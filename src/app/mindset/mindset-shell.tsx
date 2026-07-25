@@ -43,7 +43,7 @@ export default function MindsetShell({
               <Brain className="h-5 w-5 text-white" />
             </div>
             <span className="font-black text-lg tracking-tighter uppercase italic">
-              Mind<span className="text-violet-400">set</span>
+              Menta<span className="text-violet-400">lidad</span>
             </span>
           </div>
         </div>
@@ -123,7 +123,7 @@ export default function MindsetShell({
           <div className="flex items-center gap-2">
             <Brain size={18} className="text-violet-400" />
             <span className="font-black text-sm uppercase tracking-tighter italic">
-              Mind<span className="text-violet-400">set</span>
+              Menta<span className="text-violet-400">lidad</span>
             </span>
           </div>
           <form action={signout}>

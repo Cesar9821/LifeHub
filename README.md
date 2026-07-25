@@ -1,6 +1,15 @@
-# Finanzas Pro
+# LifeHub
 
-App de finanzas personales/familiares con módulos organizados en un **hub**. Módulos activos: **Finanzas** y **Mindset** (hábitos). Otros (Familia, Salud, Metas, Hogar) están planificados.
+Sistema personal de gestión de vida, organizado en un **hub** de módulos. La visión son **4 pilares**:
+
+| Pilar | Estado | Qué cubre |
+|-------|--------|-----------|
+| **Finanzas** | ✅ Activo | Movimientos, planificación mensual, ahorros y créditos |
+| **Mentalidad** | ✅ Activo | Hábitos diarios, rutina, ánimo, sueño y energía |
+| **Familia** | 🔜 En construcción | Tareas del hogar, calendario compartido, compras y despensa |
+| **Metas** | 🔜 En construcción | Objetivos anuales, proyectos personales y seguimiento |
+
+> Salud vive dentro de **Mentalidad** (ánimo/sueño/energía) y Hogar dentro de **Familia** (compras/despensa), por eso no son módulos aparte.
 
 ## Stack
 
@@ -11,7 +20,7 @@ App de finanzas personales/familiares con módulos organizados en un **hub**. M�
 
 ## Modelo de datos
 
-Multi-tenant por **hogares** (`households`): cada dato cuelga de un `household_id` y las políticas RLS garantizan que solo los miembros de un hogar ven/editan sus filas.
+Multi-tenant por **hogares** (`households`): cada dato cuelga de un `household_id` y las políticas RLS garantizan que solo los miembros de un hogar ven/editan sus filas. Los datos de Mentalidad son personales por usuario (`user_id`).
 
 El módulo de finanzas se apoya en dos tablas centrales:
 
@@ -23,7 +32,7 @@ Los archivos SQL están en [`supabase/`](supabase/) y se ejecutan en orden en el
 1. `schema.sql` — base (hogares, perfiles, RLS, categorías seed)
 2. `schema-movements.sql` — movimientos y recurrentes
 3. `schema-household.sql` — invitaciones/miembros
-4. `schema-mindset.sql` — módulo de hábitos
+4. `schema-mindset.sql` — módulo de Mentalidad (hábitos y registro diario)
 
 ## Puesta en marcha
 
@@ -60,9 +69,11 @@ Abre [http://localhost:3000](http://localhost:3000).
 ```
 src/
   app/            Rutas (App Router)
+    hub/          Selector de módulos (los 4 pilares)
     finanzas/     Dashboard, movimientos, planificación, ahorros, créditos, ajustes
-    mindset/      Hábitos y rutina
-    hub/          Selector de módulos
+    mindset/      Mentalidad: hábitos y registro diario
+    (familia)/    Por construir
+    (metas)/      Por construir
   services/       Acceso a datos (Supabase)
   lib/            Auth, clientes Supabase, utilidades
   types/          Tipos compartidos

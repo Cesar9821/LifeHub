@@ -200,7 +200,7 @@ export default async function AjustesPage() {
           <p className="text-sm font-black text-white mb-1">Tus datos son privados</p>
           <p className="text-xs text-slate-500 font-medium leading-relaxed max-w-xl">
             Las finanzas están aisladas por hogar: solo sus miembros pueden verlas.
-            Los datos de Mindset son personales de cada usuario, incluso dentro del
+            Los datos de Mentalidad son personales de cada usuario, incluso dentro del
             mismo hogar.
           </p>
         </div>

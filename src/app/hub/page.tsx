@@ -19,7 +19,7 @@ export default function HubPage() {
           {greeting}.
         </h1>
         <p className="text-slate-500 font-medium mt-4 max-w-md">
-          Elige un módulo para empezar. Todo tu hogar, en un solo lugar.
+          Elige un módulo para empezar. Tu vida, en un solo lugar.
         </p>
       </div>
 
