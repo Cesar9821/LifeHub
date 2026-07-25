@@ -72,9 +72,9 @@ export const MODULES: AppModule[] = [
     name: 'Metas',
     tagline: 'Objetivos y proyectos',
     description: 'Objetivos anuales, proyectos personales y seguimiento de progreso.',
-    href: '#',
+    href: '/metas',
     icon: Target,
-    status: 'soon',
+    status: 'active',
     accent: {
       text: 'text-amber-400',
       glow: 'group-hover:shadow-[0_0_40px_-10px_rgba(245,158,11,0.4)]',
