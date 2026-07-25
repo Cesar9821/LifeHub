@@ -1,25 +1,61 @@
 {
+  "id": "/hub",
   "name": "LifeHub",
   "short_name": "LifeHub",
-  "description": "Tu sistema personal: dinero, hábitos, familia y bienestar en un solo lugar.",
-  "start_url": "/finanzas",
+  "description": "Tu sistema personal: finanzas, mentalidad, familia y metas en un solo lugar.",
+  "lang": "es-CL",
+  "dir": "ltr",
+  "start_url": "/hub",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#050608",
   "theme_color": "#050608",
+  "categories": ["productivity", "lifestyle", "finance"],
   "icons": [
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Finanzas",
+      "short_name": "Finanzas",
+      "url": "/finanzas/dashboard",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Mentalidad",
+      "short_name": "Mentalidad",
+      "url": "/mindset",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Familia",
+      "short_name": "Familia",
+      "url": "/familia",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Metas",
+      "short_name": "Metas",
+      "url": "/metas",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

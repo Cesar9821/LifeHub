@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { signout } from '@/app/auth/actions';
-import { Activity, LogOut } from 'lucide-react';
+import { Activity, LogOut, Bell } from 'lucide-react';
 
 export default function HubShell({
   children,
@@ -38,6 +39,13 @@ export default function HubShell({
           <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-950 border border-white/10 flex items-center justify-center font-black text-indigo-500 shadow-2xl shrink-0">
             {userInitials}
           </div>
+          <Link
+            href="/notificaciones"
+            title="Notificaciones"
+            className="p-2.5 bg-white/5 rounded-xl border border-white/5 text-slate-400 hover:text-indigo-400 hover:border-indigo-500/30 transition-all active:scale-90"
+          >
+            <Bell size={18} />
+          </Link>
           <form action={signout}>
             <button
               type="submit"

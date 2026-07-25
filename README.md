@@ -35,6 +35,14 @@ Los archivos SQL están en [`supabase/`](supabase/) y se ejecutan en orden en el
 4. `schema-mindset.sql` — módulo de Mentalidad (hábitos y registro diario)
 5. `schema-metas.sql` — módulo de Metas (objetivos personales con hitos)
 6. `schema-familia.sql` — módulo de Familia (tareas del hogar y compras)
+7. `schema-notifications.sql` — suscripciones push y preferencias de avisos
+
+## PWA y notificaciones
+
+LifeHub es una **PWA instalable** en iPhone/Android (sin App Store) con **web push**
+de los 4 módulos, enviadas por un cron diario en Vercel. La configuración
+(claves VAPID, variables de entorno, instalación en iOS) está en
+[`NOTIFICACIONES.md`](NOTIFICACIONES.md).
 
 ## Puesta en marcha
 
