@@ -6,8 +6,8 @@ Sistema personal de gestión de vida, organizado en un **hub** de módulos. La v
 |-------|--------|-----------|
 | **Finanzas** | ✅ Activo | Movimientos, planificación mensual, ahorros y créditos |
 | **Mentalidad** | ✅ Activo | Hábitos diarios, rutina, ánimo, sueño y energía |
+| **Metas** | ✅ Activo | Objetivos personales con hitos y seguimiento de progreso |
 | **Familia** | 🔜 En construcción | Tareas del hogar, calendario compartido, compras y despensa |
-| **Metas** | 🔜 En construcción | Objetivos anuales, proyectos personales y seguimiento |
 
 > Salud vive dentro de **Mentalidad** (ánimo/sueño/energía) y Hogar dentro de **Familia** (compras/despensa), por eso no son módulos aparte.
 
@@ -33,6 +33,7 @@ Los archivos SQL están en [`supabase/`](supabase/) y se ejecutan en orden en el
 2. `schema-movements.sql` — movimientos y recurrentes
 3. `schema-household.sql` — invitaciones/miembros
 4. `schema-mindset.sql` — módulo de Mentalidad (hábitos y registro diario)
+5. `schema-metas.sql` — módulo de Metas (objetivos personales con hitos)
 
 ## Puesta en marcha
 
@@ -72,8 +73,8 @@ src/
     hub/          Selector de módulos (los 4 pilares)
     finanzas/     Dashboard, movimientos, planificación, ahorros, créditos, ajustes
     mindset/      Mentalidad: hábitos y registro diario
+    metas/        Metas: objetivos personales con hitos
     (familia)/    Por construir
-    (metas)/      Por construir
   services/       Acceso a datos (Supabase)
   lib/            Auth, clientes Supabase, utilidades
   types/          Tipos compartidos
