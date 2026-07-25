@@ -1,0 +1,5 @@
+node_modules/
+.next/
+*.tsbuildinfo
+finanzas-v2-main.zip
+.env.local
