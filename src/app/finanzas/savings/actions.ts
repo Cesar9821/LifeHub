@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { getActiveHouseholdId } from '@/lib/auth';
+import { failIf } from '@/lib/errors';
 import { revalidatePath } from 'next/cache';
 
 export async function addSaving(formData: FormData) {
@@ -22,10 +23,7 @@ export async function addSaving(formData: FormData) {
     }
   ]);
 
-  if (error) {
-    console.error('Error saving goal:', error.message);
-    return;
-  }
+  failIf(error, 'No se pudo crear la meta de ahorro');
 
   revalidatePath('/finanzas/savings');
   revalidatePath('/finanzas/movimientos');
@@ -72,10 +70,7 @@ export async function depositSaving(formData: FormData) {
     .from('savings')
     .update({ current_amount: newAmount })
     .eq('id', id);
-  if (upErr) {
-    console.error('Error actualizando ahorro:', upErr.message);
-    return;
-  }
+  failIf(upErr, 'No se pudo registrar el movimiento de ahorro');
 
   // Registra el movimiento (confirmado, porque el dinero ya se movió)
   const today = new Date();

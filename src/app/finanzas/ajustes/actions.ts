@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth';
+import { failIf } from '@/lib/errors';
 import { revalidatePath } from 'next/cache';
 
 export type MemberActionState = { ok?: string; error?: string } | undefined;
@@ -52,7 +53,7 @@ export async function removeMember(formData: FormData) {
     target_user: userId,
   });
 
-  if (error) console.error('Error quitando miembro:', error.message);
+  failIf(error, 'No se pudo quitar al miembro');
   revalidatePath('/finanzas/ajustes');
 }
 
@@ -67,6 +68,6 @@ export async function renameHousehold(formData: FormData) {
     new_name: name,
   });
 
-  if (error) console.error('Error renombrando hogar:', error.message);
+  failIf(error, 'No se pudo renombrar el hogar');
   revalidatePath('/finanzas/ajustes');
 }

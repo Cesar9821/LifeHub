@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { getActiveHouseholdId } from '@/lib/auth';
 import { periodOf } from '@/services/movements';
+import { failIf } from '@/lib/errors';
 import { revalidatePath } from 'next/cache';
 
 function revalidateAll() {
@@ -36,7 +37,7 @@ export async function confirmMovement(formData: FormData) {
     })
     .eq('id', id);
 
-  if (error) console.error('Error confirmando movimiento:', error.message);
+  failIf(error, 'No se pudo confirmar el movimiento');
   revalidateAll();
 }
 
@@ -51,7 +52,7 @@ export async function revertMovement(formData: FormData) {
     .update({ status: 'pending' })
     .eq('id', id);
 
-  if (error) console.error('Error revirtiendo movimiento:', error.message);
+  failIf(error, 'No se pudo revertir el movimiento');
   revalidateAll();
 }
 
@@ -88,7 +89,7 @@ export async function addVariableMovement(formData: FormData) {
     },
   ]);
 
-  if (error) console.error('Error agregando movimiento variable:', error.message);
+  failIf(error, 'No se pudo agregar el movimiento');
   revalidateAll();
 }
 
@@ -98,7 +99,7 @@ export async function deleteMovement(formData: FormData) {
   if (!id) return;
 
   const { error } = await supabase.from('movements').delete().eq('id', id);
-  if (error) console.error('Error eliminando movimiento:', error.message);
+  failIf(error, 'No se pudo eliminar el movimiento');
   revalidateAll();
 }
 
@@ -119,6 +120,6 @@ export async function editMovementAmount(formData: FormData) {
     .eq('id', id)
     .eq('status', 'pending');
 
-  if (error) console.error('Error editando monto:', error.message);
+  failIf(error, 'No se pudo editar el monto');
   revalidateAll();
 }

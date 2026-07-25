@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, getActiveHouseholdId } from '@/lib/auth';
 import { todayStr } from '@/services/mindset';
+import { failIf } from '@/lib/errors';
 import { revalidatePath } from 'next/cache';
 
 function revalidateAll() {
@@ -29,14 +30,15 @@ export async function toggleHabit(formData: FormData) {
       .eq('habit_id', habitId)
       .eq('user_id', user.id)
       .eq('log_date', today);
-    if (error) console.error('Error desmarcando hábito:', error.message);
+    failIf(error, 'No se pudo desmarcar el hábito');
   } else {
     // Marcar: inserta el registro de hoy
     const { error } = await supabase.from('habit_logs').insert([
       { habit_id: habitId, user_id: user.id, log_date: today, done: true },
     ]);
-    if (error && !error.message.includes('duplicate')) {
-      console.error('Error marcando hábito:', error.message);
+    // El registro único por día evita duplicados; ignoramos ese error.
+    if (!error?.message?.includes('duplicate')) {
+      failIf(error, 'No se pudo marcar el hábito');
     }
   }
 
@@ -79,7 +81,7 @@ export async function addHabit(formData: FormData) {
     },
   ]);
 
-  if (error) console.error('Error creando hábito:', error.message);
+  failIf(error, 'No se pudo crear el hábito');
   revalidateAll();
 }
 
@@ -94,7 +96,7 @@ export async function deleteHabit(formData: FormData) {
     .delete()
     .eq('id', id)
     .eq('user_id', user.id);
-  if (error) console.error('Error eliminando hábito:', error.message);
+  failIf(error, 'No se pudo eliminar el hábito');
 
   revalidateAll();
 }
@@ -112,7 +114,7 @@ export async function toggleHabitActive(formData: FormData) {
     .update({ is_active: !isActive })
     .eq('id', id)
     .eq('user_id', user.id);
-  if (error) console.error('Error cambiando estado:', error.message);
+  failIf(error, 'No se pudo cambiar el estado del hábito');
 
   revalidateAll();
 }
@@ -145,7 +147,7 @@ export async function saveDailyLog(formData: FormData) {
     .from('daily_logs')
     .upsert(payload, { onConflict: 'user_id,log_date' });
 
-  if (error) console.error('Error guardando registro diario:', error.message);
+  failIf(error, 'No se pudo guardar el registro diario');
   revalidateAll();
 }
 
@@ -175,6 +177,6 @@ export async function addWater(formData: FormData) {
     { onConflict: 'user_id,log_date' }
   );
 
-  if (error) console.error('Error registrando agua:', error.message);
+  failIf(error, 'No se pudo registrar el agua');
   revalidateAll();
 }

@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { getActiveHouseholdId } from '@/lib/auth';
+import { failIf } from '@/lib/errors';
 import { revalidatePath } from 'next/cache';
 
 export async function addRecurring(formData: FormData) {
@@ -31,7 +32,7 @@ export async function addRecurring(formData: FormData) {
     },
   ]);
 
-  if (error) console.error('Error creando recurrente:', error.message);
+  failIf(error, 'No se pudo crear el recurrente');
 
   revalidatePath('/finanzas/planificacion');
   revalidatePath('/finanzas/movimientos');
@@ -43,7 +44,7 @@ export async function deleteRecurring(formData: FormData) {
   if (!id) return;
 
   const { error } = await supabase.from('recurring_items').delete().eq('id', id);
-  if (error) console.error('Error eliminando recurrente:', error.message);
+  failIf(error, 'No se pudo eliminar el recurrente');
 
   revalidatePath('/finanzas/planificacion');
   revalidatePath('/finanzas/movimientos');
@@ -59,7 +60,7 @@ export async function toggleRecurring(formData: FormData) {
     .from('recurring_items')
     .update({ is_active: !isActive })
     .eq('id', id);
-  if (error) console.error('Error cambiando estado:', error.message);
+  failIf(error, 'No se pudo cambiar el estado del recurrente');
 
   revalidatePath('/finanzas/planificacion');
   revalidatePath('/finanzas/movimientos');

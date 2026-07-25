@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { getActiveHouseholdId } from '@/lib/auth';
+import { failIf } from '@/lib/errors';
 import { revalidatePath } from 'next/cache';
 
 export async function addCredit(formData: FormData): Promise<void> {
@@ -31,10 +32,7 @@ export async function addCredit(formData: FormData): Promise<void> {
     }
   ]);
 
-  if (error) {
-    console.error("Error al registrar crédito:", error.message);
-    return; 
-  }
+  failIf(error, 'No se pudo registrar el crédito');
 
   revalidatePath('/finanzas/credits');
   revalidatePath('/finanzas/movimientos');
@@ -85,10 +83,7 @@ export async function payCreditInstallment(formData: FormData) {
     .from('credits')
     .update({ remaining_amount: newRemaining, paid_installments: newPaid })
     .eq('id', id);
-  if (upErr) {
-    console.error('Error actualizando crédito:', upErr.message);
-    return;
-  }
+  failIf(upErr, 'No se pudo registrar el pago del crédito');
 
   const today = new Date();
   const dueDate = today.toISOString().slice(0, 10);

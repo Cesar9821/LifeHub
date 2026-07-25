@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { getActiveHouseholdId } from '@/lib/auth';
+import { failIf } from '@/lib/errors';
 import { revalidatePath } from 'next/cache';
 
 export async function addCategory(formData: FormData) {
@@ -20,8 +21,8 @@ export async function addCategory(formData: FormData) {
   ]);
 
   // El unique (household_id, name, kind) evita duplicados; ignoramos ese error.
-  if (error && !error.message.includes('duplicate')) {
-    console.error('Error creando categoría:', error.message);
+  if (!error?.message?.includes('duplicate')) {
+    failIf(error, 'No se pudo crear la categoría');
   }
 
   revalidatePath('/finanzas/categories');
@@ -35,7 +36,7 @@ export async function deleteCategory(formData: FormData) {
   if (!id) return;
 
   const { error } = await supabase.from('categories').delete().eq('id', id);
-  if (error) console.error('Error eliminando categoría:', error.message);
+  failIf(error, 'No se pudo eliminar la categoría');
 
   revalidatePath('/finanzas/categories');
   revalidatePath('/finanzas/movimientos');
