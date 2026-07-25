@@ -57,10 +57,10 @@ export const MODULES: AppModule[] = [
     id: 'familia',
     name: 'Familia',
     tagline: 'Organización en casa',
-    description: 'Tareas del hogar, calendario compartido, compras y despensa.',
-    href: '#',
+    description: 'Tareas del hogar, responsables y lista de compras compartida.',
+    href: '/familia',
     icon: Users,
-    status: 'soon',
+    status: 'active',
     accent: {
       text: 'text-orange-400',
       glow: 'group-hover:shadow-[0_0_40px_-10px_rgba(249,115,22,0.4)]',
