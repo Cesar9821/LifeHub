@@ -76,9 +76,10 @@ export const zRequiredText = (label = 'Este campo') =>
 
 /** Texto opcional → null si viene vacío o ausente (campo no presente en el form). */
 export const zOptionalText = z
-  .union([z.string(), z.undefined(), z.null()])
+  .string()
+  .optional()
   .transform((v) => {
-    const s = (v ?? '').toString().trim();
+    const s = (v ?? '').trim();
     return s === '' ? null : s;
   });
 
@@ -90,14 +91,16 @@ export const zAmount = z
 
 /** Fecha YYYY-MM-DD opcional → null si viene vacía o ausente. */
 export const zOptionalDate = z
-  .union([z.string(), z.undefined(), z.null()])
+  .string()
+  .optional()
   .transform((v) => {
-    const s = (v ?? '').toString().trim();
+    const s = (v ?? '').trim();
     return s === '' ? null : s;
   })
   .refine((v) => v === null || /^\d{4}-\d{2}-\d{2}$/.test(v), 'Fecha inválida.');
 
 /** Checkbox 'on'/ausente → boolean. */
 export const zCheckbox = z
-  .union([z.literal('on'), z.undefined(), z.null(), z.string()])
+  .string()
+  .optional()
   .transform((v) => v === 'on');
