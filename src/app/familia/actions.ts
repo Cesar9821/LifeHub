@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, getActiveHouseholdId } from '@/lib/auth';
 import { failIf } from '@/lib/errors';
+import { notifyUser } from '@/lib/notify';
 import {
   parseForm,
   errorState,
@@ -51,6 +52,15 @@ export async function addTask(_prev: FormState, formData: FormData): Promise<For
   if (error) {
     console.error('Error creando tarea:', error.message);
     return errorState('No se pudo crear la tarea. Inténtalo de nuevo.');
+  }
+
+  // Aviso instantáneo a quien se le asignó (si no es uno mismo).
+  if (assigned_to && assigned_to !== user.id) {
+    await notifyUser(
+      assigned_to,
+      { title: '🏠 Nueva tarea para ti', body: title, url: '/familia', tag: 'task-assign' },
+      'familia'
+    );
   }
 
   revalidate();

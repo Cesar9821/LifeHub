@@ -64,12 +64,20 @@ export async function removePushSubscription(endpoint: string) {
   revalidatePath('/notificaciones');
 }
 
-/** Actualiza qué módulos notifican. */
+/** Actualiza qué módulos notifican, sus horarios y la alerta de saldo bajo. */
 export async function updateNotificationPrefs(formData: FormData) {
   const supabase = await createClient();
   const user = await requireUser();
 
   const bool = (k: string) => formData.get(k) === 'on';
+  const time = (k: string, def: string) => {
+    const v = String(formData.get(k) || '').trim();
+    return /^\d{2}:\d{2}$/.test(v) ? v : def;
+  };
+  const num = (k: string) => {
+    const n = Number(String(formData.get(k) || '').replace(/\./g, '').replace(/,/g, ''));
+    return isNaN(n) ? 0 : Math.max(0, n);
+  };
 
   const { error } = await supabase.from('notification_prefs').upsert(
     {
@@ -79,6 +87,13 @@ export async function updateNotificationPrefs(formData: FormData) {
       mentalidad: bool('mentalidad'),
       familia: bool('familia'),
       metas: bool('metas'),
+      forja_time: time('forja_time', '06:00'),
+      m369_morning_time: time('m369_morning_time', '09:00'),
+      m369_afternoon_time: time('m369_afternoon_time', '14:00'),
+      m369_night_time: time('m369_night_time', '21:00'),
+      digest_time: time('digest_time', '09:00'),
+      low_balance_enabled: bool('low_balance_enabled'),
+      low_balance_threshold: num('low_balance_threshold'),
       updated_at: new Date().toISOString(),
     },
     { onConflict: 'user_id' }

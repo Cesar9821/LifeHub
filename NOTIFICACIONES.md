@@ -1,98 +1,74 @@
-# LifeHub — PWA + Notificaciones (guía de configuración)
+# LifeHub — PWA + Notificaciones (guía)
 
-LifeHub es una **PWA**: se instala en el iPhone gratis (sin App Store) y puede
-enviar **notificaciones push** con lo pendiente de tus 4 módulos.
+LifeHub es una **PWA**: se instala en el iPhone gratis (sin App Store) y envía
+**notificaciones push** configurables por ti.
 
 ## 1. Instalar en el iPhone (gratis)
 
-1. Abre `https://tu-app.vercel.app` en **Safari** (tiene que ser Safari).
-2. Toca **Compartir** (el cuadrito con la flecha) → **Agregar a inicio**.
-3. Abre LifeHub desde el ícono nuevo. Ya funciona como app.
+1. Abre `https://tu-app.vercel.app` en **Safari**.
+2. Toca **Compartir** → **Agregar a inicio**.
+3. Abre LifeHub desde el ícono. Ya funciona como app.
 
-> iOS **solo permite notificaciones si la app está instalada** en la pantalla de
-> inicio. Por eso el botón de activar aparece recién cuando la abres instalada.
+> iOS **solo permite notificaciones si la app está instalada** en la pantalla de inicio.
 
-## 2. Configurar las notificaciones (una sola vez)
+## 2. Configuración (una sola vez)
 
-### 2.1 Genera las claves VAPID
-
-En tu compu, en la carpeta del proyecto:
-
+### 2.1 Claves VAPID
 ```bash
 npx web-push generate-vapid-keys
 ```
 
-Te da una **Public Key** y una **Private Key**.
-
-### 2.2 Corre el SQL
-
-En Supabase → **SQL Editor**, ejecuta `supabase/schema-notifications.sql`
-(crea `push_subscriptions` y `notification_prefs`).
+### 2.2 SQL en Supabase
+Corre en el SQL Editor:
+- `supabase/schema-notifications.sql` (suscripciones + preferencias)
+- `supabase/schema-notifications-v2.sql` (horarios + anti-duplicados)
 
 ### 2.3 Variables de entorno en Vercel
-
-En Vercel → tu proyecto → **Settings → Environment Variables**, agrega
-(para Production, Preview y Development):
+Settings → Environment Variables (Production/Preview/Development):
 
 | Variable | Valor |
 |----------|-------|
-| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | la Public Key de arriba |
-| `VAPID_PRIVATE_KEY` | la Private Key de arriba |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Public Key |
+| `VAPID_PRIVATE_KEY` | Private Key |
 | `VAPID_SUBJECT` | `mailto:tu-correo@ejemplo.com` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Settings → API → `service_role` (¡secreta!) |
-| `CRON_SECRET` | una cadena larga y aleatoria que inventes |
+| `CRON_SECRET` | una cadena larga y aleatoria |
 
-Vuelve a desplegar (Vercel → Deployments → Redeploy) para que tomen efecto.
+Redeploy después de agregarlas.
 
-> El `CRON_SECRET` protege el endpoint del cron. Vercel envía automáticamente
-> `Authorization: Bearer <CRON_SECRET>` a los cron jobs cuando esa variable existe.
-
-### 2.4 Activa en tu dispositivo
-
-Abre LifeHub instalada → ícono de **campana** (arriba a la derecha del hub) →
-**Activar notificaciones** → **Enviar prueba**. Si llega, quedó listo.
-
-## 3. ¿Cuándo llegan y qué dicen?
-
-Hay **tres franjas** al día. El **369 se recuerda en las tres**; los **pendientes
-solo llegan mañana y noche** (para no saturar a media tarde):
-
-- **Mañana** — `vercel.json`, 12:00 UTC ≈ 09:00 Chile (`?slot=morning`)
-- **Tarde** — GitHub Actions, 17:00 UTC ≈ 14:00 Chile (`?slot=afternoon`, solo el 369)
-- **Noche** — `vercel.json`, 00:00 UTC ≈ 21:00 Chile (`?slot=night`)
-
-En cada envío, y **según qué módulos activaste**, recibes avisos **accionables**
-(cada uno te lleva a su pantalla al tocarlo):
-
-- 🔥 **La Forja**: recordatorio de escribir tu **369** de la franja (mañana 3× /
-  noche 9×), con la frase del día. → abre `/mindset/forja`.
-- 💰 **Finanzas**: pagos por confirmar. → abre Movimientos.
-- 🧠 **Mentalidad**: hábitos que te faltan. → abre Hoy.
-- 🏠 **Familia**: tareas asignadas a ti. → abre Familia.
-- 🎯 **Metas**: objetivos que vencen dentro de 3 días. → abre Metas.
-
-Si solo hay un pendiente, el aviso te lleva directo a esa pantalla; si hay
-varios, llega un resumen que abre el hub.
-
-### Activar la franja de la tarde (GitHub Actions)
-
-El plan Hobby de Vercel limita los crons, así que la 3ª franja (tarde) la dispara
-un workflow ya incluido en `.github/workflows/notify-afternoon.yml`. Solo agrega
-**2 secretos del repositorio** en GitHub → **Settings → Secrets and variables →
-Actions → New repository secret**:
+### 2.4 Motor de horarios (GitHub Actions)
+El motor corre **cada 30 min** desde `.github/workflows/notify.yml` y decide
+qué enviar según tus horarios. Agrega **2 secretos del repo** en GitHub →
+Settings → Secrets and variables → Actions:
 
 | Secreto | Valor |
 |---------|-------|
 | `LIFEHUB_URL` | `https://life-hub-puce.vercel.app` (sin barra final) |
-| `CRON_SECRET` | el mismo valor que pusiste en Vercel |
+| `CRON_SECRET` | el mismo de Vercel |
 
-Listo: la tarde queda cubierta gratis. Puedes probarlo a mano en GitHub →
-**Actions → LifeHub · 369 tarde → Run workflow**.
+### 2.5 Activar en tu dispositivo
+Abre LifeHub instalada → **campana** → **Activar** → **Enviar prueba**.
 
-### Probar el cron a mano
+## 3. Cómo funciona
 
+En **Notificaciones** eliges qué recibir, **a qué hora** cada cosa, y el umbral
+de saldo bajo. Todos los avisos son **accionables** (abren la pantalla correcta).
+
+**Por horario** (una vez al día, ±30 min):
+- 🔥 **La Forja** — frase del día motivadora (por defecto 06:00).
+- 🔥 **369** — recordatorio de escribir tu 369 de mañana / tarde / noche, a las horas que definas.
+- 📋 **Resumen** — pagos por confirmar, hábitos, tareas y metas por vencer.
+- 💸 **Saldo bajo** — si el saldo del mes baja del umbral que fijaste.
+
+**Al instante** (no espera horario):
+- 🏠 **Tarea asignada** — cuando alguien del hogar te asigna una tarea, te llega al toque.
+
+### Probar el motor a mano
 ```bash
-curl "https://tu-app.vercel.app/api/cron/notify?secret=TU_CRON_SECRET"
+curl -H "Authorization: Bearer TU_CRON_SECRET" "https://life-hub-puce.vercel.app/api/cron/notify"
 ```
+Envía lo que corresponda a la hora actual. Devuelve un JSON con `processed` y `pushesSent`.
 
-Devuelve un JSON con cuántos usuarios se notificaron.
+> **Precisión:** en plan gratis los horarios son aproximados (±30 min). Para
+> precisión al minuto, usa Vercel Pro (crons por minuto) o un cron externo
+> (cron-job.org) apuntando a la misma URL con el header de autorización.

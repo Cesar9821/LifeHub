@@ -1,0 +1,23 @@
+name: LifeHub · notificaciones
+
+# Motor de notificaciones: corre cada 30 min y el endpoint decide qué enviar
+# según los horarios que cada usuario configuró (y evita duplicados en el día).
+#
+# Requiere 2 secretos del repo (Settings → Secrets and variables → Actions):
+#   LIFEHUB_URL   ->  https://life-hub-puce.vercel.app   (sin barra final)
+#   CRON_SECRET   ->  el mismo valor que pusiste en Vercel
+
+on:
+  schedule:
+    - cron: '0,30 * * * *' # cada 30 minutos
+  workflow_dispatch: {}
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Procesar notificaciones
+        run: |
+          curl -fsS -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.LIFEHUB_URL }}/api/cron/notify"
