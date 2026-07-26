@@ -29,6 +29,7 @@ export default function TaskForm({
           <Input
             name="title"
             required
+            defaultValue={state.values?.title ?? ''}
             placeholder="Ej: Sacar la basura, Pagar el gas…"
             invalid={!!state.fieldErrors?.title}
           />

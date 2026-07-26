@@ -43,12 +43,13 @@ export default function GoalForm() {
           <Input
             name="title"
             required
+            defaultValue={state.values?.title ?? ''}
             placeholder="Ej: Correr una maratón, Ahorrar para un viaje…"
             invalid={!!state.fieldErrors?.title}
           />
         </Field>
         <Field label="¿Por qué importa? (tu motivo)" className="md:col-span-2">
-          <Input name="motive" placeholder="La razón que te va a sostener cuando cueste…" />
+          <Input name="motive" defaultValue={state.values?.motive ?? ''} placeholder="La razón que te va a sostener cuando cueste…" />
         </Field>
       </div>
 

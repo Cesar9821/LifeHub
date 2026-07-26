@@ -26,7 +26,7 @@ export default function ListForm() {
       <InlineMessage state={state} />
       <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
         <Field label="Nueva lista" error={state.fieldErrors?.name} className="flex-1">
-          <Input name="name" required placeholder="Ej: Farmacia, Ferretería…" invalid={!!state.fieldErrors?.name} />
+          <Input name="name" required defaultValue={state.values?.name ?? ''} placeholder="Ej: Farmacia, Ferretería…" invalid={!!state.fieldErrors?.name} />
         </Field>
         <Field label="Se reinicia" className="sm:w-44">
           <Select name="reset_period" defaultValue="none">

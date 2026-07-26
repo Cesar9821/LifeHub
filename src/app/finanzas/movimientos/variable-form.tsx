@@ -52,6 +52,7 @@ export default function VariableForm({
           <input
             name="description"
             required
+            defaultValue={state.values?.description ?? ''}
             placeholder="Ej: Compras del super"
             className={`${inputStyles} ${state.fieldErrors?.description ? 'border-rose-500/60' : ''}`}
           />

@@ -42,6 +42,7 @@ export default function RecurringForm({
           <input
             name="description"
             required
+            defaultValue={state.values?.description ?? ''}
             placeholder="Ej: Sueldo, Arriendo, Netflix…"
             className={`${inputStyles} ${state.fieldErrors?.description ? 'border-rose-500/60' : ''}`}
           />

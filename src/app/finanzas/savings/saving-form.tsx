@@ -34,6 +34,7 @@ export default function SavingForm({ inputStyles }: { inputStyles: string }) {
           <label className="text-[10px] font-black text-slate-500 uppercase px-1 tracking-widest">Nombre de la Meta</label>
           <input
             name="name"
+            defaultValue={state.values?.name ?? ''}
             placeholder="Ej: Fondo de Emergencia"
             className={inputStyles}
             required

@@ -26,7 +26,7 @@ export default function CategoryForm() {
       <InlineMessage state={state} />
       <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-4 items-end">
         <Field label="Nombre de la categoría" error={state.fieldErrors?.name}>
-          <Input name="name" required placeholder="Ej: Mascotas, Gimnasio…" invalid={!!state.fieldErrors?.name} />
+          <Input name="name" required defaultValue={state.values?.name ?? ''} placeholder="Ej: Mascotas, Gimnasio…" invalid={!!state.fieldErrors?.name} />
         </Field>
         <Field label="Tipo">
           <Select name="kind" defaultValue="expense">

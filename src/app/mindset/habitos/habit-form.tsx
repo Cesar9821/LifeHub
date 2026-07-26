@@ -31,12 +31,13 @@ export default function HabitForm() {
           <Input
             name="name"
             required
+            defaultValue={state.values?.name ?? ''}
             placeholder="Ej: Entrenar, Leer 30 min, Meditar…"
             invalid={!!state.fieldErrors?.name}
           />
         </Field>
         <Field label="Detalle (opcional)">
-          <Input name="description" placeholder="Ej: 6:00 AM, sin excusas" />
+          <Input name="description" defaultValue={state.values?.description ?? ''} placeholder="Ej: 6:00 AM, sin excusas" />
         </Field>
       </div>
 

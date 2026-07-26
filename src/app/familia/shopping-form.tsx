@@ -33,8 +33,8 @@ export default function ShoppingForm({ listId }: { listId: string }) {
     <div className="space-y-2">
       <form ref={formRef} action={formAction} className="flex items-center gap-2">
         <input type="hidden" name="list_id" value={listId} />
-        <Input name="name" required placeholder="Agregar producto…" className="flex-1 py-2.5" invalid={!!state.fieldErrors?.name} />
-        <Input name="quantity" placeholder="Cant." className="w-16 md:w-24 py-2.5" />
+        <Input name="name" required defaultValue={state.values?.name ?? ''} placeholder="Agregar producto…" className="flex-1 py-2.5" invalid={!!state.fieldErrors?.name} />
+        <Input name="quantity" defaultValue={state.values?.quantity ?? ''} placeholder="Cant." className="w-16 md:w-24 py-2.5" />
         <AddButton />
       </form>
       {!state.ok && <InlineMessage state={state} />}

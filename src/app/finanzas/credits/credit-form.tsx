@@ -38,6 +38,7 @@ export default function CreditForm({ inputStyles }: { inputStyles: string }) {
           <label className="text-[10px] font-black text-slate-500 uppercase px-1 italic tracking-widest">Nombre Crédito</label>
           <input
             name="name"
+            defaultValue={state.values?.name ?? ''}
             placeholder="Ej: Crédito Casa"
             className={`${inputStyles} ${state.fieldErrors?.name ? 'border-rose-500/60' : ''}`}
             required
