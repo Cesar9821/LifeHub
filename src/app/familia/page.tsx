@@ -5,35 +5,36 @@ import {
   Circle,
   ShoppingCart,
   ListTodo,
-  Eraser,
+  RotateCcw,
+  Repeat,
 } from 'lucide-react';
 import {
   getTasks,
-  getShoppingItems,
+  getShoppingData,
   summarizeFamilia,
+  type ShoppingListWithItems,
+  type ShoppingItem,
+  type ResetPeriod,
 } from '@/services/familia';
 import { getHouseholdMembers } from '@/services/household';
 import TaskForm from './task-form';
 import TaskItem from './task-item';
 import ShoppingForm from './shopping-form';
-import {
-  toggleShoppingItem,
-  deleteShoppingItem,
-  clearCheckedShopping,
-} from './actions';
+import ListForm from './list-form';
+import { toggleShoppingItem, deleteShoppingItem, resetListNow, deleteShoppingList } from './actions';
 
 export const dynamic = 'force-dynamic';
 
 export default async function FamiliaPage() {
-  const [tasks, shopping, members] = await Promise.all([
+  const [tasks, shoppingData, members] = await Promise.all([
     getTasks(),
-    getShoppingItems(),
+    getShoppingData(),
     getHouseholdMembers(),
   ]);
 
-  const summary = summarizeFamilia(tasks, shopping);
+  const { lists, orphans, allItems } = shoppingData;
+  const summary = summarizeFamilia(tasks, allItems);
   const nameById = new Map(members.map((m) => [m.user_id, m.full_name]));
-  const checkedCount = shopping.filter((s) => s.checked).length;
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 md:space-y-10 pb-20">
@@ -86,68 +87,121 @@ export default async function FamiliaPage() {
 
       {/* COMPRAS */}
       <section className="space-y-5">
-        <div className="flex items-center justify-between px-1">
-          <div className="flex items-center gap-2">
-            <ShoppingCart size={18} className="text-orange-400" />
-            <h2 className="text-lg font-black text-white uppercase tracking-wider">Lista de compras</h2>
-          </div>
-          {checkedCount > 0 && (
-            <form action={clearCheckedShopping}>
-              <button
-                type="submit"
-                className="inline-flex items-center gap-1.5 text-[10px] font-black text-slate-400 hover:text-rose-400 uppercase tracking-widest transition-colors"
-              >
-                <Eraser size={13} /> Limpiar comprados ({checkedCount})
-              </button>
-            </form>
-          )}
+        <div className="flex items-center gap-2 px-1">
+          <ShoppingCart size={18} className="text-orange-400" />
+          <h2 className="text-lg font-black text-white uppercase tracking-wider">Listas de compras</h2>
         </div>
 
-        <ShoppingForm />
+        <ListForm />
 
-        {shopping.length === 0 ? (
-          <EmptyState icon={<ShoppingCart size={34} className="text-slate-800" />} text="La lista está vacía" />
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {shopping.map((s) => (
-              <div
-                key={s.id}
-                className="group flex items-center gap-3 bg-slate-900/30 border border-white/5 rounded-2xl px-4 py-3 hover:bg-slate-800/40 transition-all"
-              >
-                <form action={toggleShoppingItem} className="shrink-0">
-                  <input type="hidden" name="id" value={s.id} />
-                  <input type="hidden" name="checked" value={String(s.checked)} />
-                  <button type="submit" className="flex items-center">
-                    {s.checked ? (
-                      <CheckCircle2 size={19} className="text-emerald-400" />
-                    ) : (
-                      <Circle size={19} className="text-slate-600 hover:text-orange-400 transition-colors" />
-                    )}
-                  </button>
-                </form>
-                <div className="flex-1 min-w-0">
-                  <span className={`text-sm font-bold ${s.checked ? 'text-slate-500 line-through' : 'text-slate-100'}`}>
-                    {s.name}
-                  </span>
-                  {s.quantity && (
-                    <span className="text-[11px] font-mono text-slate-500 ml-2">{s.quantity}</span>
-                  )}
-                </div>
-                <form action={deleteShoppingItem} className="shrink-0">
-                  <input type="hidden" name="id" value={s.id} />
-                  <button
-                    type="submit"
-                    title="Eliminar"
-                    className="h-8 w-8 flex items-center justify-center rounded-lg text-slate-700 hover:text-rose-500 hover:bg-rose-500/10 transition-all opacity-0 group-hover:opacity-100"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </form>
-              </div>
-            ))}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {lists.map((list) => (
+            <ShoppingListCard key={list.id} list={list} />
+          ))}
+        </div>
+
+        {orphans.length > 0 && (
+          <div className="bg-slate-900/30 border border-white/5 rounded-[2rem] p-5 md:p-6 space-y-3">
+            <h3 className="text-base font-black text-white uppercase tracking-wide">Otros</h3>
+            <div className="space-y-1.5">
+              {orphans.map((item) => (
+                <ShoppingRow key={item.id} item={item} />
+              ))}
+            </div>
           </div>
         )}
       </section>
+    </div>
+  );
+}
+
+function resetBadge(period: ResetPeriod) {
+  if (period === 'none') return null;
+  return (
+    <span className="inline-flex items-center gap-1 text-[9px] font-black text-orange-400 border border-orange-500/20 bg-orange-500/5 px-2 py-0.5 rounded-md uppercase tracking-widest">
+      <Repeat size={10} /> {period === 'weekly' ? 'Semanal' : 'Mensual'}
+    </span>
+  );
+}
+
+function ShoppingListCard({ list }: { list: ShoppingListWithItems }) {
+  return (
+    <div className="bg-slate-900/30 border border-white/5 rounded-[2rem] p-5 md:p-6 space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2 flex-wrap min-w-0">
+          <h3 className="text-base font-black text-white uppercase tracking-wide truncate">{list.name}</h3>
+          {resetBadge(list.reset_period)}
+          <span className="text-[10px] font-mono text-slate-500">{list.pending} por comprar</span>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          {list.items.length > 0 && (
+            <form action={resetListNow}>
+              <input type="hidden" name="id" value={list.id} />
+              <button
+                type="submit"
+                title="Reiniciar (desmarcar todo)"
+                className="h-8 w-8 flex items-center justify-center rounded-lg text-slate-600 hover:text-orange-400 hover:bg-orange-500/10 transition-all"
+              >
+                <RotateCcw size={14} />
+              </button>
+            </form>
+          )}
+          <form action={deleteShoppingList}>
+            <input type="hidden" name="id" value={list.id} />
+            <button
+              type="submit"
+              title="Eliminar lista"
+              className="h-8 w-8 flex items-center justify-center rounded-lg text-slate-700 hover:text-rose-500 hover:bg-rose-500/10 transition-all"
+            >
+              <Trash2 size={14} />
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {list.items.length > 0 && (
+        <div className="space-y-1.5">
+          {list.items.map((item) => (
+            <ShoppingRow key={item.id} item={item} />
+          ))}
+        </div>
+      )}
+
+      <ShoppingForm listId={list.id} />
+    </div>
+  );
+}
+
+function ShoppingRow({ item }: { item: ShoppingItem }) {
+  return (
+    <div className="group flex items-center gap-3">
+      <form action={toggleShoppingItem} className="shrink-0">
+        <input type="hidden" name="id" value={item.id} />
+        <input type="hidden" name="checked" value={String(item.checked)} />
+        <button type="submit" className="flex items-center">
+          {item.checked ? (
+            <CheckCircle2 size={19} className="text-emerald-400" />
+          ) : (
+            <Circle size={19} className="text-slate-600 hover:text-orange-400 transition-colors" />
+          )}
+        </button>
+      </form>
+      <div className="flex-1 min-w-0">
+        <span className={`text-sm font-bold ${item.checked ? 'text-slate-500 line-through' : 'text-slate-100'}`}>
+          {item.name}
+        </span>
+        {item.quantity && <span className="text-[11px] font-mono text-slate-500 ml-2">{item.quantity}</span>}
+      </div>
+      <form action={deleteShoppingItem} className="shrink-0">
+        <input type="hidden" name="id" value={item.id} />
+        <button
+          type="submit"
+          title="Eliminar"
+          className="h-7 w-7 flex items-center justify-center rounded-lg text-slate-700 hover:text-rose-500 hover:bg-rose-500/10 transition-all opacity-0 group-hover:opacity-100"
+        >
+          <Trash2 size={13} />
+        </button>
+      </form>
     </div>
   );
 }

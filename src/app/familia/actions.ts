@@ -131,23 +131,27 @@ export async function deleteTask(formData: FormData) {
 const shoppingSchema = z.object({
   name: zRequiredText('El producto'),
   quantity: zOptionalText,
+  list_id: z
+    .string()
+    .optional()
+    .transform((v) => (v && v.trim() !== '' ? v.trim() : null)),
 });
 
-/** Agrega un ítem a la lista de compras. */
+/** Agrega un ítem a una lista de compras. */
 export async function addShoppingItem(
   _prev: FormState,
   formData: FormData
 ): Promise<FormState> {
   const parsed = parseForm(shoppingSchema, formData);
   if (!parsed.success) return parsed.state;
-  const { name, quantity } = parsed.data;
+  const { name, quantity, list_id } = parsed.data;
 
   const supabase = await createClient();
   const user = await requireUser();
   const householdId = await getActiveHouseholdId();
 
   const { error } = await supabase.from('shopping_items').insert([
-    { household_id: householdId, created_by: user.id, name, quantity },
+    { household_id: householdId, created_by: user.id, name, quantity, list_id },
   ]);
 
   if (error) {
@@ -196,17 +200,65 @@ export async function deleteShoppingItem(formData: FormData) {
   revalidate();
 }
 
-/** Vacía los productos ya marcados (comprados). */
-export async function clearCheckedShopping() {
+const listSchema = z.object({
+  name: zRequiredText('El nombre'),
+  reset_period: z.enum(['none', 'weekly', 'monthly']).default('none'),
+});
+
+/** Crea una lista de compras (con su período de reinicio). */
+export async function addShoppingList(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = parseForm(listSchema, formData);
+  if (!parsed.success) return parsed.state;
+  const { name, reset_period } = parsed.data;
+
   const supabase = await createClient();
   const householdId = await getActiveHouseholdId();
 
+  const { error } = await supabase.from('shopping_lists').insert([
+    { household_id: householdId, name, reset_period },
+  ]);
+
+  if (error) {
+    console.error('Error creando lista:', error.message);
+    return errorState('No se pudo crear la lista.');
+  }
+
+  revalidate();
+  return successState('Lista creada.');
+}
+
+/** Elimina una lista (y sus productos por cascada). */
+export async function deleteShoppingList(formData: FormData) {
+  const supabase = await createClient();
+  const householdId = await getActiveHouseholdId();
+
+  const id = String(formData.get('id') || '');
+  if (!id) return;
+
+  const { error } = await supabase
+    .from('shopping_lists')
+    .delete()
+    .eq('id', id)
+    .eq('household_id', householdId);
+
+  failIf(error, 'No se pudo eliminar la lista');
+  revalidate();
+}
+
+/** Reinicia una lista ahora: desmarca todos sus productos. */
+export async function resetListNow(formData: FormData) {
+  const supabase = await createClient();
+  const householdId = await getActiveHouseholdId();
+
+  const id = String(formData.get('id') || '');
+  if (!id) return;
+
   const { error } = await supabase
     .from('shopping_items')
-    .delete()
-    .eq('household_id', householdId)
-    .eq('checked', true);
+    .update({ checked: false })
+    .eq('list_id', id)
+    .eq('household_id', householdId);
 
-  failIf(error, 'No se pudo limpiar la lista');
+  failIf(error, 'No se pudo reiniciar la lista');
   revalidate();
 }
