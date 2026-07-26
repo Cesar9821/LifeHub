@@ -25,15 +25,22 @@ export default function EventForm() {
           <Input
             name="title"
             required
+            defaultValue={state.values?.title ?? ''}
             placeholder="Ej: Cumpleaños de mamá, Pago del colegio…"
             invalid={!!state.fieldErrors?.title}
           />
         </Field>
         <Field label="Fecha" error={state.fieldErrors?.event_date} className="md:w-44">
-          <Input name="event_date" type="date" required invalid={!!state.fieldErrors?.event_date} />
+          <Input
+            name="event_date"
+            type="date"
+            required
+            defaultValue={state.values?.event_date ?? ''}
+            invalid={!!state.fieldErrors?.event_date}
+          />
         </Field>
         <Field label="Hora (opcional)" className="md:w-32">
-          <Input name="event_time" type="time" />
+          <Input name="event_time" type="time" defaultValue={state.values?.event_time ?? ''} />
         </Field>
         <SubmitButton pendingText="Agregando…">
           <CalendarPlus size={15} /> Agregar

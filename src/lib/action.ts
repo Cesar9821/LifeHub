@@ -10,6 +10,8 @@ export interface FormState {
   ok: boolean;
   message?: string;
   fieldErrors?: Record<string, string>;
+  /** Valores ingresados, para repoblar el formulario tras un error. */
+  values?: Record<string, string>;
 }
 
 /** Estado inicial neutro para useActionState. */
@@ -50,9 +52,14 @@ export function parseForm<T extends z.ZodType>(
     if (!fieldErrors[key]) fieldErrors[key] = issue.message;
   }
 
+  const values: Record<string, string> = {};
+  for (const [key, value] of formData.entries()) {
+    if (typeof value === 'string') values[key] = value;
+  }
+
   return {
     success: false,
-    state: errorState('Revisa los datos ingresados.', fieldErrors),
+    state: { ok: false, message: 'Revisa los datos ingresados.', fieldErrors, values },
   };
 }
 
