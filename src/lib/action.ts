@@ -67,12 +67,13 @@ export const zRequiredText = (label = 'Este campo') =>
     .trim()
     .min(1, `${label} es obligatorio.`);
 
-/** Texto opcional → null si viene vacío. */
+/** Texto opcional → null si viene vacío o ausente (campo no presente en el form). */
 export const zOptionalText = z
-  .string()
-  .trim()
-  .transform((v) => (v === '' ? null : v))
-  .nullable();
+  .union([z.string(), z.undefined(), z.null()])
+  .transform((v) => {
+    const s = (v ?? '').toString().trim();
+    return s === '' ? null : s;
+  });
 
 /** Monto en pesos: acepta string y lo pasa a número entero ≥ 0. */
 export const zAmount = z
@@ -80,11 +81,13 @@ export const zAmount = z
   .transform((v) => Number(String(v).replace(/\./g, '')))
   .pipe(z.number({ error: 'Monto inválido.' }).min(0, 'El monto no puede ser negativo.'));
 
-/** Fecha YYYY-MM-DD opcional → null si viene vacía. */
+/** Fecha YYYY-MM-DD opcional → null si viene vacía o ausente. */
 export const zOptionalDate = z
-  .string()
-  .transform((v) => (v.trim() === '' ? null : v.trim()))
-  .nullable()
+  .union([z.string(), z.undefined(), z.null()])
+  .transform((v) => {
+    const s = (v ?? '').toString().trim();
+    return s === '' ? null : s;
+  })
   .refine((v) => v === null || /^\d{4}-\d{2}-\d{2}$/.test(v), 'Fecha inválida.');
 
 /** Checkbox 'on'/ausente → boolean. */
