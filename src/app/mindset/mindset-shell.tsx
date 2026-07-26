@@ -8,6 +8,7 @@ import {
   Brain,
   Flame,
   ListChecks,
+  Swords,
   ArrowLeft,
   LogOut,
 } from 'lucide-react';
@@ -25,6 +26,7 @@ export default function MindsetShell({
 
   const menuItems = [
     { icon: <Flame size={18} />, label: 'Hoy', href: '/mindset' },
+    { icon: <Swords size={18} />, label: 'La Forja', href: '/mindset/forja' },
     { icon: <ListChecks size={18} />, label: 'Hábitos', href: '/mindset/habitos' },
   ];
 

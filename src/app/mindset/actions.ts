@@ -18,7 +18,10 @@ import { revalidatePath } from 'next/cache';
 function revalidateAll() {
   revalidatePath('/mindset');
   revalidatePath('/mindset/habitos');
+  revalidatePath('/mindset/forja');
 }
+
+const M369_TARGETS = { morning: 3, afternoon: 6, night: 9 } as const;
 
 /** Marca o desmarca un hábito para HOY (el pasado no se toca). */
 export async function toggleHabit(formData: FormData) {
@@ -237,5 +240,73 @@ export async function addWater(formData: FormData) {
   );
 
   failIf(error, 'No se pudo registrar el agua');
+  revalidateAll();
+}
+
+/* ------------------------------------------------------------------ */
+/*  MÉTODO 369 — La Forja                                             */
+/* ------------------------------------------------------------------ */
+
+const affirmation369Schema = z.object({
+  affirmation: zRequiredText('La afirmación'),
+});
+
+/** Guarda (o actualiza) la afirmación/meta del día para el método 369. */
+export async function save369Affirmation(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = parseForm(affirmation369Schema, formData);
+  if (!parsed.success) return parsed.state;
+
+  const supabase = await createClient();
+  const user = await requireUser();
+
+  const { error } = await supabase.from('mindset_369').upsert(
+    {
+      user_id: user.id,
+      log_date: todayStr(),
+      affirmation: parsed.data.affirmation,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'user_id,log_date' }
+  );
+
+  if (error) {
+    console.error('Error guardando afirmación 369:', error.message);
+    return errorState('No se pudo guardar la afirmación.');
+  }
+
+  revalidateAll();
+  return successState('Afirmación guardada.');
+}
+
+/** Registra una repetición del bloque (mañana/tarde/noche), tope 3/6/9. */
+export async function add369Rep(formData: FormData) {
+  const supabase = await createClient();
+  const user = await requireUser();
+
+  const block = String(formData.get('block') || '') as 'morning' | 'afternoon' | 'night';
+  if (!(block in M369_TARGETS)) return;
+
+  const today = todayStr();
+  const { data: row } = await supabase
+    .from('mindset_369')
+    .select('morning, afternoon, night')
+    .eq('user_id', user.id)
+    .eq('log_date', today)
+    .maybeSingle();
+
+  const current = (row as Record<string, number> | null)?.[block] ?? 0;
+  const next = Math.min(M369_TARGETS[block], current + 1);
+
+  const { error } = await supabase.from('mindset_369').upsert(
+    {
+      user_id: user.id,
+      log_date: today,
+      [block]: next,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'user_id,log_date' }
+  );
+
+  failIf(error, 'No se pudo registrar la repetición');
   revalidateAll();
 }

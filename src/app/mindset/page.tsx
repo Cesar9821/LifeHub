@@ -1,6 +1,7 @@
 import Link from 'next/link';
-import { Flame, Target, TrendingUp, ListChecks, ArrowRight } from 'lucide-react';
+import { Flame, Target, TrendingUp, ListChecks, ArrowRight, Swords } from 'lucide-react';
 import { getHabitsWithStatus, getTodayLog, summarizeHabits } from '@/services/mindset';
+import { phraseOfDay } from '@/lib/mindset-phrases';
 import HabitCard from './habit-card';
 import DailyPanel from './daily-panel';
 
@@ -24,6 +25,7 @@ export default async function MindsetTodayPage() {
   const greeting = hour < 12 ? 'Buenos días' : hour < 20 ? 'Buenas tardes' : 'Buenas noches';
 
   const allDone = summary.totalHabits > 0 && summary.pendingToday === 0;
+  const phrase = phraseOfDay();
 
   return (
     <div className="space-y-8 pb-20 max-w-6xl">
@@ -46,6 +48,25 @@ export default async function MindsetTodayPage() {
           </p>
         )}
       </div>
+
+      {/* FRASE DEL DÍA + LA FORJA */}
+      <Link
+        href="/mindset/forja"
+        className="group flex items-center gap-4 bg-gradient-to-br from-violet-600/10 to-transparent border border-violet-500/15 rounded-[1.75rem] p-5 hover:border-violet-500/30 transition-all"
+      >
+        <div className="h-11 w-11 shrink-0 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
+          <Swords size={18} className="text-violet-400" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold text-slate-200 italic leading-snug line-clamp-2">
+            &ldquo;{phrase.text}&rdquo;
+          </p>
+          <p className="text-[9px] font-black text-violet-400 uppercase tracking-widest mt-0.5">
+            La Forja · {phrase.source}
+          </p>
+        </div>
+        <ArrowRight size={16} className="text-slate-600 group-hover:text-violet-400 group-hover:translate-x-1 transition-all shrink-0" />
+      </Link>
 
       {/* MÉTRICAS */}
       {summary.totalHabits > 0 && (
