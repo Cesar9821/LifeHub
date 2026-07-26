@@ -1,9 +1,18 @@
 'use server';
 
+import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, getActiveHouseholdId } from '@/lib/auth';
 import { todayStr } from '@/services/mindset';
 import { failIf } from '@/lib/errors';
+import {
+  parseForm,
+  errorState,
+  successState,
+  zRequiredText,
+  zOptionalText,
+  type FormState,
+} from '@/lib/action';
 import { revalidatePath } from 'next/cache';
 
 function revalidateAll() {
@@ -45,20 +54,22 @@ export async function toggleHabit(formData: FormData) {
   revalidateAll();
 }
 
-export async function addHabit(formData: FormData) {
+const habitSchema = z.object({
+  name: zRequiredText('El hábito'),
+  description: zOptionalText,
+  kind: z.enum(['build', 'break']).default('build'),
+  frequency: z.enum(['daily', 'weekly']).default('daily'),
+  target_per_week: z.coerce.number().int().min(1).max(7).default(7),
+  icon: z.string().trim().min(1).default('Flame'),
+});
+
+export async function addHabit(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = parseForm(habitSchema, formData);
+  if (!parsed.success) return parsed.state;
+  const { name, description, kind, frequency, target_per_week, icon } = parsed.data;
+
   const supabase = await createClient();
   const user = await requireUser();
-
-  const name = String(formData.get('name') || '').trim();
-  const description = String(formData.get('description') || '').trim() || null;
-  const kind = String(formData.get('kind') || 'build');
-  const frequency = String(formData.get('frequency') || 'daily');
-  const targetPerWeek = Number(formData.get('target_per_week')) || 7;
-  const icon = String(formData.get('icon') || 'Flame');
-
-  if (!name) return;
-  if (kind !== 'build' && kind !== 'break') return;
-  if (frequency !== 'daily' && frequency !== 'weekly') return;
 
   let householdId: string | null = null;
   try {
@@ -75,14 +86,19 @@ export async function addHabit(formData: FormData) {
       description,
       kind,
       frequency,
-      target_per_week: frequency === 'daily' ? 7 : targetPerWeek,
+      target_per_week: frequency === 'daily' ? 7 : target_per_week,
       icon,
       is_active: true,
     },
   ]);
 
-  failIf(error, 'No se pudo crear el hábito');
+  if (error) {
+    console.error('Error creando hábito:', error.message);
+    return errorState('No se pudo crear el hábito. Inténtalo de nuevo.');
+  }
+
   revalidateAll();
+  return successState('Hábito creado.');
 }
 
 export async function deleteHabit(formData: FormData) {

@@ -10,7 +10,6 @@ import {
   ListChecks,
   ArrowLeft,
   LogOut,
-  Activity,
 } from 'lucide-react';
 
 export default function MindsetShell({
