@@ -1,7 +1,7 @@
-import { ListChecks, Trash2, Flame, Ban, Check, Power } from 'lucide-react';
+import { ListChecks, Ban, Check } from 'lucide-react';
 import { getHabitsWithStatus } from '@/services/mindset';
-import { deleteHabit, toggleHabitActive } from '../actions';
 import HabitForm from './habit-form';
+import HabitItem, { type HabitItemData } from './habit-item';
 
 export default async function HabitosPage() {
   const habits = await getHabitsWithStatus();
@@ -56,16 +56,7 @@ function HabitList({
 }: {
   title: string;
   icon: React.ReactNode;
-  habits: {
-    id: string;
-    name: string;
-    description: string | null;
-    frequency: string;
-    target_per_week: number;
-    streak: number;
-    bestStreak: number;
-    is_active: boolean;
-  }[];
+  habits: HabitItemData[];
   empty: string;
 }) {
   return (
@@ -81,54 +72,7 @@ function HabitList({
       ) : (
         <div className="space-y-2">
           {habits.map((h) => (
-            <div
-              key={h.id}
-              className="flex items-center justify-between gap-3 bg-black/20 border border-white/5 rounded-xl px-4 py-3 group"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold text-slate-200 truncate">{h.name}</p>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                  {h.frequency === 'daily'
-                    ? 'Diario'
-                    : `${h.target_per_week}× por semana`}
-                  {h.bestStreak > 0 && ` · récord ${h.bestStreak}`}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-3 shrink-0">
-                <div
-                  className={`flex items-center gap-1 ${
-                    h.streak > 0 ? 'text-orange-400' : 'text-slate-600'
-                  }`}
-                >
-                  <Flame size={13} />
-                  <span className="font-black font-mono text-sm">{h.streak}</span>
-                </div>
-
-                <form action={toggleHabitActive}>
-                  <input type="hidden" name="id" value={h.id} />
-                  <input type="hidden" name="is_active" value={String(h.is_active)} />
-                  <button
-                    type="submit"
-                    title="Pausar"
-                    className="text-emerald-500 hover:text-emerald-400 transition-colors"
-                  >
-                    <Power size={14} />
-                  </button>
-                </form>
-
-                <form action={deleteHabit}>
-                  <input type="hidden" name="id" value={h.id} />
-                  <button
-                    type="submit"
-                    title="Eliminar"
-                    className="text-slate-600 hover:text-rose-400 transition-colors opacity-60 md:opacity-0 md:group-hover:opacity-100"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </form>
-              </div>
-            </div>
+            <HabitItem key={h.id} habit={h} />
           ))}
         </div>
       )}

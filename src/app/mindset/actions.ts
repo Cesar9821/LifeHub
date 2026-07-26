@@ -101,6 +101,44 @@ export async function addHabit(_prev: FormState, formData: FormData): Promise<Fo
   return successState('Hábito creado.');
 }
 
+const updateHabitSchema = z.object({
+  id: z.string().min(1),
+  name: zRequiredText('El hábito'),
+  description: zOptionalText,
+  kind: z.enum(['build', 'break']).default('build'),
+  frequency: z.enum(['daily', 'weekly']).default('daily'),
+  target_per_week: z.coerce.number().int().min(1).max(7).default(7),
+});
+
+export async function updateHabit(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = parseForm(updateHabitSchema, formData);
+  if (!parsed.success) return parsed.state;
+  const { id, name, description, kind, frequency, target_per_week } = parsed.data;
+
+  const supabase = await createClient();
+  const user = await requireUser();
+
+  const { error } = await supabase
+    .from('habits')
+    .update({
+      name,
+      description,
+      kind,
+      frequency,
+      target_per_week: frequency === 'daily' ? 7 : target_per_week,
+    })
+    .eq('id', id)
+    .eq('user_id', user.id);
+
+  if (error) {
+    console.error('Error editando hábito:', error.message);
+    return errorState('No se pudo guardar el hábito.');
+  }
+
+  revalidateAll();
+  return successState('Hábito actualizado.');
+}
+
 export async function deleteHabit(formData: FormData) {
   const supabase = await createClient();
   const user = await requireUser();
