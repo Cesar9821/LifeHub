@@ -161,3 +161,32 @@ export function summarizeFamilia(
     shoppingPending: allItems.filter((s) => !s.checked).length,
   };
 }
+
+export interface HouseholdEvent {
+  id: string;
+  title: string;
+  notes: string | null;
+  event_date: string;
+  event_time: string | null;
+}
+
+/** Eventos del hogar desde hoy en adelante, ordenados por fecha/hora. */
+export async function getUpcomingEvents(): Promise<HouseholdEvent[]> {
+  const supabase = await createClient();
+  const householdId = await getActiveHouseholdId();
+  const today = todayStr();
+
+  const { data, error } = await supabase
+    .from('household_events')
+    .select('id, title, notes, event_date, event_time')
+    .eq('household_id', householdId)
+    .gte('event_date', today)
+    .order('event_date', { ascending: true })
+    .order('event_time', { ascending: true, nullsFirst: true });
+
+  if (error) {
+    console.error('Error cargando eventos:', error.message);
+    return [];
+  }
+  return (data as HouseholdEvent[]) || [];
+}

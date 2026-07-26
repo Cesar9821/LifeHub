@@ -262,3 +262,54 @@ export async function resetListNow(formData: FormData) {
   failIf(error, 'No se pudo reiniciar la lista');
   revalidate();
 }
+
+const eventSchema = z.object({
+  title: zRequiredText('El evento'),
+  event_date: z.string().refine((v) => /^\d{4}-\d{2}-\d{2}$/.test(v), 'Elige una fecha válida.'),
+  event_time: z
+    .string()
+    .optional()
+    .transform((v) => (v && v.trim() !== '' ? v.trim() : null)),
+  notes: zOptionalText,
+});
+
+/** Crea un evento del calendario del hogar. */
+export async function addEvent(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = parseForm(eventSchema, formData);
+  if (!parsed.success) return parsed.state;
+  const { title, event_date, event_time, notes } = parsed.data;
+
+  const supabase = await createClient();
+  const user = await requireUser();
+  const householdId = await getActiveHouseholdId();
+
+  const { error } = await supabase.from('household_events').insert([
+    { household_id: householdId, created_by: user.id, title, event_date, event_time, notes },
+  ]);
+
+  if (error) {
+    console.error('Error creando evento:', error.message);
+    return errorState('No se pudo crear el evento.');
+  }
+
+  revalidate();
+  return successState('Evento agregado.');
+}
+
+/** Elimina un evento. */
+export async function deleteEvent(formData: FormData) {
+  const supabase = await createClient();
+  const householdId = await getActiveHouseholdId();
+
+  const id = String(formData.get('id') || '');
+  if (!id) return;
+
+  const { error } = await supabase
+    .from('household_events')
+    .delete()
+    .eq('id', id)
+    .eq('household_id', householdId);
+
+  failIf(error, 'No se pudo eliminar el evento');
+  revalidate();
+}

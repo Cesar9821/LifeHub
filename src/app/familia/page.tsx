@@ -7,29 +7,42 @@ import {
   ListTodo,
   RotateCcw,
   Repeat,
+  CalendarDays,
+  Clock,
 } from 'lucide-react';
 import {
   getTasks,
   getShoppingData,
+  getUpcomingEvents,
   summarizeFamilia,
   type ShoppingListWithItems,
   type ShoppingItem,
   type ResetPeriod,
+  type HouseholdEvent,
 } from '@/services/familia';
 import { getHouseholdMembers } from '@/services/household';
+import { daysUntil } from '@/lib/format';
 import TaskForm from './task-form';
 import TaskItem from './task-item';
 import ShoppingForm from './shopping-form';
 import ListForm from './list-form';
-import { toggleShoppingItem, deleteShoppingItem, resetListNow, deleteShoppingList } from './actions';
+import EventForm from './event-form';
+import {
+  toggleShoppingItem,
+  deleteShoppingItem,
+  resetListNow,
+  deleteShoppingList,
+  deleteEvent,
+} from './actions';
 
 export const dynamic = 'force-dynamic';
 
 export default async function FamiliaPage() {
-  const [tasks, shoppingData, members] = await Promise.all([
+  const [tasks, shoppingData, members, events] = await Promise.all([
     getTasks(),
     getShoppingData(),
     getHouseholdMembers(),
+    getUpcomingEvents(),
   ]);
 
   const { lists, orphans, allItems } = shoppingData;
@@ -52,10 +65,11 @@ export default async function FamiliaPage() {
       </div>
 
       {/* RESUMEN */}
-      <div className="grid grid-cols-3 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <StatTile label="Tareas pendientes" value={String(summary.pendingTasks)} accent="text-white" />
-        <StatTile label="Completadas" value={String(summary.doneTasks)} accent="text-emerald-400" />
+        <StatTile label="Eventos próximos" value={String(events.length)} accent="text-sky-400" />
         <StatTile label="Por comprar" value={String(summary.shoppingPending)} accent="text-orange-400" />
+        <StatTile label="Completadas" value={String(summary.doneTasks)} accent="text-emerald-400" />
       </div>
 
       {/* TAREAS */}
@@ -80,6 +94,28 @@ export default async function FamiliaPage() {
                 members={members}
                 assigneeName={t.assigned_to ? nameById.get(t.assigned_to) ?? null : null}
               />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* CALENDARIO */}
+      <section className="space-y-5">
+        <div className="flex items-center gap-2 px-1">
+          <CalendarDays size={18} className="text-orange-400" />
+          <h2 className="text-lg font-black text-white uppercase tracking-wider">Calendario</h2>
+        </div>
+
+        <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-7 backdrop-blur-xl">
+          <EventForm />
+        </div>
+
+        {events.length === 0 ? (
+          <EmptyState icon={<CalendarDays size={34} className="text-slate-800" />} text="Sin eventos próximos" />
+        ) : (
+          <div className="space-y-2">
+            {events.map((e) => (
+              <EventRow key={e.id} event={e} />
             ))}
           </div>
         )}
@@ -200,6 +236,56 @@ function ShoppingRow({ item }: { item: ShoppingItem }) {
           className="h-7 w-7 flex items-center justify-center rounded-lg text-slate-700 hover:text-rose-500 hover:bg-rose-500/10 transition-all opacity-0 group-hover:opacity-100"
         >
           <Trash2 size={13} />
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function eventWhen(e: HouseholdEvent): { day: string; mon: string; label: string; tone: string } {
+  const d = daysUntil(e.event_date);
+  const [y, m, dd] = e.event_date.split('-').map(Number);
+  const dt = new Date(y, m - 1, dd);
+  const day = String(dd).padStart(2, '0');
+  const mon = new Intl.DateTimeFormat('es-CL', { month: 'short' }).format(dt);
+  if (d <= 0) return { day, mon, label: 'Hoy', tone: 'text-rose-400' };
+  if (d === 1) return { day, mon, label: 'Mañana', tone: 'text-amber-400' };
+  if (d <= 7) return { day, mon, label: `En ${d} días`, tone: 'text-amber-400' };
+  return {
+    day,
+    mon,
+    label: new Intl.DateTimeFormat('es-CL', { weekday: 'long' }).format(dt),
+    tone: 'text-slate-500',
+  };
+}
+
+function EventRow({ event: e }: { event: HouseholdEvent }) {
+  const w = eventWhen(e);
+  return (
+    <div className="group flex items-center gap-3 bg-slate-900/30 border border-white/5 rounded-2xl px-4 py-3 hover:bg-slate-800/40 transition-all">
+      <div className="shrink-0 h-12 w-12 rounded-xl bg-sky-500/10 border border-sky-500/20 flex flex-col items-center justify-center leading-none">
+        <span className="text-base font-black text-sky-300 font-mono">{w.day}</span>
+        <span className="text-[8px] font-black text-sky-400/70 uppercase">{w.mon}</span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-bold text-slate-100 truncate">{e.title}</p>
+        <div className="flex items-center gap-3 mt-0.5">
+          <span className={`text-[10px] font-black uppercase tracking-wide ${w.tone}`}>{w.label}</span>
+          {e.event_time && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500">
+              <Clock size={11} /> {e.event_time.slice(0, 5)}
+            </span>
+          )}
+        </div>
+      </div>
+      <form action={deleteEvent} className="shrink-0">
+        <input type="hidden" name="id" value={e.id} />
+        <button
+          type="submit"
+          title="Eliminar"
+          className="h-8 w-8 flex items-center justify-center rounded-lg text-slate-700 hover:text-rose-500 hover:bg-rose-500/10 transition-all opacity-0 group-hover:opacity-100"
+        >
+          <Trash2 size={15} />
         </button>
       </form>
     </div>
