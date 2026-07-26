@@ -1,25 +1,48 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { sendToSubscriptions, type PushRow } from '@/lib/push-server';
+import { sendToSubscriptions, type PushRow, type PushPayload } from '@/lib/push-server';
+import { phraseOfDay } from '@/lib/mindset-phrases';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /** Fecha de hoy (YYYY-MM-DD) en horario de Chile. */
 function todayInChile(): string {
-  const parts = new Intl.DateTimeFormat('en-CA', {
+  return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Santiago',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
   }).format(new Date());
-  return parts; // en-CA da YYYY-MM-DD
+}
+
+/** Hora actual (0-23) en Chile. */
+function hourInChile(): number {
+  return Number(
+    new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'America/Santiago',
+      hour: '2-digit',
+      hour12: false,
+    }).format(new Date())
+  );
 }
 
 function addDays(dateStr: string, days: number): string {
   const [y, m, d] = dateStr.split('-').map(Number);
-  const date = new Date(Date.UTC(y, m - 1, d + days));
-  return date.toISOString().slice(0, 10);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
+type Block = 'morning' | 'afternoon' | 'night';
+const M369: Record<Block, { target: number; label: string }> = {
+  morning: { target: 3, label: 'de la mañana' },
+  afternoon: { target: 6, label: 'de la tarde' },
+  night: { target: 9, label: 'de la noche' },
+};
+
+function blockForHour(h: number): Block {
+  if (h < 12) return 'morning';
+  if (h < 18) return 'afternoon';
+  return 'night';
 }
 
 interface Prefs {
@@ -29,6 +52,13 @@ interface Prefs {
   mentalidad: boolean;
   familia: boolean;
   metas: boolean;
+}
+
+interface M369Row {
+  user_id: string;
+  morning: number;
+  afternoon: number;
+  night: number;
 }
 
 async function countFor(
@@ -62,12 +92,21 @@ export async function GET(request: NextRequest) {
   const today = todayInChile();
   const soon = addDays(today, 3);
 
-  // Carga base
-  const [{ data: prefsRows }, { data: subsRows }, { data: memberRows }] =
+  // Franja: explícita por ?slot=, o según la hora de Chile.
+  const slotParam = request.nextUrl.searchParams.get('slot');
+  const block: Block =
+    slotParam === 'morning' || slotParam === 'afternoon' || slotParam === 'night'
+      ? slotParam
+      : blockForHour(hourInChile());
+
+  const phrase = phraseOfDay();
+
+  const [{ data: prefsRows }, { data: subsRows }, { data: memberRows }, { data: m369Rows }] =
     await Promise.all([
       db.from('notification_prefs').select('*').eq('enabled', true),
       db.from('push_subscriptions').select('id, user_id, endpoint, p256dh, auth'),
       db.from('household_members').select('user_id, household_id'),
+      db.from('mindset_369').select('user_id, morning, afternoon, night').eq('log_date', today),
     ]);
 
   const prefsByUser = new Map<string, Prefs>();
@@ -87,6 +126,9 @@ export async function GET(request: NextRequest) {
     householdsByUser.set(m.user_id, list);
   }
 
+  const m369ByUser = new Map<string, M369Row>();
+  for (const r of (m369Rows as M369Row[]) || []) m369ByUser.set(r.user_id, r);
+
   let usersNotified = 0;
   let pushesSent = 0;
   const expiredAll: string[] = [];
@@ -95,10 +137,28 @@ export async function GET(request: NextRequest) {
     const prefs = prefsByUser.get(userId);
     if (!prefs || !prefs.enabled) continue;
 
-    const lines: string[] = [];
+    const messages: PushPayload[] = [];
     const hids = householdsByUser.get(userId) || [];
 
-    // FINANZAS — pagos pendientes vencidos o de hoy
+    // LA FORJA — recordatorio del 369 según la franja
+    if (prefs.mentalidad) {
+      const row = m369ByUser.get(userId);
+      const done = row ? row[block] : 0;
+      const target = M369[block].target;
+      if (done < target) {
+        const base = `Escribe tu 369 ${M369[block].label} (${done}/${target}).`;
+        messages.push({
+          title: 'La Forja 🔥',
+          body: block === 'morning' ? `“${phrase.text}”  ·  ${base}` : base,
+          url: '/mindset/forja',
+          tag: '369',
+        });
+      }
+    }
+
+    // PENDIENTES por módulo (cada uno con su deep-link)
+    const pending: { text: string; url: string }[] = [];
+
     if (prefs.finanzas && hids.length > 0) {
       const n = await countFor(db, () =>
         db
@@ -108,17 +168,12 @@ export async function GET(request: NextRequest) {
           .eq('status', 'pending')
           .lte('due_date', today)
       );
-      if (n > 0) lines.push(`💰 ${n} pago${n > 1 ? 's' : ''} por confirmar`);
+      if (n > 0) pending.push({ text: `💰 ${n} pago${n > 1 ? 's' : ''} por confirmar`, url: '/finanzas/movimientos' });
     }
 
-    // MENTALIDAD — hábitos que faltan hoy
     if (prefs.mentalidad) {
       const totalHabits = await countFor(db, () =>
-        db
-          .from('habits')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', userId)
-          .eq('is_active', true)
+        db.from('habits').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('is_active', true)
       );
       const doneToday = await countFor(db, () =>
         db
@@ -128,11 +183,10 @@ export async function GET(request: NextRequest) {
           .eq('log_date', today)
           .eq('done', true)
       );
-      const pending = Math.max(0, totalHabits - doneToday);
-      if (pending > 0) lines.push(`🧠 ${pending} hábito${pending > 1 ? 's' : ''} por cumplir`);
+      const p = Math.max(0, totalHabits - doneToday);
+      if (p > 0) pending.push({ text: `🧠 ${p} hábito${p > 1 ? 's' : ''} por cumplir`, url: '/mindset' });
     }
 
-    // FAMILIA — tareas asignadas a mí, vencidas o de hoy
     if (prefs.familia) {
       const n = await countFor(db, () =>
         db
@@ -142,10 +196,9 @@ export async function GET(request: NextRequest) {
           .eq('done', false)
           .lte('due_date', today)
       );
-      if (n > 0) lines.push(`🏠 ${n} tarea${n > 1 ? 's' : ''} del hogar`);
+      if (n > 0) pending.push({ text: `🏠 ${n} tarea${n > 1 ? 's' : ''} del hogar`, url: '/familia' });
     }
 
-    // METAS — objetivos que vencen dentro de 3 días
     if (prefs.metas) {
       const n = await countFor(db, () =>
         db
@@ -156,24 +209,33 @@ export async function GET(request: NextRequest) {
           .gte('target_date', today)
           .lte('target_date', soon)
       );
-      if (n > 0) lines.push(`🎯 ${n} meta${n > 1 ? 's' : ''} por vencer`);
+      if (n > 0) pending.push({ text: `🎯 ${n} meta${n > 1 ? 's' : ''} por vencer`, url: '/metas' });
     }
 
-    if (lines.length === 0) continue; // nada que avisar hoy
+    // Un solo pendiente → aviso directo a su pantalla. Varios → resumen al hub.
+    if (pending.length === 1) {
+      messages.push({ title: 'LifeHub', body: pending[0].text, url: pending[0].url, tag: 'pendientes' });
+    } else if (pending.length > 1) {
+      messages.push({
+        title: 'Tus pendientes de hoy',
+        body: pending.map((p) => p.text).join('  ·  '),
+        url: '/hub',
+        tag: 'pendientes',
+      });
+    }
 
-    const { sent, expiredEndpoints } = await sendToSubscriptions(subs, {
-      title: 'LifeHub — tus pendientes de hoy',
-      body: lines.join('  ·  '),
-      url: '/hub',
-      tag: 'daily-digest',
-    });
+    if (messages.length === 0) continue;
 
-    pushesSent += sent;
-    if (sent > 0) usersNotified++;
-    expiredAll.push(...expiredEndpoints);
+    let userGotOne = false;
+    for (const msg of messages) {
+      const { sent, expiredEndpoints } = await sendToSubscriptions(subs, msg);
+      pushesSent += sent;
+      if (sent > 0) userGotOne = true;
+      expiredAll.push(...expiredEndpoints);
+    }
+    if (userGotOne) usersNotified++;
   }
 
-  // Limpia suscripciones caducadas
   if (expiredAll.length > 0) {
     await db.from('push_subscriptions').delete().in('endpoint', expiredAll);
   }
@@ -181,6 +243,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     ok: true,
     date: today,
+    block,
     usersNotified,
     pushesSent,
     cleaned: expiredAll.length,

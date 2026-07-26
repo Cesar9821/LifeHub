@@ -25,7 +25,7 @@ const DEFAULT_PREFS: Prefs = {
 
 const MODULES = [
   { key: 'finanzas', label: 'Finanzas', desc: 'Pagos por confirmar del mes', icon: Wallet, color: 'text-emerald-400' },
-  { key: 'mentalidad', label: 'Mentalidad', desc: 'Hábitos que te faltan hoy', icon: Brain, color: 'text-indigo-400' },
+  { key: 'mentalidad', label: 'Mentalidad', desc: 'Hábitos y tu 369 (La Forja)', icon: Brain, color: 'text-indigo-400' },
   { key: 'familia', label: 'Familia', desc: 'Tareas del hogar asignadas', icon: Users, color: 'text-orange-400' },
   { key: 'metas', label: 'Metas', desc: 'Objetivos que vencen pronto', icon: Target, color: 'text-amber-400' },
 ] as const;
