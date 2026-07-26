@@ -1,14 +1,12 @@
-import { Tag, Plus, Trash2, TrendingUp, TrendingDown } from 'lucide-react';
+import { Tag, Trash2, TrendingUp, TrendingDown } from 'lucide-react';
 import { getCategories } from '@/services/categories';
-import { addCategory, deleteCategory } from './actions';
+import { deleteCategory } from './actions';
+import CategoryForm from './category-form';
 
 export default async function CategoriesPage() {
   const categories = await getCategories();
   const income = categories.filter((c) => c.kind === 'income');
   const expense = categories.filter((c) => c.kind === 'expense');
-
-  const inputStyles =
-    'bg-slate-900/50 border border-slate-800 rounded-xl p-3 text-sm text-white placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all backdrop-blur-md w-full';
 
   return (
     <div className="space-y-8 md:space-y-12 pb-20">
@@ -29,37 +27,7 @@ export default async function CategoriesPage() {
       </div>
 
       {/* FORMULARIO */}
-      <form
-        action={addCategory}
-        className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-8 backdrop-blur-xl grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-4 items-end"
-      >
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-1">
-            Nombre de la categoría
-          </label>
-          <input
-            name="name"
-            required
-            placeholder="Ej: Mascotas, Gimnasio…"
-            className={inputStyles}
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-1">
-            Tipo
-          </label>
-          <select name="kind" defaultValue="expense" className={`${inputStyles} appearance-none pr-8`}>
-            <option value="expense" className="bg-[#0A0C10]">Gasto</option>
-            <option value="income" className="bg-[#0A0C10]">Ingreso</option>
-          </select>
-        </div>
-        <button
-          type="submit"
-          className="bg-white text-black px-6 py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-slate-200 transition-all active:scale-95"
-        >
-          <Plus size={16} /> Agregar
-        </button>
-      </form>
+      <CategoryForm />
 
       {/* LISTADOS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

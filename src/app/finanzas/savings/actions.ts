@@ -1,18 +1,27 @@
 'use server'
 
+import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { getActiveHouseholdId } from '@/lib/auth';
 import { failIf } from '@/lib/errors';
+import { parseForm, errorState, successState, zRequiredText, type FormState } from '@/lib/action';
 import { revalidatePath } from 'next/cache';
 
-export async function addSaving(formData: FormData) {
+const savingSchema = z.object({
+  name: zRequiredText('El nombre'),
+  target_amount: z
+    .union([z.string(), z.number()])
+    .transform((v) => Number(String(v).replace(/\./g, '').replace(/,/g, '')))
+    .pipe(z.number({ error: 'Monto inválido.' }).positive('Ingresa un monto mayor a 0.')),
+});
+
+export async function addSaving(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = parseForm(savingSchema, formData);
+  if (!parsed.success) return parsed.state;
+  const { name, target_amount } = parsed.data;
+
   const supabase = await createClient();
   const householdId = await getActiveHouseholdId();
-
-  const name = formData.get('name') as string;
-  const target_amount = parseFloat(formData.get('target_amount') as string);
-
-  if (!name || isNaN(target_amount) || target_amount <= 0) return;
 
   const { error } = await supabase.from('savings').insert([
     {
@@ -23,11 +32,15 @@ export async function addSaving(formData: FormData) {
     }
   ]);
 
-  failIf(error, 'No se pudo crear la meta de ahorro');
+  if (error) {
+    console.error('Error saving goal:', error.message);
+    return errorState('No se pudo crear la meta de ahorro.');
+  }
 
   revalidatePath('/finanzas/savings');
   revalidatePath('/finanzas/movimientos');
   revalidatePath('/finanzas/dashboard');
+  return successState('Meta de ahorro creada.');
 }
 
 export async function deleteSaving(id: string) {

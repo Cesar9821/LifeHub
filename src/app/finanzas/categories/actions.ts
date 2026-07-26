@@ -1,33 +1,43 @@
 'use server';
 
+import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { getActiveHouseholdId } from '@/lib/auth';
 import { failIf } from '@/lib/errors';
+import { parseForm, errorState, successState, zRequiredText, type FormState } from '@/lib/action';
 import { revalidatePath } from 'next/cache';
 
-export async function addCategory(formData: FormData) {
+const categorySchema = z.object({
+  name: zRequiredText('El nombre'),
+  kind: z.enum(['income', 'expense']).default('expense'),
+  icon: z.string().trim().min(1).default('Tag'),
+});
+
+export async function addCategory(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = parseForm(categorySchema, formData);
+  if (!parsed.success) return parsed.state;
+  const { name, kind, icon } = parsed.data;
+
   const supabase = await createClient();
   const householdId = await getActiveHouseholdId();
-
-  const name = String(formData.get('name') || '').trim();
-  const kind = String(formData.get('kind') || 'expense');
-  const icon = String(formData.get('icon') || 'Tag');
-
-  if (!name) return;
-  if (kind !== 'income' && kind !== 'expense') return;
 
   const { error } = await supabase.from('categories').insert([
     { household_id: householdId, name, kind, icon },
   ]);
 
-  // El unique (household_id, name, kind) evita duplicados; ignoramos ese error.
-  if (!error?.message?.includes('duplicate')) {
-    failIf(error, 'No se pudo crear la categoría');
+  if (error) {
+    // El unique (household_id, name, kind) evita duplicados.
+    if (error.message?.includes('duplicate')) {
+      return errorState('Ya existe una categoría con ese nombre.');
+    }
+    console.error('Error creando categoría:', error.message);
+    return errorState('No se pudo crear la categoría.');
   }
 
   revalidatePath('/finanzas/categories');
   revalidatePath('/finanzas/movimientos');
   revalidatePath('/finanzas/planificacion');
+  return successState('Categoría agregada.');
 }
 
 export async function deleteCategory(formData: FormData) {
