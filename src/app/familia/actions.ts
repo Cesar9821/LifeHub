@@ -57,6 +57,40 @@ export async function addTask(_prev: FormState, formData: FormData): Promise<For
   return successState('Tarea agregada.');
 }
 
+const updateTaskSchema = z.object({
+  id: z.string().min(1),
+  title: zRequiredText('La tarea'),
+  assigned_to: z
+    .string()
+    .transform((v) => (v.trim() === '' ? null : v.trim()))
+    .nullable(),
+  due_date: zOptionalDate,
+});
+
+/** Edita una tarea del hogar. Contrato FormState. */
+export async function updateTask(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = parseForm(updateTaskSchema, formData);
+  if (!parsed.success) return parsed.state;
+  const { id, title, assigned_to, due_date } = parsed.data;
+
+  const supabase = await createClient();
+  const householdId = await getActiveHouseholdId();
+
+  const { error } = await supabase
+    .from('household_tasks')
+    .update({ title, assigned_to, due_date })
+    .eq('id', id)
+    .eq('household_id', householdId);
+
+  if (error) {
+    console.error('Error editando tarea:', error.message);
+    return errorState('No se pudo guardar la tarea.');
+  }
+
+  revalidate();
+  return successState('Tarea actualizada.');
+}
+
 /** Marca/desmarca una tarea como hecha. */
 export async function toggleTask(formData: FormData) {
   const supabase = await createClient();

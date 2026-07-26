@@ -5,42 +5,24 @@ import {
   Circle,
   ShoppingCart,
   ListTodo,
-  UserCircle2,
-  CalendarClock,
   Eraser,
 } from 'lucide-react';
 import {
   getTasks,
   getShoppingItems,
   summarizeFamilia,
-  type HouseholdTask,
 } from '@/services/familia';
 import { getHouseholdMembers } from '@/services/household';
 import TaskForm from './task-form';
+import TaskItem from './task-item';
 import ShoppingForm from './shopping-form';
 import {
-  toggleTask,
-  deleteTask,
   toggleShoppingItem,
   deleteShoppingItem,
   clearCheckedShopping,
 } from './actions';
 
 export const dynamic = 'force-dynamic';
-
-function dueInfo(t: HouseholdTask): { text: string; tone: string } | null {
-  if (!t.due_date || t.done) return null;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const [y, m, d] = t.due_date.split('-').map(Number);
-  const due = new Date(y, m - 1, d);
-  const days = Math.round((due.getTime() - today.getTime()) / 86_400_000);
-  const label = new Intl.DateTimeFormat('es-CL', { day: '2-digit', month: 'short' }).format(due);
-  if (days < 0) return { text: `${label} · atrasada`, tone: 'text-rose-400' };
-  if (days === 0) return { text: 'Hoy', tone: 'text-orange-400' };
-  if (days <= 3) return { text: label, tone: 'text-orange-400' };
-  return { text: label, tone: 'text-slate-500' };
-}
 
 export default async function FamiliaPage() {
   const [tasks, shopping, members] = await Promise.all([
@@ -90,57 +72,14 @@ export default async function FamiliaPage() {
           <EmptyState icon={<ListTodo size={34} className="text-slate-800" />} text="Sin tareas por ahora" />
         ) : (
           <div className="space-y-2">
-            {tasks.map((t) => {
-              const due = dueInfo(t);
-              const who = t.assigned_to ? nameById.get(t.assigned_to) : null;
-              return (
-                <div
-                  key={t.id}
-                  className="group flex items-center gap-3 bg-slate-900/30 border border-white/5 rounded-2xl px-4 py-3 hover:bg-slate-800/40 transition-all"
-                >
-                  <form action={toggleTask} className="shrink-0">
-                    <input type="hidden" name="id" value={t.id} />
-                    <input type="hidden" name="done" value={String(t.done)} />
-                    <button type="submit" className="flex items-center" title={t.done ? 'Marcar pendiente' : 'Marcar hecha'}>
-                      {t.done ? (
-                        <CheckCircle2 size={20} className="text-emerald-400" />
-                      ) : (
-                        <Circle size={20} className="text-slate-600 hover:text-orange-400 transition-colors" />
-                      )}
-                    </button>
-                  </form>
-
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm font-bold truncate ${t.done ? 'text-slate-500 line-through' : 'text-slate-100'}`}>
-                      {t.title}
-                    </p>
-                    <div className="flex items-center gap-3 mt-0.5">
-                      {who && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-orange-400/80 uppercase tracking-wide">
-                          <UserCircle2 size={12} /> {who}
-                        </span>
-                      )}
-                      {due && (
-                        <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide ${due.tone}`}>
-                          <CalendarClock size={12} /> {due.text}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <form action={deleteTask} className="shrink-0">
-                    <input type="hidden" name="id" value={t.id} />
-                    <button
-                      type="submit"
-                      title="Eliminar"
-                      className="h-8 w-8 flex items-center justify-center rounded-lg text-slate-700 hover:text-rose-500 hover:bg-rose-500/10 transition-all opacity-0 group-hover:opacity-100"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </form>
-                </div>
-              );
-            })}
+            {tasks.map((t) => (
+              <TaskItem
+                key={t.id}
+                task={t}
+                members={members}
+                assigneeName={t.assigned_to ? nameById.get(t.assigned_to) ?? null : null}
+              />
+            ))}
           </div>
         )}
       </section>
