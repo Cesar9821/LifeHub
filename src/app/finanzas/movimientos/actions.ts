@@ -1,10 +1,31 @@
 'use server';
 
+import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { getActiveHouseholdId } from '@/lib/auth';
 import { periodOf } from '@/services/movements';
 import { failIf } from '@/lib/errors';
+import {
+  parseForm,
+  errorState,
+  successState,
+  zRequiredText,
+  zCheckbox,
+  type FormState,
+} from '@/lib/action';
 import { revalidatePath } from 'next/cache';
+
+const variableSchema = z.object({
+  description: zRequiredText('La descripción'),
+  kind: z.enum(['income', 'expense']).default('expense'),
+  amount: z
+    .union([z.string(), z.number()])
+    .transform((v) => Number(String(v).replace(/\./g, '')))
+    .pipe(z.number({ error: 'Monto inválido.' }).positive('Ingresa un monto mayor a 0.')),
+  category: z.string().trim().min(1).default('General'),
+  due_date: z.string().optional().default(''),
+  confirm_now: zCheckbox,
+});
 
 function revalidateAll() {
   revalidatePath('/finanzas/movimientos');
@@ -57,20 +78,15 @@ export async function revertMovement(formData: FormData) {
 }
 
 /** Agrega un movimiento variable (gasto o ingreso puntual del mes). */
-export async function addVariableMovement(formData: FormData) {
+export async function addVariableMovement(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = parseForm(variableSchema, formData);
+  if (!parsed.success) return parsed.state;
+  const { description, kind, amount, category, due_date, confirm_now } = parsed.data;
+
   const supabase = await createClient();
   const householdId = await getActiveHouseholdId();
 
-  const description = String(formData.get('description') || '').trim();
-  const kind = String(formData.get('kind') || 'expense');
-  const amount = Number(formData.get('amount')) || 0;
-  const category = String(formData.get('category') || 'General');
-  const dueDate = String(formData.get('due_date') || '') || new Date().toISOString().slice(0, 10);
-  const confirmNow = formData.get('confirm_now') === 'on';
-
-  if (!description || amount <= 0) return;
-  if (kind !== 'income' && kind !== 'expense') return;
-
+  const dueDate = due_date.trim() || new Date().toISOString().slice(0, 10);
   const period = periodOf(new Date(dueDate + 'T00:00:00'));
 
   const { error } = await supabase.from('movements').insert([
@@ -81,16 +97,21 @@ export async function addVariableMovement(formData: FormData) {
       kind,
       category,
       estimated_amount: amount,
-      actual_amount: confirmNow ? amount : null,
-      status: confirmNow ? 'confirmed' : 'pending',
-      confirmed_at: confirmNow ? new Date().toISOString() : null,
+      actual_amount: confirm_now ? amount : null,
+      status: confirm_now ? 'confirmed' : 'pending',
+      confirmed_at: confirm_now ? new Date().toISOString() : null,
       due_date: dueDate,
       period_month: period,
     },
   ]);
 
-  failIf(error, 'No se pudo agregar el movimiento');
+  if (error) {
+    console.error('Error agregando movimiento variable:', error.message);
+    return errorState('No se pudo agregar el movimiento.');
+  }
+
   revalidateAll();
+  return successState(confirm_now ? 'Movimiento agregado y confirmado.' : 'Movimiento agregado.');
 }
 
 export async function deleteMovement(formData: FormData) {

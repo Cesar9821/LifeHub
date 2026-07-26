@@ -1,21 +1,32 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useActionState, useState, useEffect, useRef } from 'react';
 import { Plus } from 'lucide-react';
 import { addVariableMovement } from './actions';
+import { IDLE_STATE } from '@/lib/action';
 import { CLPInput } from '@/components/ui/clp-input';
+import { SubmitButton } from '@/components/ui/submit-button';
+import { InlineMessage } from '@/components/ui/inline-message';
 
 export default function VariableForm({
   categories,
 }: {
   categories: { income: string[]; expense: string[] };
 }) {
+  const [state, formAction] = useActionState(addVariableMovement, IDLE_STATE);
   const [kind, setKind] = useState<'income' | 'expense'>('expense');
   const [today, setToday] = useState('');
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
+    // Se fija en el cliente para evitar desajuste de hidratación con la fecha.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setToday(new Date().toISOString().slice(0, 10));
   }, []);
+
+  useEffect(() => {
+    if (state.ok) formRef.current?.reset();
+  }, [state]);
 
   const inputStyles =
     'bg-slate-900/50 border border-slate-800 rounded-xl p-3 text-sm text-white placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all backdrop-blur-md w-full';
@@ -24,7 +35,8 @@ export default function VariableForm({
 
   return (
     <form
-      action={addVariableMovement}
+      ref={formRef}
+      action={formAction}
       className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-8 backdrop-blur-xl space-y-5"
     >
       <div className="flex items-center gap-2">
@@ -32,10 +44,20 @@ export default function VariableForm({
         <h2 className="text-lg font-black text-white uppercase tracking-wider">Agregar movimiento</h2>
       </div>
 
+      <InlineMessage state={state} />
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="flex flex-col gap-1.5 lg:col-span-2">
           <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-1">Descripción</label>
-          <input name="description" required placeholder="Ej: Compras del super" className={inputStyles} />
+          <input
+            name="description"
+            required
+            placeholder="Ej: Compras del super"
+            className={`${inputStyles} ${state.fieldErrors?.description ? 'border-rose-500/60' : ''}`}
+          />
+          {state.fieldErrors?.description && (
+            <p className="text-[11px] font-bold text-rose-400 px-1">{state.fieldErrors.description}</p>
+          )}
         </div>
         <div className="flex flex-col gap-1.5">
           <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-1">Tipo</label>
@@ -73,12 +95,9 @@ export default function VariableForm({
           <input name="confirm_now" type="checkbox" defaultChecked className="w-4 h-4 accent-emerald-500" />
           Ya pagado / recibido
         </label>
-        <button
-          type="submit"
-          className="bg-white text-black px-6 py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-slate-200 transition-all active:scale-95"
-        >
+        <SubmitButton pendingText="Agregando…">
           <Plus size={16} /> Agregar
-        </button>
+        </SubmitButton>
       </div>
     </form>
   );

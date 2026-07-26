@@ -1,41 +1,62 @@
 'use server'
 
+import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { getActiveHouseholdId } from '@/lib/auth';
 import { failIf } from '@/lib/errors';
+import {
+  parseForm,
+  errorState,
+  successState,
+  zRequiredText,
+  zAmount,
+  type FormState,
+} from '@/lib/action';
 import { revalidatePath } from 'next/cache';
 
-export async function addCredit(formData: FormData): Promise<void> {
+const creditSchema = z.object({
+  name: zRequiredText('El nombre'),
+  total_amount: zAmount,
+  installment_value: zAmount,
+  paid_installments: z.coerce.number({ error: 'Valor inválido.' }).int().min(0).default(0),
+  total_installments: z.coerce
+    .number({ error: 'Valor inválido.' })
+    .int()
+    .min(1, 'Debe haber al menos 1 cuota.')
+    .default(1),
+});
+
+export async function addCredit(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = parseForm(creditSchema, formData);
+  if (!parsed.success) return parsed.state;
+  const { name, total_amount, installment_value, paid_installments, total_installments } =
+    parsed.data;
+
   const supabase = await createClient();
   const householdId = await getActiveHouseholdId();
 
-  const name = formData.get('name') as string;
-  
-  // CORRECCIÓN: Cambiado 'original_amount' por 'total_amount'
-  const total_val = parseFloat(formData.get('total_amount') as string) || 0;
-  
-  const inst_val = parseFloat(formData.get('installment_value') as string) || 0;
-  const paid_inst = parseInt(formData.get('paid_installments') as string) || 0;
-  const total_inst = parseInt(formData.get('total_installments') as string) || 1;
-
-  const calculated_remaining = total_val - (paid_inst * inst_val);
+  const calculated_remaining = total_amount - paid_installments * installment_value;
 
   const { error } = await supabase.from('credits').insert([
     {
       household_id: householdId,
-      name: name,
-      total_amount: total_val,       
-      remaining_amount: calculated_remaining, 
-      installment_value: inst_val,      
-      paid_installments: paid_inst,     
-      total_installments: total_inst    
-    }
+      name,
+      total_amount,
+      remaining_amount: calculated_remaining,
+      installment_value,
+      paid_installments,
+      total_installments,
+    },
   ]);
 
-  failIf(error, 'No se pudo registrar el crédito');
+  if (error) {
+    console.error('Error al registrar crédito:', error.message);
+    return errorState('No se pudo registrar el crédito.');
+  }
 
   revalidatePath('/finanzas/credits');
   revalidatePath('/finanzas/movimientos');
+  return successState('Crédito registrado.');
 }
 export async function deleteCredit(id: string): Promise<void> {
   const supabase = await createClient();

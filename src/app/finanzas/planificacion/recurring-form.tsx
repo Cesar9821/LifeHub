@@ -1,16 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useActionState, useEffect, useState, useRef } from 'react';
 import { Plus } from 'lucide-react';
 import { addRecurring } from './actions';
+import { IDLE_STATE } from '@/lib/action';
 import { CLPInput } from '@/components/ui/clp-input';
+import { SubmitButton } from '@/components/ui/submit-button';
+import { InlineMessage } from '@/components/ui/inline-message';
 
 export default function RecurringForm({
   categories,
 }: {
   categories: { income: string[]; expense: string[] };
 }) {
+  const [state, formAction] = useActionState(addRecurring, IDLE_STATE);
   const [kind, setKind] = useState<'income' | 'expense'>('expense');
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    if (state.ok) formRef.current?.reset();
+  }, [state]);
 
   const inputStyles =
     'bg-slate-900/50 border border-slate-800 rounded-xl p-3 text-sm text-white placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all backdrop-blur-md w-full';
@@ -19,15 +28,26 @@ export default function RecurringForm({
 
   return (
     <form
-      action={addRecurring}
+      ref={formRef}
+      action={formAction}
       className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-8 backdrop-blur-xl space-y-5"
     >
+      <InlineMessage state={state} />
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="flex flex-col gap-1.5 lg:col-span-2">
           <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-1">
             Descripción
           </label>
-          <input name="description" required placeholder="Ej: Sueldo, Arriendo, Netflix…" className={inputStyles} />
+          <input
+            name="description"
+            required
+            placeholder="Ej: Sueldo, Arriendo, Netflix…"
+            className={`${inputStyles} ${state.fieldErrors?.description ? 'border-rose-500/60' : ''}`}
+          />
+          {state.fieldErrors?.description && (
+            <p className="text-[11px] font-bold text-rose-400 px-1">{state.fieldErrors.description}</p>
+          )}
         </div>
         <div className="flex flex-col gap-1.5">
           <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-1">Tipo</label>
@@ -45,7 +65,18 @@ export default function RecurringForm({
           <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-1">
             Día del mes (1-31)
           </label>
-          <input name="due_day" type="number" min="1" max="31" required placeholder="5" className={inputStyles} />
+          <input
+            name="due_day"
+            type="number"
+            min="1"
+            max="31"
+            required
+            placeholder="5"
+            className={`${inputStyles} ${state.fieldErrors?.due_day ? 'border-rose-500/60' : ''}`}
+          />
+          {state.fieldErrors?.due_day && (
+            <p className="text-[11px] font-bold text-rose-400 px-1">{state.fieldErrors.due_day}</p>
+          )}
         </div>
       </div>
 
@@ -69,12 +100,9 @@ export default function RecurringForm({
           <input name="is_variable" type="checkbox" className="w-4 h-4 accent-indigo-500" />
           Monto variable (luz, agua…)
         </label>
-        <button
-          type="submit"
-          className="bg-white text-black px-6 py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-slate-200 transition-all active:scale-95"
-        >
+        <SubmitButton pendingText="Agregando…">
           <Plus size={16} /> Agregar
-        </button>
+        </SubmitButton>
       </div>
     </form>
   );
