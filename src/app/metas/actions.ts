@@ -64,6 +64,38 @@ export async function addGoal(_prev: FormState, formData: FormData): Promise<For
   return successState('Meta creada.');
 }
 
+const updateGoalSchema = z.object({
+  id: z.string().min(1),
+  title: zRequiredText('El objetivo'),
+  description: zOptionalText,
+  category: z.string().trim().min(1).default('Personal'),
+  target_date: zOptionalDate,
+});
+
+/** Edita los datos de una meta existente. Contrato FormState. */
+export async function updateGoal(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = parseForm(updateGoalSchema, formData);
+  if (!parsed.success) return parsed.state;
+  const { id, title, description, category, target_date } = parsed.data;
+
+  const supabase = await createClient();
+  const user = await requireUser();
+
+  const { error } = await supabase
+    .from('goals')
+    .update({ title, description, category, target_date })
+    .eq('id', id)
+    .eq('user_id', user.id);
+
+  if (error) {
+    console.error('Error editando meta:', error.message);
+    return errorState('No se pudo guardar los cambios.');
+  }
+
+  revalidate();
+  return successState('Cambios guardados.');
+}
+
 /** Cambia el estado de una meta: activa, completada o archivada. */
 export async function setGoalStatus(formData: FormData) {
   const supabase = await createClient();
