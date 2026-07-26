@@ -1,12 +1,13 @@
-import { Target } from 'lucide-react';
-import { getGoals, summarizeGoals } from '@/services/metas';
+import { Target, Archive, RotateCcw, Trash2 } from 'lucide-react';
+import { getGoals, getArchivedGoals, summarizeGoals } from '@/services/metas';
+import { setGoalStatus, deleteGoal } from './actions';
 import GoalForm from './goal-form';
 import GoalCard from './goal-card';
 
 export const dynamic = 'force-dynamic';
 
 export default async function MetasPage() {
-  const goals = await getGoals();
+  const [goals, archived] = await Promise.all([getGoals(), getArchivedGoals()]);
   const summary = summarizeGoals(goals);
 
   const active = goals.filter((g) => g.status === 'active');
@@ -52,8 +53,8 @@ export default async function MetasPage() {
         </div>
       ) : (
         <div className="space-y-5">
-          {active.map((g) => (
-            <GoalCard key={g.id} goal={g} />
+          {active.map((g, i) => (
+            <GoalCard key={g.id} goal={g} isFirst={i === 0} isLast={i === active.length - 1} />
           ))}
         </div>
       )}
@@ -65,9 +66,45 @@ export default async function MetasPage() {
             Completadas
           </h2>
           {done.map((g) => (
-            <GoalCard key={g.id} goal={g} />
+            <GoalCard key={g.id} goal={g} isFirst isLast />
           ))}
         </div>
+      )}
+
+      {/* ARCHIVADAS */}
+      {archived.length > 0 && (
+        <details className="group pt-4">
+          <summary className="flex items-center gap-2 cursor-pointer text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] italic px-2 select-none hover:text-slate-300 transition-colors">
+            <Archive size={13} />
+            Archivadas ({archived.length})
+          </summary>
+          <div className="mt-4 space-y-2">
+            {archived.map((g) => (
+              <div
+                key={g.id}
+                className="flex items-center gap-3 bg-slate-900/20 border border-white/5 rounded-2xl px-4 py-3 group/item"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-slate-400 truncate">{g.title}</p>
+                  <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest">{g.category}</p>
+                </div>
+                <form action={setGoalStatus} className="shrink-0">
+                  <input type="hidden" name="id" value={g.id} />
+                  <input type="hidden" name="status" value="active" />
+                  <button type="submit" title="Reactivar" className="h-8 w-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-amber-400 hover:bg-amber-500/10 transition-all">
+                    <RotateCcw size={15} />
+                  </button>
+                </form>
+                <form action={deleteGoal} className="shrink-0">
+                  <input type="hidden" name="id" value={g.id} />
+                  <button type="submit" title="Eliminar" className="h-8 w-8 flex items-center justify-center rounded-lg text-slate-600 hover:text-rose-500 hover:bg-rose-500/10 transition-all">
+                    <Trash2 size={15} />
+                  </button>
+                </form>
+              </div>
+            ))}
+          </div>
+        </details>
       )}
     </div>
   );

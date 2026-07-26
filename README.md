@@ -37,6 +37,7 @@ Los archivos SQL están en [`supabase/`](supabase/) y se ejecutan en orden en el
 6. `schema-familia.sql` — módulo de Familia (tareas del hogar y compras)
 7. `schema-notifications.sql` — suscripciones push y preferencias de avisos
 8. `schema-mindset-369.sql` — Mentalidad: método 369 (La Forja)
+9. `schema-metas-v2.sql` — Metas: medibles por monto + motivo
 
 ## PWA y notificaciones
 
