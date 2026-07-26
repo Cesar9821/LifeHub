@@ -174,7 +174,7 @@ export async function toggleHabitActive(formData: FormData) {
 }
 
 /** Guarda el registro diario de hoy (sueño, ánimo, energía, agua, peso). */
-export async function saveDailyLog(formData: FormData) {
+export async function saveDailyLog(_prev: FormState, formData: FormData): Promise<FormState> {
   const supabase = await createClient();
   const user = await requireUser();
 
@@ -201,8 +201,13 @@ export async function saveDailyLog(formData: FormData) {
     .from('daily_logs')
     .upsert(payload, { onConflict: 'user_id,log_date' });
 
-  failIf(error, 'No se pudo guardar el registro diario');
+  if (error) {
+    console.error('Error guardando registro diario:', error.message);
+    return errorState('No se pudo guardar el registro.');
+  }
+
   revalidateAll();
+  return successState('Registro guardado.');
 }
 
 /** Suma agua rápido (vasos de 250ml). */

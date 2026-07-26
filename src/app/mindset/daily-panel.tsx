@@ -1,8 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useActionState } from 'react';
 import { Moon, Zap, Smile, Droplets, Plus, Minus, Save } from 'lucide-react';
 import { saveDailyLog, addWater } from './actions';
+import { IDLE_STATE } from '@/lib/action';
+import { SubmitButton } from '@/components/ui/submit-button';
+import { InlineMessage } from '@/components/ui/inline-message';
 
 const MOODS = ['😞', '😕', '😐', '🙂', '😄'];
 
@@ -21,6 +24,7 @@ export default function DailyPanel({
 }) {
   const [selectedMood, setSelectedMood] = useState<number | null>(mood);
   const [selectedEnergy, setSelectedEnergy] = useState<number | null>(energy);
+  const [saveState, saveAction] = useActionState(saveDailyLog, IDLE_STATE);
 
   const waterGlasses = Math.round(waterMl / 250);
   const waterGoal = 8;
@@ -68,7 +72,8 @@ export default function DailyPanel({
             <input type="hidden" name="ml" value="-250" />
             <button
               type="submit"
-              className="p-2.5 bg-white/5 border border-white/5 text-slate-500 rounded-xl hover:text-white transition-all active:scale-95"
+              disabled={waterGlasses <= 0}
+              className="p-2.5 bg-white/5 border border-white/5 text-slate-500 rounded-xl hover:text-white transition-all active:scale-95 disabled:opacity-30 disabled:pointer-events-none"
             >
               <Minus size={13} />
             </button>
@@ -77,7 +82,7 @@ export default function DailyPanel({
       </div>
 
       {/* FORMULARIO */}
-      <form action={saveDailyLog} className="space-y-5 pt-2 border-t border-white/5">
+      <form action={saveAction} className="space-y-5 pt-2 border-t border-white/5">
         {/* Ánimo */}
         <div>
           <div className="flex items-center gap-2 mb-3">
@@ -177,12 +182,11 @@ export default function DailyPanel({
 
         <input type="hidden" name="water_ml" value={waterMl} />
 
-        <button
-          type="submit"
-          className="w-full flex items-center justify-center gap-2 bg-white text-black py-3 rounded-xl font-black text-xs uppercase tracking-wider hover:bg-slate-200 transition-all active:scale-95"
-        >
+        <InlineMessage state={saveState} />
+
+        <SubmitButton pendingText="Guardando…" className="w-full">
           <Save size={14} /> Guardar registro
-        </button>
+        </SubmitButton>
       </form>
     </div>
   );
