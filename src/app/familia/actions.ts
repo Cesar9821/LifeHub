@@ -1,37 +1,60 @@
 'use server';
 
+import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, getActiveHouseholdId } from '@/lib/auth';
 import { failIf } from '@/lib/errors';
+import {
+  parseForm,
+  errorState,
+  successState,
+  zRequiredText,
+  zOptionalText,
+  zOptionalDate,
+  type FormState,
+} from '@/lib/action';
 import { revalidatePath } from 'next/cache';
 
 function revalidate() {
   revalidatePath('/familia');
 }
 
+const taskSchema = z.object({
+  title: zRequiredText('La tarea'),
+  assigned_to: z
+    .string()
+    .transform((v) => (v.trim() === '' ? null : v.trim()))
+    .nullable(),
+  due_date: zOptionalDate,
+});
+
 /** Crea una tarea del hogar (opcionalmente asignada y con fecha). */
-export async function addTask(formData: FormData) {
+export async function addTask(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = parseForm(taskSchema, formData);
+  if (!parsed.success) return parsed.state;
+  const { title, assigned_to, due_date } = parsed.data;
+
   const supabase = await createClient();
   const user = await requireUser();
   const householdId = await getActiveHouseholdId();
-
-  const title = String(formData.get('title') || '').trim();
-  const assignedTo = String(formData.get('assigned_to') || '') || null;
-  const dueDate = String(formData.get('due_date') || '') || null;
-  if (!title) return;
 
   const { error } = await supabase.from('household_tasks').insert([
     {
       household_id: householdId,
       created_by: user.id,
       title,
-      assigned_to: assignedTo,
-      due_date: dueDate,
+      assigned_to,
+      due_date,
     },
   ]);
 
-  failIf(error, 'No se pudo crear la tarea');
+  if (error) {
+    console.error('Error creando tarea:', error.message);
+    return errorState('No se pudo crear la tarea. Inténtalo de nuevo.');
+  }
+
   revalidate();
+  return successState('Tarea agregada.');
 }
 
 /** Marca/desmarca una tarea como hecha. */
@@ -71,22 +94,35 @@ export async function deleteTask(formData: FormData) {
   revalidate();
 }
 
+const shoppingSchema = z.object({
+  name: zRequiredText('El producto'),
+  quantity: zOptionalText,
+});
+
 /** Agrega un ítem a la lista de compras. */
-export async function addShoppingItem(formData: FormData) {
+export async function addShoppingItem(
+  _prev: FormState,
+  formData: FormData
+): Promise<FormState> {
+  const parsed = parseForm(shoppingSchema, formData);
+  if (!parsed.success) return parsed.state;
+  const { name, quantity } = parsed.data;
+
   const supabase = await createClient();
   const user = await requireUser();
   const householdId = await getActiveHouseholdId();
-
-  const name = String(formData.get('name') || '').trim();
-  const quantity = String(formData.get('quantity') || '').trim() || null;
-  if (!name) return;
 
   const { error } = await supabase.from('shopping_items').insert([
     { household_id: householdId, created_by: user.id, name, quantity },
   ]);
 
-  failIf(error, 'No se pudo agregar el producto');
+  if (error) {
+    console.error('Error agregando producto:', error.message);
+    return errorState('No se pudo agregar el producto.');
+  }
+
   revalidate();
+  return successState();
 }
 
 /** Marca/desmarca un ítem de compras. */

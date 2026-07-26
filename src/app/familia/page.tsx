@@ -5,7 +5,6 @@ import {
   Circle,
   ShoppingCart,
   ListTodo,
-  Plus,
   UserCircle2,
   CalendarClock,
   Eraser,
@@ -18,10 +17,10 @@ import {
 } from '@/services/familia';
 import { getHouseholdMembers } from '@/services/household';
 import TaskForm from './task-form';
+import ShoppingForm from './shopping-form';
 import {
   toggleTask,
   deleteTask,
-  addShoppingItem,
   toggleShoppingItem,
   deleteShoppingItem,
   clearCheckedShopping,
@@ -53,9 +52,6 @@ export default async function FamiliaPage() {
   const summary = summarizeFamilia(tasks, shopping);
   const nameById = new Map(members.map((m) => [m.user_id, m.full_name]));
   const checkedCount = shopping.filter((s) => s.checked).length;
-
-  const inputStyles =
-    'bg-black/30 border border-white/10 rounded-xl px-3 text-sm text-white placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all';
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 md:space-y-10 pb-20">
@@ -168,19 +164,7 @@ export default async function FamiliaPage() {
           )}
         </div>
 
-        <form
-          action={addShoppingItem}
-          className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-4 md:p-5 backdrop-blur-xl flex items-center gap-3"
-        >
-          <input name="name" required placeholder="Producto…" className={`${inputStyles} py-3 flex-1`} />
-          <input name="quantity" placeholder="Cant." className={`${inputStyles} py-3 w-20 md:w-28`} />
-          <button
-            type="submit"
-            className="h-11 w-11 shrink-0 flex items-center justify-center rounded-xl bg-white text-black hover:bg-slate-200 transition-all active:scale-95"
-          >
-            <Plus size={18} />
-          </button>
-        </form>
+        <ShoppingForm />
 
         {shopping.length === 0 ? (
           <EmptyState icon={<ShoppingCart size={34} className="text-slate-800" />} text="La lista está vacía" />
