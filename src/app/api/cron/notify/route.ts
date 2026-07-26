@@ -156,10 +156,12 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // PENDIENTES por módulo (cada uno con su deep-link)
+    // PENDIENTES por módulo (cada uno con su deep-link).
+    // Solo mañana y noche, para no saturar a media tarde (ahí va solo el 369).
     const pending: { text: string; url: string }[] = [];
+    const withPending = block !== 'afternoon';
 
-    if (prefs.finanzas && hids.length > 0) {
+    if (withPending && prefs.finanzas && hids.length > 0) {
       const n = await countFor(db, () =>
         db
           .from('movements')
@@ -171,7 +173,7 @@ export async function GET(request: NextRequest) {
       if (n > 0) pending.push({ text: `💰 ${n} pago${n > 1 ? 's' : ''} por confirmar`, url: '/finanzas/movimientos' });
     }
 
-    if (prefs.mentalidad) {
+    if (withPending && prefs.mentalidad) {
       const totalHabits = await countFor(db, () =>
         db.from('habits').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('is_active', true)
       );
@@ -187,7 +189,7 @@ export async function GET(request: NextRequest) {
       if (p > 0) pending.push({ text: `🧠 ${p} hábito${p > 1 ? 's' : ''} por cumplir`, url: '/mindset' });
     }
 
-    if (prefs.familia) {
+    if (withPending && prefs.familia) {
       const n = await countFor(db, () =>
         db
           .from('household_tasks')
@@ -199,7 +201,7 @@ export async function GET(request: NextRequest) {
       if (n > 0) pending.push({ text: `🏠 ${n} tarea${n > 1 ? 's' : ''} del hogar`, url: '/familia' });
     }
 
-    if (prefs.metas) {
+    if (withPending && prefs.metas) {
       const n = await countFor(db, () =>
         db
           .from('goals')

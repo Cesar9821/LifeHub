@@ -1,0 +1,25 @@
+name: LifeHub · 369 tarde
+
+# Franja de la TARDE del método 369 (6×).
+# Vercel (plan Hobby) ya cubre mañana y noche vía vercel.json; esta 3ª franja
+# la disparamos gratis desde GitHub Actions.
+#
+# Requiere 2 secretos del repo (Settings → Secrets and variables → Actions):
+#   LIFEHUB_URL   ->  https://life-hub-puce.vercel.app   (sin barra final)
+#   CRON_SECRET   ->  el mismo valor que pusiste en Vercel
+
+on:
+  schedule:
+    # 17:00 UTC ≈ 14:00 en Chile (la ruta calcula la franja "afternoon").
+    - cron: '0 17 * * *'
+  workflow_dispatch: {} # permite dispararlo a mano para probar
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disparar notificación de la tarde
+        run: |
+          curl -fsS -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.LIFEHUB_URL }}/api/cron/notify?slot=afternoon"

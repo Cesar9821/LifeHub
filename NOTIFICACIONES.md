@@ -54,11 +54,12 @@ Abre LifeHub instalada → ícono de **campana** (arriba a la derecha del hub) �
 
 ## 3. ¿Cuándo llegan y qué dicen?
 
-Hay **dos horarios** configurados en `vercel.json` (ambos 1×/día, dentro del
-plan Hobby):
+Hay **tres franjas** al día. El **369 se recuerda en las tres**; los **pendientes
+solo llegan mañana y noche** (para no saturar a media tarde):
 
-- **Mañana** (`?slot=morning`, 12:00 UTC ≈ 09:00 Chile)
-- **Noche** (`?slot=night`, 00:00 UTC ≈ 21:00 Chile)
+- **Mañana** — `vercel.json`, 12:00 UTC ≈ 09:00 Chile (`?slot=morning`)
+- **Tarde** — GitHub Actions, 17:00 UTC ≈ 14:00 Chile (`?slot=afternoon`, solo el 369)
+- **Noche** — `vercel.json`, 00:00 UTC ≈ 21:00 Chile (`?slot=night`)
 
 En cada envío, y **según qué módulos activaste**, recibes avisos **accionables**
 (cada uno te lleva a su pantalla al tocarlo):
@@ -73,11 +74,20 @@ En cada envío, y **según qué módulos activaste**, recibes avisos **accionabl
 Si solo hay un pendiente, el aviso te lleva directo a esa pantalla; si hay
 varios, llega un resumen que abre el hub.
 
-> **¿Quieres también el 369 de la tarde (6×)?** Agrega un tercer cron
-> `"/api/cron/notify?slot=afternoon"` a `"0 18 * * *"` en `vercel.json`. En el
-> plan Hobby de Vercel el límite es acotado; si no te deja, puedes dispararlo con
-> un cron externo gratis (p. ej. cron-job.org) apuntando a esa URL con tu
-> `?secret=CRON_SECRET`.
+### Activar la franja de la tarde (GitHub Actions)
+
+El plan Hobby de Vercel limita los crons, así que la 3ª franja (tarde) la dispara
+un workflow ya incluido en `.github/workflows/notify-afternoon.yml`. Solo agrega
+**2 secretos del repositorio** en GitHub → **Settings → Secrets and variables →
+Actions → New repository secret**:
+
+| Secreto | Valor |
+|---------|-------|
+| `LIFEHUB_URL` | `https://life-hub-puce.vercel.app` (sin barra final) |
+| `CRON_SECRET` | el mismo valor que pusiste en Vercel |
+
+Listo: la tarde queda cubierta gratis. Puedes probarlo a mano en GitHub →
+**Actions → LifeHub · 369 tarde → Run workflow**.
 
 ### Probar el cron a mano
 
