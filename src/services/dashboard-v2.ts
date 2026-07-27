@@ -22,6 +22,8 @@ export interface DashboardData {
   trend: { label: string; balance: number }[];
   /** Salud financiera 0-100 */
   healthScore: number;
+  /** Gasto confirmado por categoría (top del mes) */
+  byCategory: { category: string; total: number }[];
 }
 
 const SHORT_MONTHS = [
@@ -53,6 +55,18 @@ export async function getDashboardData(
   ]);
 
   const month = summarize(movements);
+
+  // Gasto confirmado por categoría (top del mes)
+  const catMap = new Map<string, number>();
+  for (const m of movements) {
+    if (m.kind === 'expense' && m.status === 'confirmed') {
+      catMap.set(m.category, (catMap.get(m.category) || 0) + m.effective_amount);
+    }
+  }
+  const byCategory = [...catMap.entries()]
+    .map(([category, total]) => ({ category, total }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 6);
 
   const recurring = recurringRes.data || [];
   const plannedIncome = recurring
@@ -100,5 +114,6 @@ export async function getDashboardData(
     totalDebt,
     trend,
     healthScore,
+    byCategory,
   };
 }

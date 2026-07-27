@@ -188,6 +188,33 @@ export default async function DashboardPage({
         />
       </div>
 
+      {/* GASTO POR CATEGORÍA */}
+      {d.byCategory.length > 0 && (
+        <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-8 backdrop-blur-xl">
+          <div className="flex items-center gap-2 mb-6">
+            <TrendingDown size={16} className="text-rose-400" />
+            <h2 className="text-sm font-black text-white uppercase tracking-[0.2em]">Gasto por categoría</h2>
+          </div>
+          <div className="space-y-4">
+            {d.byCategory.map((c) => {
+              const max = d.byCategory[0].total || 1;
+              const pct = Math.round((c.total / max) * 100);
+              return (
+                <div key={c.category}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-bold text-slate-300 uppercase tracking-wide">{c.category}</span>
+                    <span className="text-xs font-mono font-bold text-rose-400">{CLP(c.total)}</span>
+                  </div>
+                  <div className="h-2 bg-black/40 rounded-full overflow-hidden">
+                    <div className="h-full bg-rose-500/70 rounded-full" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* TENDENCIA 6 MESES */}
       <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-8 backdrop-blur-xl">
         <div className="flex items-center gap-2 mb-8">
