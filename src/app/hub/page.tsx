@@ -1,8 +1,12 @@
 import Link from 'next/link';
 import { ArrowRight, Lock } from 'lucide-react';
 import { MODULES } from './modules';
+import { getHubSummary } from '@/services/hub';
 
-export default function HubPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function HubPage() {
+  const summary = await getHubSummary();
   const now = new Date();
   const hour = now.getHours();
   const greeting =
@@ -69,6 +73,10 @@ export default function HubPage() {
               <p className="text-sm text-slate-500 font-medium leading-relaxed">
                 {mod.description}
               </p>
+
+              {isActive && summary[mod.id] && (
+                <p className={`mt-4 text-xs font-black ${mod.accent.text}`}>{summary[mod.id]}</p>
+              )}
 
               {/* Flecha de entrada */}
               {isActive && (

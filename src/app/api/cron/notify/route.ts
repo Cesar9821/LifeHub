@@ -217,6 +217,23 @@ export async function GET(request: NextRequest) {
         if (n > 0) pending.push({ text: `🎯 ${n} meta${n > 1 ? 's' : ''} por vencer`, url: '/metas' });
       }
 
+      // Familia — evento de hoy/mañana
+      if (prefs.familia && hids.length > 0) {
+        const tomorrow = addDays(today, 1);
+        const { data: evs } = await db
+          .from('household_events')
+          .select('title, event_date')
+          .in('household_id', hids)
+          .gte('event_date', today)
+          .lte('event_date', tomorrow)
+          .order('event_date', { ascending: true })
+          .limit(1);
+        const ev = (evs as { title: string; event_date: string }[] | null)?.[0];
+        if (ev) {
+          pending.push({ text: `📅 ${ev.title} (${ev.event_date === today ? 'hoy' : 'mañana'})`, url: '/familia' });
+        }
+      }
+
       // Saldo bajo (Finanzas)
       if (prefs.low_balance_enabled && prefs.finanzas && hids.length > 0) {
         const { data: mv } = await db
