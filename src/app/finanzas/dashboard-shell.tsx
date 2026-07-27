@@ -21,7 +21,8 @@ import {
   ArrowLeft,
   PieChart,
   Tag,
-  Repeat
+  Repeat,
+  Link2
 } from 'lucide-react';
 
 export default function DashboardShell({
@@ -50,6 +51,7 @@ export default function DashboardShell({
     { icon: <CreditCard size={18} />, label: 'Créditos', href: '/finanzas/credits' },
     { icon: <Tag size={18} />, label: 'Categorías', href: '/finanzas/categories' },
     { icon: <BarChart3 size={18} />, label: 'Rendimiento', href: '/finanzas/performance' },
+    { icon: <Link2 size={18} />, label: 'Conexiones', href: '/finanzas/conexiones' },
     { icon: <Settings size={18} />, label: 'Ajustes', href: '/finanzas/ajustes' },
   ];
 

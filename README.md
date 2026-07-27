@@ -41,6 +41,8 @@ Los archivos SQL están en [`supabase/`](supabase/) y se ejecutan en orden en el
 10. `schema-familia-v2.sql` — Familia: listas de compras (checklist recurrente)
 11. `schema-familia-v3.sql` — Familia: calendario / eventos compartidos
 12. `schema-notifications-v2.sql` — Notificaciones: horarios configurables + saldo bajo
+13. `schema-mindset-v2.sql` — Mentalidad: La Rana, reflexión e innegociables
+14. `schema-mercadopago.sql` — Finanzas: conexión Mercado Pago (opcional)
 
 ## PWA y notificaciones
 
