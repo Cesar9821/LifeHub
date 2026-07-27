@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { CreditCard, Calendar, ArrowDownCircle, PieChart, ShieldAlert, TrendingDown, Trash2 } from 'lucide-react';
+import { CreditCard, Calendar, ArrowDownCircle, PieChart, ShieldAlert, TrendingDown, Trash2, Target } from 'lucide-react';
 import CreditForm from './credit-form';
 import { deleteCredit } from './actions';
 import CreditPayment from './credit-payment';
@@ -14,6 +14,11 @@ export default async function CreditsPage() {
 
   const totalDebt = credits?.reduce((acc, curr) => acc + Number(curr.remaining_amount), 0) || 0;
   const totalMonthly = credits?.reduce((acc, curr) => acc + Number(curr.installment_value), 0) || 0;
+
+  // Estrategia bola de nieve: ataca primero la deuda más chica.
+  const snowball = (credits || [])
+    .filter((c) => Number(c.remaining_amount) > 0)
+    .sort((a, b) => Number(a.remaining_amount) - Number(b.remaining_amount))[0];
 
   const inputStyles = "bg-slate-900/50 border border-slate-800 rounded-xl p-3 text-sm text-white placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-rose-500/50 focus:border-rose-500 transition-all backdrop-blur-md w-full appearance-none";
 
@@ -66,6 +71,19 @@ export default async function CreditsPage() {
           <CreditForm inputStyles={inputStyles} />
         </div>
       </section>
+
+      {/* ESTRATEGIA BOLA DE NIEVE */}
+      {snowball && (
+        <div className="bg-gradient-to-br from-rose-500/10 to-transparent border border-rose-500/20 rounded-[2rem] p-6 flex items-start gap-3">
+          <Target size={20} className="text-rose-400 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-black text-white uppercase tracking-tight">Estrategia bola de nieve</p>
+            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+              Ataca primero <b className="text-rose-300">{snowball.name}</b> (${Number(snowball.remaining_amount).toLocaleString('es-CL')}), la deuda más chica. Al liquidarla, suma su cuota a la siguiente y acelera. El impulso es real.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* GRID DE CRÉDITOS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
