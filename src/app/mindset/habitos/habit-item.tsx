@@ -20,6 +20,7 @@ export interface HabitItemData {
   streak: number;
   bestStreak: number;
   is_active: boolean;
+  non_negotiable: boolean;
 }
 
 export default function HabitItem({ habit: h }: { habit: HabitItemData }) {
@@ -72,6 +73,10 @@ export default function HabitItem({ habit: h }: { habit: HabitItemData }) {
             <input type="hidden" name="target_per_week" value={7} />
           )}
         </div>
+        <label className="flex items-center gap-2 text-xs font-bold text-slate-400 cursor-pointer">
+          <input name="non_negotiable" type="checkbox" defaultChecked={h.non_negotiable} className="w-4 h-4 accent-rose-500" />
+          🔒 Innegociable
+        </label>
         <div className="flex items-center gap-2">
           <SubmitButton pendingText="Guardando…">
             <Check size={15} /> Guardar
@@ -87,7 +92,12 @@ export default function HabitItem({ habit: h }: { habit: HabitItemData }) {
   return (
     <div className="flex items-center justify-between gap-3 bg-black/20 border border-white/5 rounded-xl px-4 py-3 group">
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold text-slate-200 truncate">{h.name}</p>
+        <p className="text-sm font-bold text-slate-200 truncate">
+          {h.name}
+          {h.non_negotiable && (
+            <span className="ml-2 text-[9px] font-black text-rose-400 uppercase tracking-widest">🔒</span>
+          )}
+        </p>
         <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
           {h.frequency === 'daily' ? 'Diario' : `${h.target_per_week}× por semana`}
           {h.bestStreak > 0 && ` · récord ${h.bestStreak}`}

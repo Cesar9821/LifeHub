@@ -4,6 +4,7 @@ import { getHabitsWithStatus, getTodayLog, summarizeHabits } from '@/services/mi
 import { phraseOfDay } from '@/lib/mindset-phrases';
 import HabitCard from './habit-card';
 import DailyPanel from './daily-panel';
+import FrogCard from './frog-card';
 
 const DAYS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 const MONTHS = [
@@ -67,6 +68,9 @@ export default async function MindsetTodayPage() {
         </div>
         <ArrowRight size={16} className="text-slate-600 group-hover:text-violet-400 group-hover:translate-x-1 transition-all shrink-0" />
       </Link>
+
+      {/* LA RANA DEL DÍA */}
+      <FrogCard topTask={todayLog?.top_task ?? null} done={todayLog?.top_task_done ?? false} />
 
       {/* MÉTRICAS */}
       {summary.totalHabits > 0 && (
@@ -145,6 +149,7 @@ export default async function MindsetTodayPage() {
           energy={todayLog?.energy ?? null}
           waterMl={todayLog?.water_ml ?? 0}
           weightKg={todayLog?.weight_kg ?? null}
+          reflection={todayLog?.reflection ?? null}
         />
       </div>
     </div>

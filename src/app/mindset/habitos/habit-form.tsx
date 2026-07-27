@@ -68,6 +68,10 @@ export default function HabitForm() {
           <input type="hidden" name="target_per_week" value={7} />
         )}
 
+        <label className="flex items-center gap-2 text-xs font-bold text-slate-400 cursor-pointer pb-3">
+          <input name="non_negotiable" type="checkbox" className="w-4 h-4 accent-rose-500" />
+          🔒 Innegociable
+        </label>
         <SubmitButton pendingText="Creando…" className={frequency === 'weekly' ? 'md:col-span-3' : ''}>
           <Plus size={15} /> Crear hábito
         </SubmitButton>

@@ -12,6 +12,7 @@ export interface Habit {
   kind: 'build' | 'break';
   sort_order: number;
   is_active: boolean;
+  non_negotiable: boolean;
 }
 
 export interface HabitWithStatus extends Habit {
@@ -138,6 +139,9 @@ export interface DailyLog {
   water_ml: number;
   weight_kg: number | null;
   note: string | null;
+  top_task: string | null;
+  top_task_done: boolean;
+  reflection: string | null;
 }
 
 /** Registro diario de hoy (si existe). */
@@ -147,7 +151,7 @@ export async function getTodayLog(): Promise<DailyLog | null> {
 
   const { data } = await supabase
     .from('daily_logs')
-    .select('log_date, sleep_hours, mood, energy, water_ml, weight_kg, note')
+    .select('log_date, sleep_hours, mood, energy, water_ml, weight_kg, note, top_task, top_task_done, reflection')
     .eq('user_id', user.id)
     .eq('log_date', todayStr())
     .maybeSingle();

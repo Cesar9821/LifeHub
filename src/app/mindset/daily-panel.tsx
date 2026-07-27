@@ -15,12 +15,14 @@ export default function DailyPanel({
   energy,
   waterMl,
   weightKg,
+  reflection,
 }: {
   sleepHours: number | null;
   mood: number | null;
   energy: number | null;
   waterMl: number;
   weightKg: number | null;
+  reflection: string | null;
 }) {
   const [selectedMood, setSelectedMood] = useState<number | null>(mood);
   const [selectedEnergy, setSelectedEnergy] = useState<number | null>(energy);
@@ -178,6 +180,20 @@ export default function DailyPanel({
               className={inputStyles}
             />
           </div>
+        </div>
+
+        {/* Reflexión nocturna */}
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider">🌙 Reflexión de hoy</span>
+          </div>
+          <textarea
+            name="reflection"
+            rows={2}
+            defaultValue={reflection ?? ''}
+            placeholder="¿Qué conquistaste? ¿Qué evitaste? Honestidad brutal."
+            className={`${inputStyles} resize-none`}
+          />
         </div>
 
         <input type="hidden" name="water_ml" value={waterMl} />
