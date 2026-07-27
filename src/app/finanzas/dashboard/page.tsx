@@ -11,6 +11,7 @@ import {
   ArrowRight,
   Target,
   Landmark,
+  ShieldCheck,
 } from 'lucide-react';
 import { getDashboardData } from '@/services/dashboard-v2';
 import { normalizePeriod, periodLabel, isCurrentPeriod } from '@/services/movements';
@@ -29,6 +30,12 @@ export default async function DashboardPage({
   const isCurrent = isCurrentPeriod(period);
 
   const maxTrend = Math.max(...d.trend.map((t) => Math.abs(t.balance)), 1);
+
+  // Fondo de emergencia: cuántos meses de gastos cubren tus ahorros (ideal 6).
+  const monthsCovered = d.plannedExpense > 0 ? d.totalSavings / d.plannedExpense : 0;
+  const fundPct = Math.min(100, Math.round((monthsCovered / 6) * 100));
+  const fundText = monthsCovered >= 6 ? 'text-emerald-400' : monthsCovered >= 3 ? 'text-amber-400' : 'text-rose-400';
+  const fundBar = monthsCovered >= 6 ? 'bg-emerald-500' : monthsCovered >= 3 ? 'bg-amber-500' : 'bg-rose-500';
 
   // Progreso presupuestado vs real
   const expenseProgress =
@@ -187,6 +194,27 @@ export default async function DashboardPage({
           value={`${d.healthScore}%`}
         />
       </div>
+
+      {/* FONDO DE EMERGENCIA */}
+      {d.plannedExpense > 0 && (
+        <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-8 backdrop-blur-xl">
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <div className="flex items-center gap-2">
+              <ShieldCheck size={16} className="text-emerald-400" />
+              <h2 className="text-sm font-black text-white uppercase tracking-[0.2em]">Fondo de emergencia</h2>
+            </div>
+            <span className={`text-xs font-black font-mono ${fundText}`}>
+              {monthsCovered.toFixed(1)} meses
+            </span>
+          </div>
+          <div className="h-2.5 bg-black/40 rounded-full overflow-hidden">
+            <div className={`h-full ${fundBar} rounded-full transition-all`} style={{ width: `${fundPct}%` }} />
+          </div>
+          <p className="text-[11px] font-medium text-slate-500 mt-2">
+            Tus ahorros cubren {monthsCovered.toFixed(1)} de 6 meses de gastos. La meta sana: 3 a 6 meses.
+          </p>
+        </div>
+      )}
 
       {/* GASTO POR CATEGORÍA */}
       {d.byCategory.length > 0 && (
