@@ -166,6 +166,11 @@ export default function GoalCard({
                 {g.pace.onTrack ? 'Al día' : `Vas atrás · meta ${g.pace.expectedPct}%`}
               </span>
             )}
+            {g.saving_name && (
+              <span className="inline-flex items-center gap-1 text-[9px] font-black text-teal-400 uppercase tracking-widest">
+                🔗 {g.saving_name}
+              </span>
+            )}
           </div>
           <h3 className={`text-xl md:text-2xl font-black tracking-tight ${isDone ? 'text-emerald-300 line-through' : 'text-white'}`}>
             {g.title}
@@ -270,8 +275,8 @@ export default function GoalCard({
         </div>
       </div>
 
-      {/* Registrar avance (metas medibles) */}
-      {g.measurable && !isDone && (
+      {/* Registrar avance (metas medibles, no vinculadas a un ahorro) */}
+      {g.measurable && !isDone && !g.saving_name && (
         <form action={progressAction} className="mt-4 flex items-center gap-2">
           <input type="hidden" name="id" value={g.id} />
           <div className="flex-1 flex items-center gap-2 bg-black/30 border border-white/10 rounded-xl px-3 focus-within:border-amber-500/50 transition-colors">

@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { requireUser } from '@/lib/auth';
+import { requireUser, getActiveHouseholdId } from '@/lib/auth';
 
 export type GoalStatus = 'active' | 'done' | 'archived';
 
@@ -16,6 +16,7 @@ export interface Goal {
   target_value: number | null;
   current_value: number;
   unit: string | null;
+  saving_id: string | null;
   sort_order: number;
   created_at: string;
   completed_at: string | null;
@@ -41,6 +42,14 @@ export interface GoalWithProgress extends Goal {
   daysLeft: number | null;
   /** Ritmo esperado vs real. null si no aplica. */
   pace: { expectedPct: number; onTrack: boolean } | null;
+  /** Nombre del ahorro vinculado (si la meta está ligada a Finanzas). */
+  saving_name: string | null;
+}
+
+interface SavingInfo {
+  name: string;
+  current: number;
+  target: number;
 }
 
 /** Días entre dos fechas YYYY-MM-DD (b - a). */
@@ -76,24 +85,38 @@ function computePace(g: Goal, progress: number): { expectedPct: number; onTrack:
   return { expectedPct, onTrack: progress >= expectedPct };
 }
 
-function withProgress(goals: Goal[], byGoal: Map<string, Milestone[]>): GoalWithProgress[] {
+function withProgress(
+  goals: Goal[],
+  byGoal: Map<string, Milestone[]>,
+  savings: Map<string, SavingInfo>
+): GoalWithProgress[] {
   const today = todayLocal();
   return goals.map((g) => {
     const list = byGoal.get(g.id) || [];
     const total = list.length;
     const done = list.filter((m) => m.done).length;
-    const progress = computeProgress(g, done, total);
+
+    // Si está vinculada a un ahorro, el avance viene del saldo de ese ahorro.
+    const linked = g.saving_id ? savings.get(g.saving_id) : undefined;
+    const current_value = linked ? linked.current : Number(g.current_value) || 0;
+    const target_value =
+      g.target_value != null ? Number(g.target_value) : linked ? linked.target : null;
+
+    const eff: Goal = { ...g, current_value, target_value };
+    const progress = computeProgress(eff, done, total);
+
     return {
       ...g,
-      current_value: Number(g.current_value) || 0,
-      target_value: g.target_value != null ? Number(g.target_value) : null,
+      current_value,
+      target_value,
       milestones: list,
       doneMilestones: done,
       totalMilestones: total,
-      measurable: g.target_value != null && Number(g.target_value) > 0,
+      measurable: target_value != null && target_value > 0,
       progress,
       daysLeft: g.target_date ? daysBetween(today, g.target_date) : null,
-      pace: computePace(g, progress),
+      pace: computePace(eff, progress),
+      saving_name: linked?.name ?? null,
     };
   });
 }
@@ -102,8 +125,14 @@ function withProgress(goals: Goal[], byGoal: Map<string, Milestone[]>): GoalWith
 export async function getGoals(): Promise<GoalWithProgress[]> {
   const supabase = await createClient();
   const user = await requireUser();
+  let householdId: string | null = null;
+  try {
+    householdId = await getActiveHouseholdId();
+  } catch {
+    householdId = null;
+  }
 
-  const [goalsRes, milestonesRes] = await Promise.all([
+  const [goalsRes, milestonesRes, savingsRes] = await Promise.all([
     supabase
       .from('goals')
       .select('*')
@@ -117,10 +146,18 @@ export async function getGoals(): Promise<GoalWithProgress[]> {
       .eq('user_id', user.id)
       .order('sort_order', { ascending: true })
       .order('created_at', { ascending: true }),
+    householdId
+      ? supabase.from('savings').select('id, name, current_amount, target_amount').eq('household_id', householdId)
+      : Promise.resolve({ data: [] as unknown[] }),
   ]);
 
   const goals = (goalsRes.data as Goal[]) || [];
   const milestones = (milestonesRes.data as Milestone[]) || [];
+
+  const savings = new Map<string, SavingInfo>();
+  for (const s of (savingsRes.data as { id: string; name: string; current_amount: number; target_amount: number }[]) || []) {
+    savings.set(s.id, { name: s.name, current: Number(s.current_amount) || 0, target: Number(s.target_amount) || 0 });
+  }
 
   const byGoal = new Map<string, Milestone[]>();
   for (const m of milestones) {
@@ -129,7 +166,24 @@ export async function getGoals(): Promise<GoalWithProgress[]> {
     byGoal.set(m.goal_id, list);
   }
 
-  return withProgress(goals, byGoal);
+  return withProgress(goals, byGoal, savings);
+}
+
+/** Ahorros del hogar disponibles para vincular a una meta. */
+export async function getLinkableSavings(): Promise<{ id: string; name: string }[]> {
+  const supabase = await createClient();
+  let householdId: string | null = null;
+  try {
+    householdId = await getActiveHouseholdId();
+  } catch {
+    return [];
+  }
+  const { data } = await supabase
+    .from('savings')
+    .select('id, name')
+    .eq('household_id', householdId)
+    .order('name', { ascending: true });
+  return (data as { id: string; name: string }[]) || [];
 }
 
 /** Metas archivadas (para el historial). */

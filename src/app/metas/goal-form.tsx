@@ -12,7 +12,7 @@ import { InlineMessage } from '@/components/ui/inline-message';
 
 const UNITS = ['$', 'km', 'kg', 'libros', 'días', 'veces', 'horas'];
 
-export default function GoalForm() {
+export default function GoalForm({ savings }: { savings: { id: string; name: string }[] }) {
   const [state, formAction] = useActionState(addGoal, IDLE_STATE);
   const [mode, setMode] = useState<'hitos' | 'cantidad'>('hitos');
   const formRef = useRef<HTMLFormElement>(null);
@@ -91,9 +91,14 @@ export default function GoalForm() {
               ))}
             </Select>
           </Field>
-          <p className="text-[11px] text-slate-500 pb-3">
-            Registrarás tu avance (ej: +$50.000) y la barra se llena sola.
-          </p>
+          <Field label="Vincular a ahorro (opcional)">
+            <Select name="saving_id" defaultValue="">
+              <option value="" className="bg-[#0A0C10]">Sin vincular</option>
+              {savings.map((s) => (
+                <option key={s.id} value={s.id} className="bg-[#0A0C10]">{s.name}</option>
+              ))}
+            </Select>
+          </Field>
         </div>
       )}
 

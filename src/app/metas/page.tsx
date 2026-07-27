@@ -1,5 +1,5 @@
 import { Target, Archive, RotateCcw, Trash2 } from 'lucide-react';
-import { getGoals, getArchivedGoals, summarizeGoals } from '@/services/metas';
+import { getGoals, getArchivedGoals, getLinkableSavings, summarizeGoals } from '@/services/metas';
 import { setGoalStatus, deleteGoal } from './actions';
 import GoalForm from './goal-form';
 import GoalCard from './goal-card';
@@ -7,7 +7,7 @@ import GoalCard from './goal-card';
 export const dynamic = 'force-dynamic';
 
 export default async function MetasPage() {
-  const [goals, archived] = await Promise.all([getGoals(), getArchivedGoals()]);
+  const [goals, archived, savings] = await Promise.all([getGoals(), getArchivedGoals(), getLinkableSavings()]);
   const summary = summarizeGoals(goals);
 
   const active = goals.filter((g) => g.status === 'active');
@@ -41,7 +41,7 @@ export default async function MetasPage() {
       </div>
 
       {/* FORMULARIO */}
-      <GoalForm />
+      <GoalForm savings={savings} />
 
       {/* LISTA ACTIVAS */}
       {active.length === 0 && done.length === 0 ? (

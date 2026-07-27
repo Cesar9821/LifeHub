@@ -38,13 +38,17 @@ const goalSchema = z.object({
   target_date: zOptionalDate,
   target_value: zTargetValue,
   unit: zOptionalText,
+  saving_id: z
+    .string()
+    .optional()
+    .transform((v) => (v && v.trim() !== '' ? v.trim() : null)),
 });
 
 /** Crea una meta nueva. Contrato FormState (useActionState). */
 export async function addGoal(_prev: FormState, formData: FormData): Promise<FormState> {
   const parsed = parseForm(goalSchema, formData);
   if (!parsed.success) return parsed.state;
-  const { title, description, motive, category, target_date, target_value, unit } = parsed.data;
+  const { title, description, motive, category, target_date, target_value, unit, saving_id } = parsed.data;
 
   const supabase = await createClient();
   const user = await requireUser();
@@ -68,6 +72,7 @@ export async function addGoal(_prev: FormState, formData: FormData): Promise<For
       target_date,
       target_value,
       unit: target_value != null ? unit || '$' : null,
+      saving_id,
       status: 'active',
     },
   ]);
