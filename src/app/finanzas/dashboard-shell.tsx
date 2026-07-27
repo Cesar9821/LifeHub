@@ -45,6 +45,7 @@ export default function DashboardShell({
     { icon: <LayoutDashboard size={18} />, label: 'Dashboard', href: '/finanzas/dashboard' },
     { icon: <Activity size={18} />, label: 'Movimientos', href: '/finanzas/movimientos' },
     { icon: <Repeat size={18} />, label: 'Planificación', href: '/finanzas/planificacion' },
+    { icon: <PieChart size={18} />, label: 'Presupuestos', href: '/finanzas/presupuestos' },
     { icon: <Target size={18} />, label: 'Ahorros', href: '/finanzas/savings' },
     { icon: <CreditCard size={18} />, label: 'Créditos', href: '/finanzas/credits' },
     { icon: <Tag size={18} />, label: 'Categorías', href: '/finanzas/categories' },

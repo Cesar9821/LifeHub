@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   ArrowRight,
   Target,
+  Landmark,
 } from 'lucide-react';
 import { getDashboardData } from '@/services/dashboard-v2';
 import { normalizePeriod, periodLabel, isCurrentPeriod } from '@/services/movements';
@@ -143,6 +144,27 @@ export default async function DashboardPage({
         >
           Ajustar planificación <ArrowRight size={12} />
         </Link>
+      </div>
+
+      {/* PATRIMONIO NETO */}
+      <div className="bg-gradient-to-br from-teal-500/10 to-transparent border border-teal-500/20 p-6 md:p-8 rounded-[2rem] backdrop-blur-xl">
+        <div className="flex items-center gap-2 mb-3">
+          <Landmark size={16} className="text-teal-400" />
+          <p className="text-[9px] font-black text-teal-400/80 uppercase tracking-[0.2em]">
+            Patrimonio neto (ahorros − deuda)
+          </p>
+        </div>
+        <p
+          className={`text-3xl sm:text-4xl md:text-5xl font-black font-mono leading-none break-all ${
+            d.totalSavings - d.totalDebt >= 0 ? 'text-white' : 'text-rose-400'
+          }`}
+        >
+          {CLP(d.totalSavings - d.totalDebt)}
+        </p>
+        <div className="flex items-center gap-5 mt-5">
+          <span className="text-xs font-bold text-teal-400 font-mono">+{CLP(d.totalSavings)} ahorros</span>
+          <span className="text-xs font-bold text-rose-400 font-mono">−{CLP(d.totalDebt)} deuda</span>
+        </div>
       </div>
 
       {/* PATRIMONIO */}
