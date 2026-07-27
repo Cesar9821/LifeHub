@@ -1,7 +1,7 @@
 import { getPerformanceData } from './actions'
 import { normalizePeriod, periodLabel, isCurrentPeriod } from '@/services/movements'
 import MonthSelector from '../movimientos/month-selector'
-import { ArrowUpRight, Activity, Target, Zap, ShieldCheck, AlertCircle, Wallet, Lightbulb, TrendingUp } from 'lucide-react'
+import { Activity, Target, Zap, ShieldCheck, AlertCircle, Wallet, Lightbulb, TrendingUp } from 'lucide-react'
 
 const formatFull = (n: number) => 
   new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 }).format(n);
@@ -63,7 +63,7 @@ export default async function PerformancePage({
 
       {/* SECCIÓN DE INSIGHTS (INTELIGENCIA ESTRATÉGICA) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {data.insights.map((insight: any) => (
+        {data.insights.map((insight: { id: string; title: string; desc: string; action: string }) => (
           <div key={insight.id} className="bg-slate-900/40 border border-white/5 p-8 rounded-[2.5rem] hover:bg-slate-900/60 transition-all group relative overflow-hidden">
             <div className="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition-opacity">
                {insight.id === 'saving' && <Target size={100} />}
@@ -81,7 +81,7 @@ export default async function PerformancePage({
             </div>
             
             <h4 className="font-black uppercase text-[10px] tracking-[0.2em] text-slate-500 mb-2">{insight.title}</h4>
-            <p className="text-white text-lg font-bold leading-tight mb-6 italic group-hover:text-indigo-400 transition-colors">"{insight.desc}"</p>
+            <p className="text-white text-lg font-bold leading-tight mb-6 italic group-hover:text-indigo-400 transition-colors">&ldquo;{insight.desc}&rdquo;</p>
             
             <div className="bg-black/40 p-4 rounded-2xl border border-white/5 backdrop-blur-md">
               <p className="text-[9px] font-black text-indigo-500 uppercase mb-1 tracking-tighter">Protocolo de Acción:</p>
@@ -182,7 +182,7 @@ export default async function PerformancePage({
   )
 }
 
-function StatCard({ label, value, color }: any) {
+function StatCard({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div className="bg-[#0A0C10] border border-white/5 p-8 rounded-[2.5rem] hover:border-indigo-500/30 transition-all group shadow-xl">
       <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6 group-hover:text-slate-300 transition-colors">{label}</p>

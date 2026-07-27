@@ -39,6 +39,7 @@ export default function DashboardShell({
 
   // Efecto para cerrar el sidebar automáticamente al cambiar de ruta en móviles
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsSidebarOpen(false);
   }, [pathname]);
 

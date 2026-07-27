@@ -1,4 +1,4 @@
-import { Repeat, Plus, Trash2, TrendingUp, TrendingDown, Power, Wallet } from 'lucide-react';
+import { Repeat, Trash2, TrendingUp, TrendingDown, Power } from 'lucide-react';
 import { getRecurringItems } from '@/services/movements';
 import { getCategoryNamesByKind } from '@/services/categories';
 import { deleteRecurring, toggleRecurring } from './actions';
@@ -20,9 +20,6 @@ export default async function PlanificacionPage() {
   const totalIncome = incomes.filter((i) => i.is_active).reduce((a, i) => a + i.amount, 0);
   const totalExpense = expenses.filter((i) => i.is_active).reduce((a, i) => a + i.amount, 0);
   const freeMonthly = totalIncome - totalExpense;
-
-  const inputStyles =
-    'bg-slate-900/50 border border-slate-800 rounded-xl p-3 text-sm text-white placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all backdrop-blur-md w-full';
 
   return (
     <div className="space-y-8 md:space-y-12 pb-20">
