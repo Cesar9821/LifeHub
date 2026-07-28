@@ -10,6 +10,7 @@ import {
   isCurrentPeriod,
 } from '@/services/movements';
 import { getCategoryNamesByKind } from '@/services/categories';
+import { getHouseholdMembers } from '@/services/household';
 import MovementRow from './movement-row';
 import VariableForm from './variable-form';
 import MonthSelector from './month-selector';
@@ -33,14 +34,17 @@ export default async function MovimientosPage({
     await ensureMonthGenerated(period);
   }
 
-  const [movements, categories, recurringItems] = await Promise.all([
+  const [movements, categories, recurringItems, members] = await Promise.all([
     getMovements(period),
     getCategoryNamesByKind(),
     getRecurringItems(),
+    getHouseholdMembers(),
   ]);
 
   const summary = summarize(movements);
   const variableMap = new Map(recurringItems.map((r) => [r.id, r.is_variable]));
+  // Solo el primer nombre de cada miembro, por user_id.
+  const firstNameById = new Map(members.map((m) => [m.user_id, m.full_name.trim().split(/\s+/)[0]]));
 
   const monthLabel = periodLabel(period);
 
@@ -66,6 +70,7 @@ export default async function MovimientosPage({
       dueDate={m.due_date}
       dateState={m.date_state}
       isVariable={m.recurring_id ? variableMap.get(m.recurring_id) || false : false}
+      registeredBy={m.created_by ? firstNameById.get(m.created_by) ?? null : null}
     />
   );
 

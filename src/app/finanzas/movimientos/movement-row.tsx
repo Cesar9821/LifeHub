@@ -17,6 +17,7 @@ interface Props {
   dueDate: string;
   dateState: 'overdue' | 'today' | 'upcoming';
   isVariable: boolean;
+  registeredBy?: string | null;
 }
 
 function clp(n: number) {
@@ -70,6 +71,7 @@ export default function MovementRow(p: Props) {
                   : 'Próximo'}
                 {' · '}
                 {p.category}
+                {p.registeredBy && ` · ${p.registeredBy}`}
               </span>
             </div>
           </div>
