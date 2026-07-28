@@ -62,15 +62,31 @@ export default function VariableForm({
         </div>
         <div className="flex flex-col gap-1.5">
           <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-1">Tipo</label>
-          <select
-            name="kind"
-            value={kind}
-            onChange={(e) => setKind(e.target.value as 'income' | 'expense')}
-            className={`${inputStyles} appearance-none pr-8`}
-          >
-            <option value="expense" className="bg-[#0A0C10]">Gasto</option>
-            <option value="income" className="bg-[#0A0C10]">Ingreso</option>
-          </select>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setKind('expense')}
+              className={`py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all active:scale-95 ${
+                kind === 'expense'
+                  ? 'bg-rose-500/20 border border-rose-500/40 text-rose-300'
+                  : 'bg-black/20 border border-white/5 text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              Gasto
+            </button>
+            <button
+              type="button"
+              onClick={() => setKind('income')}
+              className={`py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all active:scale-95 ${
+                kind === 'income'
+                  ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-300'
+                  : 'bg-black/20 border border-white/5 text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              Ingreso
+            </button>
+          </div>
+          <input type="hidden" name="kind" value={kind} />
         </div>
         <div className="flex flex-col gap-1.5">
           <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-1">Monto</label>

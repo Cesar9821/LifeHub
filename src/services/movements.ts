@@ -18,6 +18,7 @@ export type DateState = 'overdue' | 'today' | 'upcoming';
 export interface Movement {
   id: string;
   recurring_id: string | null;
+  created_by: string | null;
   description: string;
   kind: 'income' | 'expense';
   category: string;

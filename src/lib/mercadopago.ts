@@ -51,6 +51,9 @@ export interface MpPayment {
   transaction_amount: number;
   date_created: string;
   status: string;
+  /** Quién recibió el pago (si coincide con tu cuenta = ingreso). */
+  collector_id?: number | string;
+  operation_type?: string;
 }
 
 /** Últimos pagos (cobros) de la cuenta conectada. */

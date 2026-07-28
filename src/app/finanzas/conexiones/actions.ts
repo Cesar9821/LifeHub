@@ -24,10 +24,11 @@ export async function syncMercadoPago() {
 
   const { data: conn } = await supabase
     .from('mp_connections')
-    .select('access_token')
+    .select('access_token, mp_user_id')
     .eq('user_id', user.id)
     .maybeSingle();
   if (!conn?.access_token) return;
+  const mpUserId = String(conn.mp_user_id || '');
 
   const payments = (await mpFetchPayments(conn.access_token)).filter((p) => p.status === 'approved');
   if (payments.length === 0) {
@@ -45,21 +46,26 @@ export async function syncMercadoPago() {
 
   const rows = payments
     .filter((p) => !already.has(`mp:${p.id}`))
-    .map((p) => ({
-      household_id: householdId,
-      created_by: user.id,
-      recurring_id: null,
-      external_id: `mp:${p.id}`,
-      description: `MP: ${p.description || 'Pago'} (#${p.id})`,
-      kind: 'income',
-      category: 'Mercado Pago',
-      estimated_amount: p.transaction_amount,
-      actual_amount: p.transaction_amount,
-      status: 'confirmed',
-      confirmed_at: p.date_created,
-      due_date: p.date_created.slice(0, 10),
-      period_month: periodOf(new Date(p.date_created)),
-    }));
+    .map((p) => {
+      // Si tu cuenta es quien RECIBIÓ el pago → ingreso; si pagaste → gasto.
+      const isIncome = mpUserId !== '' && String(p.collector_id ?? '') === mpUserId;
+      const kind = isIncome ? 'income' : 'expense';
+      return {
+        household_id: householdId,
+        created_by: user.id,
+        recurring_id: null,
+        external_id: `mp:${p.id}`,
+        description: `${isIncome ? 'MP recibido' : 'MP gasto'}: ${p.description || 'Pago'} (#${p.id})`,
+        kind,
+        category: 'Mercado Pago',
+        estimated_amount: p.transaction_amount,
+        actual_amount: p.transaction_amount,
+        status: 'confirmed',
+        confirmed_at: p.date_created,
+        due_date: p.date_created.slice(0, 10),
+        period_month: periodOf(new Date(p.date_created)),
+      };
+    });
 
   if (rows.length > 0) {
     const { error } = await supabase.from('movements').insert(rows);

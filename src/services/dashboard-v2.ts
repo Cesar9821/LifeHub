@@ -31,6 +31,8 @@ export interface DashboardData {
   /** Presupuesto global: límite total y gastado en categorías con presupuesto */
   budgetTotal: number;
   budgetSpent: number;
+  /** Ingresos y gastos confirmados del mes por persona del hogar */
+  byPerson: { user_id: string; income: number; expense: number }[];
 }
 
 const SHORT_MONTHS = [
@@ -90,6 +92,18 @@ export async function getDashboardData(
     .map(([category, total]) => ({ category, total }))
     .sort((a, b) => b.total - a.total)
     .slice(0, 6);
+
+  // Ingresos y gastos confirmados por persona del hogar (created_by)
+  const personMap = new Map<string, { income: number; expense: number }>();
+  for (const m of movements) {
+    if (m.status !== 'confirmed') continue;
+    const key = m.created_by || '';
+    const p = personMap.get(key) || { income: 0, expense: 0 };
+    if (m.kind === 'income') p.income += m.effective_amount;
+    else p.expense += m.effective_amount;
+    personMap.set(key, p);
+  }
+  const byPerson = [...personMap.entries()].map(([user_id, v]) => ({ user_id, income: v.income, expense: v.expense }));
 
   // Presupuesto global del mes (suma de límites vs gastado en esas categorías)
   const budgetsData = (budgetsRes.data as { category: string; amount: number }[]) || [];
@@ -153,5 +167,6 @@ export async function getDashboardData(
     prevExpense,
     budgetTotal,
     budgetSpent,
+    byPerson,
   };
 }

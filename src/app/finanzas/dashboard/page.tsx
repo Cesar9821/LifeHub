@@ -15,8 +15,10 @@ import {
   PieChart,
   ArrowDown,
   ArrowUp,
+  Users,
 } from 'lucide-react';
 import { getDashboardData } from '@/services/dashboard-v2';
+import { getHouseholdMembers } from '@/services/household';
 import { normalizePeriod, periodLabel, isCurrentPeriod } from '@/services/movements';
 import MonthSelector from '../movimientos/month-selector';
 
@@ -29,7 +31,8 @@ export default async function DashboardPage({
 }) {
   const params = await searchParams;
   const period = normalizePeriod(params?.mes);
-  const d = await getDashboardData(period);
+  const [d, members] = await Promise.all([getDashboardData(period), getHouseholdMembers()]);
+  const nameById = new Map(members.map((m) => [m.user_id, m.full_name]));
   const isCurrent = isCurrentPeriod(period);
 
   const maxTrend = Math.max(...d.trend.map((t) => Math.abs(t.balance)), 1);
@@ -177,6 +180,27 @@ export default async function DashboardPage({
           )}
         </Link>
       </div>
+
+      {/* POR PERSONA */}
+      {d.byPerson.length > 0 && (
+        <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-8 backdrop-blur-xl">
+          <div className="flex items-center gap-2 mb-6">
+            <Users size={16} className="text-indigo-400" />
+            <h2 className="text-sm font-black text-white uppercase tracking-[0.2em]">Por persona</h2>
+          </div>
+          <div className="space-y-3">
+            {d.byPerson.map((p) => (
+              <div key={p.user_id} className="flex items-center justify-between gap-3 border-b border-white/5 pb-3 last:border-0 last:pb-0">
+                <span className="text-sm font-bold text-slate-200">{nameById.get(p.user_id) || 'Alguien'}</span>
+                <div className="flex items-center gap-4 font-mono">
+                  <span className="text-xs font-bold text-emerald-400">+{CLP(p.income)}</span>
+                  <span className="text-xs font-bold text-rose-400">−{CLP(p.expense)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* PRESUPUESTADO VS REAL */}
       <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-8 backdrop-blur-xl">
