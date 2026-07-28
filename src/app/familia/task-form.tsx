@@ -44,8 +44,15 @@ export default function TaskForm({
             ))}
           </Select>
         </Field>
-        <Field label="Fecha (opcional)" className="md:w-44">
+        <Field label="Fecha (opcional)" className="md:w-40">
           <Input name="due_date" type="date" />
+        </Field>
+        <Field label="Repetir" className="md:w-36">
+          <Select name="repeat" defaultValue="none">
+            <option value="none" className="bg-[#0A0C10]">No</option>
+            <option value="weekly" className="bg-[#0A0C10]">Cada semana</option>
+            <option value="monthly" className="bg-[#0A0C10]">Cada mes</option>
+          </Select>
         </Field>
         <SubmitButton pendingText="Agregando…">
           <Plus size={15} /> Agregar

@@ -27,13 +27,21 @@ const taskSchema = z.object({
     .transform((v) => (v.trim() === '' ? null : v.trim()))
     .nullable(),
   due_date: zOptionalDate,
+  repeat: z.enum(['none', 'weekly', 'monthly']).default('none'),
 });
+
+/** Avanza una fecha YYYY-MM-DD según el período. */
+function advanceDate(dateStr: string, repeat: 'weekly' | 'monthly'): string {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const next = repeat === 'weekly' ? Date.UTC(y, m - 1, d + 7) : Date.UTC(y, m, d);
+  return new Date(next).toISOString().slice(0, 10);
+}
 
 /** Crea una tarea del hogar (opcionalmente asignada y con fecha). */
 export async function addTask(_prev: FormState, formData: FormData): Promise<FormState> {
   const parsed = parseForm(taskSchema, formData);
   if (!parsed.success) return parsed.state;
-  const { title, assigned_to, due_date } = parsed.data;
+  const { title, assigned_to, due_date, repeat } = parsed.data;
 
   const supabase = await createClient();
   const user = await requireUser();
@@ -46,6 +54,7 @@ export async function addTask(_prev: FormState, formData: FormData): Promise<For
       title,
       assigned_to,
       due_date,
+      repeat,
     },
   ]);
 
@@ -101,22 +110,44 @@ export async function updateTask(_prev: FormState, formData: FormData): Promise<
   return successState('Tarea actualizada.');
 }
 
-/** Marca/desmarca una tarea como hecha. */
+/** Marca/desmarca una tarea. Al completar una recurrente, genera la siguiente. */
 export async function toggleTask(formData: FormData) {
   const supabase = await createClient();
+  const user = await requireUser();
   const householdId = await getActiveHouseholdId();
 
   const id = String(formData.get('id') || '');
   const done = formData.get('done') === 'true';
   if (!id) return;
+  const nowDone = !done;
 
   const { error } = await supabase
     .from('household_tasks')
-    .update({ done: !done, done_at: !done ? new Date().toISOString() : null })
+    .update({ done: nowDone, done_at: nowDone ? new Date().toISOString() : null })
     .eq('id', id)
     .eq('household_id', householdId);
-
   failIf(error, 'No se pudo actualizar la tarea');
+
+  if (nowDone) {
+    const { data: task } = await supabase
+      .from('household_tasks')
+      .select('title, assigned_to, due_date, repeat')
+      .eq('id', id)
+      .maybeSingle();
+    if (task && task.repeat && task.repeat !== 'none' && task.due_date) {
+      await supabase.from('household_tasks').insert([
+        {
+          household_id: householdId,
+          created_by: user.id,
+          title: task.title,
+          assigned_to: task.assigned_to,
+          due_date: advanceDate(task.due_date, task.repeat as 'weekly' | 'monthly'),
+          repeat: task.repeat,
+        },
+      ]);
+    }
+  }
+
   revalidate();
 }
 

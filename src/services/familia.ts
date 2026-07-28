@@ -9,6 +9,7 @@ export interface HouseholdTask {
   assigned_to: string | null;
   due_date: string | null;
   done: boolean;
+  repeat: 'none' | 'weekly' | 'monthly';
   created_at: string;
 }
 
@@ -43,7 +44,7 @@ export async function getTasks(): Promise<HouseholdTask[]> {
 
   const { data, error } = await supabase
     .from('household_tasks')
-    .select('id, title, notes, assigned_to, due_date, done, created_at')
+    .select('id, title, notes, assigned_to, due_date, done, repeat, created_at')
     .eq('household_id', householdId)
     .order('done', { ascending: true })
     .order('due_date', { ascending: true, nullsFirst: false })

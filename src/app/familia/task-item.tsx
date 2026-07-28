@@ -115,6 +115,11 @@ export default function TaskItem({
               <CalendarClock size={12} /> {due.text}
             </span>
           )}
+          {t.repeat !== 'none' && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-orange-400/70 uppercase tracking-wide">
+              🔁 {t.repeat === 'weekly' ? 'Semanal' : 'Mensual'}
+            </span>
+          )}
         </div>
       </div>
 
