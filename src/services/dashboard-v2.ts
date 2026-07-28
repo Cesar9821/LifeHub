@@ -24,6 +24,13 @@ export interface DashboardData {
   healthScore: number;
   /** Gasto confirmado por categoría (top del mes) */
   byCategory: { category: string; total: number }[];
+  /** Ingreso confirmado por categoría (top del mes) */
+  byIncomeCategory: { category: string; total: number }[];
+  /** Gasto confirmado del mes anterior */
+  prevExpense: number;
+  /** Presupuesto global: límite total y gastado en categorías con presupuesto */
+  budgetTotal: number;
+  budgetSpent: number;
 }
 
 const SHORT_MONTHS = [
@@ -37,7 +44,7 @@ export async function getDashboardData(
   const supabase = await createClient();
   const householdId = await getActiveHouseholdId();
 
-  const [movements, recurringRes, savingsRes, creditsRes] = await Promise.all([
+  const [movements, recurringRes, savingsRes, creditsRes, budgetsRes] = await Promise.all([
     getMovements(period),
     supabase
       .from('recurring_items')
@@ -51,6 +58,10 @@ export async function getDashboardData(
     supabase
       .from('credits')
       .select('remaining_amount')
+      .eq('household_id', householdId),
+    supabase
+      .from('budgets')
+      .select('category, amount')
       .eq('household_id', householdId),
   ]);
 
@@ -67,6 +78,23 @@ export async function getDashboardData(
     .map(([category, total]) => ({ category, total }))
     .sort((a, b) => b.total - a.total)
     .slice(0, 6);
+
+  // Ingreso confirmado por categoría (de dónde viene la plata)
+  const incCatMap = new Map<string, number>();
+  for (const m of movements) {
+    if (m.kind === 'income' && m.status === 'confirmed') {
+      incCatMap.set(m.category, (incCatMap.get(m.category) || 0) + m.effective_amount);
+    }
+  }
+  const byIncomeCategory = [...incCatMap.entries()]
+    .map(([category, total]) => ({ category, total }))
+    .sort((a, b) => b.total - a.total)
+    .slice(0, 6);
+
+  // Presupuesto global del mes (suma de límites vs gastado en esas categorías)
+  const budgetsData = (budgetsRes.data as { category: string; amount: number }[]) || [];
+  const budgetTotal = budgetsData.reduce((a, b) => a + Number(b.amount), 0);
+  const budgetSpent = budgetsData.reduce((a, b) => a + (catMap.get(b.category) || 0), 0);
 
   const recurring = recurringRes.data || [];
   const plannedIncome = recurring
@@ -96,6 +124,12 @@ export async function getDashboardData(
     return { label: SHORT_MONTHS[m - 1], balance: s.balance };
   });
 
+  // Gasto confirmado del mes anterior (para comparar)
+  const prevMovs = trendMovements[trendMovements.length - 2] || [];
+  const prevExpense = prevMovs
+    .filter((m) => m.kind === 'expense' && m.status === 'confirmed')
+    .reduce((a, m) => a + m.effective_amount, 0);
+
   // Salud: qué proporción de tus ingresos confirmados te queda
   const healthScore =
     month.incomeConfirmed > 0
@@ -115,5 +149,9 @@ export async function getDashboardData(
     trend,
     healthScore,
     byCategory,
+    byIncomeCategory,
+    prevExpense,
+    budgetTotal,
+    budgetSpent,
   };
 }

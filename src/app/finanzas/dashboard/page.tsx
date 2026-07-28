@@ -12,6 +12,9 @@ import {
   Target,
   Landmark,
   ShieldCheck,
+  PieChart,
+  ArrowDown,
+  ArrowUp,
 } from 'lucide-react';
 import { getDashboardData } from '@/services/dashboard-v2';
 import { normalizePeriod, periodLabel, isCurrentPeriod } from '@/services/movements';
@@ -36,6 +39,12 @@ export default async function DashboardPage({
   const fundPct = Math.min(100, Math.round((monthsCovered / 6) * 100));
   const fundText = monthsCovered >= 6 ? 'text-emerald-400' : monthsCovered >= 3 ? 'text-amber-400' : 'text-rose-400';
   const fundBar = monthsCovered >= 6 ? 'bg-emerald-500' : monthsCovered >= 3 ? 'bg-amber-500' : 'bg-rose-500';
+
+  // Comparación con el mes anterior y presupuesto global
+  const expenseChange = d.prevExpense > 0 ? Math.round(((d.month.expenseConfirmed - d.prevExpense) / d.prevExpense) * 100) : null;
+  const budgetPct = d.budgetTotal > 0 ? Math.round((d.budgetSpent / d.budgetTotal) * 100) : 0;
+  const budgetBar = budgetPct > 100 ? 'bg-rose-500' : budgetPct >= 80 ? 'bg-amber-500' : 'bg-emerald-500';
+  const budgetTextC = budgetPct > 100 ? 'text-rose-400' : budgetPct >= 80 ? 'text-amber-400' : 'text-emerald-400';
 
   // Progreso presupuestado vs real
   const expenseProgress =
@@ -117,6 +126,56 @@ export default async function DashboardPage({
             )}
           </div>
         </div>
+      </div>
+
+      {/* CONTROL DEL MES */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-slate-900/40 border border-white/5 p-6 rounded-[2rem] backdrop-blur-xl">
+          <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3">Gasto vs mes anterior</p>
+          {expenseChange === null ? (
+            <p className="text-2xl font-black text-slate-400 font-mono">Sin comparación</p>
+          ) : (
+            <div className="flex items-center gap-2">
+              {expenseChange > 0 ? (
+                <ArrowUp size={22} className="text-rose-400" />
+              ) : (
+                <ArrowDown size={22} className="text-emerald-400" />
+              )}
+              <p className={`text-3xl font-black font-mono ${expenseChange > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                {Math.abs(expenseChange)}%
+              </p>
+            </div>
+          )}
+          <p className="text-[11px] text-slate-500 mt-2">
+            {CLP(d.month.expenseConfirmed)} este mes · {CLP(d.prevExpense)} el anterior
+          </p>
+        </div>
+
+        <Link
+          href="/finanzas/presupuestos"
+          className="bg-slate-900/40 border border-white/5 p-6 rounded-[2rem] backdrop-blur-xl hover:border-white/10 transition-all block"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em]">Presupuesto del mes</p>
+            <PieChart size={14} className="text-slate-500" />
+          </div>
+          {d.budgetTotal > 0 ? (
+            <>
+              <div className="flex items-baseline gap-2 mb-2">
+                <span className="text-2xl font-black font-mono text-white">{CLP(d.budgetSpent)}</span>
+                <span className="text-xs font-mono text-slate-500">/ {CLP(d.budgetTotal)}</span>
+              </div>
+              <div className="h-2 bg-black/40 rounded-full overflow-hidden">
+                <div className={`h-full ${budgetBar} rounded-full`} style={{ width: `${Math.min(100, budgetPct)}%` }} />
+              </div>
+              <p className={`text-[11px] font-black mt-2 ${budgetTextC}`}>
+                {budgetPct}% usado{d.budgetTotal > d.budgetSpent ? ` · quedan ${CLP(d.budgetTotal - d.budgetSpent)}` : ''}
+              </p>
+            </>
+          ) : (
+            <p className="text-sm text-slate-500 font-medium">Fija límites por categoría para controlar el gasto →</p>
+          )}
+        </Link>
       </div>
 
       {/* PRESUPUESTADO VS REAL */}
@@ -235,6 +294,33 @@ export default async function DashboardPage({
                   </div>
                   <div className="h-2 bg-black/40 rounded-full overflow-hidden">
                     <div className="h-full bg-rose-500/70 rounded-full" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* INGRESO POR CATEGORÍA */}
+      {d.byIncomeCategory.length > 0 && (
+        <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-8 backdrop-blur-xl">
+          <div className="flex items-center gap-2 mb-6">
+            <TrendingUp size={16} className="text-emerald-400" />
+            <h2 className="text-sm font-black text-white uppercase tracking-[0.2em]">Ingresos por categoría</h2>
+          </div>
+          <div className="space-y-4">
+            {d.byIncomeCategory.map((c) => {
+              const max = d.byIncomeCategory[0].total || 1;
+              const pct = Math.round((c.total / max) * 100);
+              return (
+                <div key={c.category}>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-bold text-slate-300 uppercase tracking-wide">{c.category}</span>
+                    <span className="text-xs font-mono font-bold text-emerald-400">{CLP(c.total)}</span>
+                  </div>
+                  <div className="h-2 bg-black/40 rounded-full overflow-hidden">
+                    <div className="h-full bg-emerald-500/70 rounded-full" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
               );
