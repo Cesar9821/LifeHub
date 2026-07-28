@@ -171,6 +171,21 @@ export interface HouseholdEvent {
   event_time: string | null;
 }
 
+/** Menú semanal del hogar: mapa "weekday_slot" → título. */
+export async function getMealPlan(): Promise<Record<string, string>> {
+  const supabase = await createClient();
+  const householdId = await getActiveHouseholdId();
+  const { data } = await supabase
+    .from('meal_plan')
+    .select('weekday, slot, title')
+    .eq('household_id', householdId);
+  const map: Record<string, string> = {};
+  for (const r of (data as { weekday: number; slot: string; title: string }[]) || []) {
+    map[`${r.weekday}_${r.slot}`] = r.title;
+  }
+  return map;
+}
+
 /** Eventos del hogar desde hoy en adelante, ordenados por fecha/hora. */
 export async function getUpcomingEvents(): Promise<HouseholdEvent[]> {
   const supabase = await createClient();

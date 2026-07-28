@@ -9,11 +9,13 @@ import {
   Repeat,
   CalendarDays,
   Clock,
+  UtensilsCrossed,
 } from 'lucide-react';
 import {
   getTasks,
   getShoppingData,
   getUpcomingEvents,
+  getMealPlan,
   summarizeFamilia,
   type ShoppingListWithItems,
   type ShoppingItem,
@@ -27,6 +29,7 @@ import TaskItem from './task-item';
 import ShoppingForm from './shopping-form';
 import ListForm from './list-form';
 import EventForm from './event-form';
+import MealPlanner from './meal-planner';
 import {
   toggleShoppingItem,
   deleteShoppingItem,
@@ -38,11 +41,12 @@ import {
 export const dynamic = 'force-dynamic';
 
 export default async function FamiliaPage() {
-  const [tasks, shoppingData, members, events] = await Promise.all([
+  const [tasks, shoppingData, members, events, mealPlan] = await Promise.all([
     getTasks(),
     getShoppingData(),
     getHouseholdMembers(),
     getUpcomingEvents(),
+    getMealPlan(),
   ]);
 
   const { lists, orphans, allItems } = shoppingData;
@@ -119,6 +123,15 @@ export default async function FamiliaPage() {
             ))}
           </div>
         )}
+      </section>
+
+      {/* MENÚ SEMANAL */}
+      <section className="space-y-5">
+        <div className="flex items-center gap-2 px-1">
+          <UtensilsCrossed size={18} className="text-orange-400" />
+          <h2 className="text-lg font-black text-white uppercase tracking-wider">Menú de la semana</h2>
+        </div>
+        <MealPlanner plan={mealPlan} />
       </section>
 
       {/* COMPRAS */}

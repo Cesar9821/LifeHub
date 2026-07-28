@@ -354,3 +354,29 @@ export async function deleteEvent(formData: FormData) {
   failIf(error, 'No se pudo eliminar el evento');
   revalidate();
 }
+
+/** Guarda el menú semanal completo (reemplaza el existente). */
+export async function setMealPlan(_prev: FormState, formData: FormData): Promise<FormState> {
+  const supabase = await createClient();
+  const householdId = await getActiveHouseholdId();
+
+  const rows: { household_id: string; weekday: number; slot: string; title: string }[] = [];
+  for (let d = 0; d < 7; d++) {
+    for (const slot of ['almuerzo', 'cena'] as const) {
+      const title = String(formData.get(`m_${d}_${slot}`) || '').trim();
+      if (title) rows.push({ household_id: householdId, weekday: d, slot, title });
+    }
+  }
+
+  await supabase.from('meal_plan').delete().eq('household_id', householdId);
+  if (rows.length > 0) {
+    const { error } = await supabase.from('meal_plan').insert(rows);
+    if (error) {
+      console.error('Error guardando menú:', error.message);
+      return errorState('No se pudo guardar el menú.');
+    }
+  }
+
+  revalidate();
+  return successState('Menú guardado.');
+}
