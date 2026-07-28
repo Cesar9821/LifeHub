@@ -40,6 +40,16 @@ export default async function MetasPage() {
         />
       </div>
 
+      {/* LOGROS */}
+      {summary.done > 0 && (
+        <div className="bg-gradient-to-br from-emerald-500/10 to-transparent border border-emerald-500/20 rounded-[1.75rem] p-5 flex items-center gap-3">
+          <span className="text-2xl">🏆</span>
+          <p className="text-sm font-black text-white">
+            Llevas {summary.done} meta{summary.done !== 1 ? 's' : ''} cumplida{summary.done !== 1 ? 's' : ''}. Cada una te forjó. Sigue.
+          </p>
+        </div>
+      )}
+
       {/* FORMULARIO */}
       <GoalForm savings={savings} />
 
