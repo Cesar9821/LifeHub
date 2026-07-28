@@ -95,18 +95,18 @@ export default async function MovimientosPage({
           <div className="flex items-center gap-2 mb-2">
             <Wallet size={16} className="text-indigo-400" />
             <p className="text-[9px] font-black text-indigo-400/80 uppercase tracking-[0.2em]">
-              Saldo líquido (confirmado)
+              Te queda (confirmado)
             </p>
           </div>
           <p className={`text-3xl sm:text-4xl font-black font-mono leading-none break-all ${summary.balance >= 0 ? 'text-white' : 'text-rose-400'}`}>
             {clp(summary.balance)}
           </p>
           <div className="flex items-center gap-4 mt-4">
-            <span className="text-[11px] font-bold text-emerald-400 font-mono">
-              +{clp(summary.incomeConfirmed)}
+            <span className="text-xs font-bold text-emerald-400 font-mono">
+              +{clp(summary.incomeConfirmed)} <span className="text-[8px] text-emerald-400/50 uppercase tracking-widest">ingresado</span>
             </span>
-            <span className="text-[11px] font-bold text-rose-400 font-mono">
-              −{clp(summary.expenseConfirmed)}
+            <span className="text-xs font-bold text-rose-400 font-mono">
+              −{clp(summary.expenseConfirmed)} <span className="text-[8px] text-rose-400/50 uppercase tracking-widest">gastado</span>
             </span>
           </div>
         </div>
