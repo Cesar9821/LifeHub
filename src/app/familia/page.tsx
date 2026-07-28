@@ -10,6 +10,7 @@ import {
   CalendarDays,
   Clock,
   UtensilsCrossed,
+  Trophy,
 } from 'lucide-react';
 import {
   getTasks,
@@ -53,6 +54,14 @@ export default async function FamiliaPage() {
   const summary = summarizeFamilia(tasks, allItems);
   const nameById = new Map(members.map((m) => [m.user_id, m.full_name]));
 
+  // Ranking del hogar: 1 punto por tarea completada asignada.
+  const points = new Map<string, number>();
+  for (const t of tasks) if (t.done && t.assigned_to) points.set(t.assigned_to, (points.get(t.assigned_to) || 0) + 1);
+  const ranking = members
+    .map((m) => ({ name: m.full_name, pts: points.get(m.user_id) || 0 }))
+    .sort((a, b) => b.pts - a.pts);
+  const hasPoints = ranking.some((r) => r.pts > 0);
+
   return (
     <div className="max-w-5xl mx-auto space-y-8 md:space-y-10 pb-20">
       {/* HEADER */}
@@ -75,6 +84,26 @@ export default async function FamiliaPage() {
         <StatTile label="Por comprar" value={String(summary.shoppingPending)} accent="text-orange-400" />
         <StatTile label="Completadas" value={String(summary.doneTasks)} accent="text-emerald-400" />
       </div>
+
+      {/* RANKING DEL HOGAR */}
+      {hasPoints && members.length > 1 && (
+        <div className="bg-slate-900/40 border border-white/5 rounded-[1.75rem] p-5 backdrop-blur-xl">
+          <div className="flex items-center gap-2 mb-3">
+            <Trophy size={16} className="text-amber-400" />
+            <h2 className="text-sm font-black text-white uppercase tracking-widest">Ranking del hogar</h2>
+          </div>
+          <div className="space-y-2">
+            {ranking.map((r, i) => (
+              <div key={r.name} className="flex items-center justify-between">
+                <span className="text-sm font-bold text-slate-200">
+                  {['🥇', '🥈', '🥉'][i] ?? '·'} {r.name}
+                </span>
+                <span className="text-sm font-black font-mono text-amber-400">{r.pts} pts</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* TAREAS */}
       <section className="space-y-5">
