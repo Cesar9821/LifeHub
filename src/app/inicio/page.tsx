@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, Sparkles, ListChecks } from 'lucide-react';
 import { requireUser } from '@/lib/auth';
@@ -17,6 +18,21 @@ import MonthSelector from '@/app/finanzas/movimientos/month-selector';
 import QuickAdd from './quick-add';
 
 export const dynamic = 'force-dynamic';
+
+// Ícono y nombre propios para diferenciar esta pantalla al agregarla a la
+// pantalla de inicio del iPhone (usa el apple-touch-icon de esta ruta).
+export const metadata: Metadata = {
+  title: 'Finanzas',
+  appleWebApp: {
+    capable: true,
+    title: 'Finanzas',
+    statusBarStyle: 'black-translucent',
+  },
+  icons: {
+    icon: '/icon-inicio-192.png',
+    apple: '/apple-icon-inicio.png',
+  },
+};
 
 export default async function InicioPage({
   searchParams,
