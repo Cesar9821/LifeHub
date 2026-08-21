@@ -54,10 +54,10 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Con sesión y visitando login/register -> al dashboard
+  // Con sesión y visitando login/register -> a la pantalla de inicio rápido
   if (user && (pathname.startsWith('/login') || pathname.startsWith('/register'))) {
     const url = request.nextUrl.clone();
-    url.pathname = '/hub';
+    url.pathname = '/inicio';
     return NextResponse.redirect(url);
   }
 

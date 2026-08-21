@@ -1,11 +1,11 @@
 {
-  "id": "/hub",
+  "id": "/inicio",
   "name": "LifeHub",
   "short_name": "LifeHub",
   "description": "Tu sistema personal: finanzas, mentalidad, familia y metas en un solo lugar.",
   "lang": "es-CL",
   "dir": "ltr",
-  "start_url": "/hub",
+  "start_url": "/inicio",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",

@@ -28,6 +28,7 @@ const variableSchema = z.object({
 });
 
 function revalidateAll() {
+  revalidatePath('/inicio');
   revalidatePath('/finanzas/movimientos');
   revalidatePath('/finanzas/dashboard');
   revalidatePath('/finanzas/performance');
