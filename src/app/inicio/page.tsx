@@ -1,21 +1,16 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, Sparkles, ListChecks } from 'lucide-react';
+import { AlertTriangle, ArrowRight, PiggyBank, TrendingDown, Wallet, Zap } from 'lucide-react';
 import { requireUser } from '@/lib/auth';
-import {
-  ensureMonthGenerated,
-  getMovements,
-  getRecurringItems,
-  periodOf,
-  normalizePeriod,
-  periodLabel,
-  isCurrentPeriod,
-} from '@/services/movements';
-import { getCategoryNamesByKind } from '@/services/categories';
-import { getHouseholdMembers } from '@/services/household';
-import MovementRow from '@/app/finanzas/movimientos/movement-row';
+import { formatCLP } from '@/lib/format';
+import { budgetStatus, STATUS_LABEL } from '@/lib/plan/budget';
+import { defaultMonth, expenseListItems, loadPlanPage, monthView, savedBefore } from '@/services/plan';
 import MonthSelector from '@/app/finanzas/movimientos/month-selector';
-import QuickAdd from './quick-add';
+import { QuickExpenseFab } from '@/components/finanzas/expense-sheet';
+import { ExpenseList } from '@/components/finanzas/expense-list';
+import { RealtimeRefresh } from '@/components/finanzas/realtime-refresh';
+import { SchemaMissingCard, SeedPlanCard } from '@/components/finanzas/seed-plan-card';
+import { UsageBar } from '@/components/finanzas/status-chip';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,106 +34,149 @@ export default async function InicioPage({
 }: {
   searchParams: Promise<{ mes?: string }>;
 }) {
-  const user = await requireUser();
+  await requireUser();
   const params = await searchParams;
-  const period = normalizePeriod(params?.mes);
+  const { plan, householdId, registrantById, myName, quick } = await loadPlanPage();
+  const firstName = myName.trim().split(/\s+/)[0] || 'Hola';
 
-  // Genera pendientes del mes en curso o futuros (no retroactivo).
-  if (period >= periodOf()) {
-    await ensureMonthGenerated(period);
-  }
+  const month = defaultMonth(plan, params?.mes);
+  const v = monthView(plan, month);
+  const saved = savedBefore(plan, month);
+  const totalStatus = budgetStatus(v.expenseBudget, v.spent);
+  const cmrRow = plan.cmr.months.find((m) => m.month === month);
+  const advances = plan.debtItems
+    .filter((d) => (cmrRow?.items[d.id]?.advance ?? 0) >= 1)
+    .map((d) => `${formatCLP(cmrRow!.items[d.id].advance)} a ${d.name}`);
 
-  const [movements, categories, recurringItems, members] = await Promise.all([
-    getMovements(period),
-    getCategoryNamesByKind(),
-    getRecurringItems(),
-    getHouseholdMembers(),
-  ]);
-
-  const variableMap = new Map(recurringItems.map((r) => [r.id, r.is_variable]));
-  const firstNameById = new Map(members.map((m) => [m.user_id, m.full_name.trim().split(/\s+/)[0]]));
-
-  // A qué fecha se registran los movimientos rápidos: hoy si es el mes en curso,
-  // o el primer día del mes elegido si es otro mes.
-  const dueDate = isCurrentPeriod(period) ? new Date().toISOString().slice(0, 10) : period;
-
-  const pending = movements.filter((m) => m.status === 'pending');
-
-  const rawName =
-    (user.user_metadata?.full_name as string | undefined) ??
-    (user.user_metadata?.name as string | undefined) ??
-    '';
-  const firstName = rawName.trim().split(/\s+/)[0] || 'Hola';
-
-  const renderRow = (m: (typeof movements)[number]) => (
-    <MovementRow
-      key={m.id}
-      id={m.id}
-      description={m.description}
-      kind={m.kind}
-      category={m.category}
-      estimatedAmount={m.estimated_amount}
-      actualAmount={m.actual_amount}
-      effectiveAmount={m.effective_amount}
-      status={m.status}
-      dueDate={m.due_date}
-      dateState={m.date_state}
-      isVariable={m.recurring_id ? variableMap.get(m.recurring_id) || false : false}
-      registeredBy={m.created_by ? firstNameById.get(m.created_by) ?? null : null}
-    />
-  );
+  const recent = expenseListItems(plan, v.movements.slice(0, 10), registrantById);
 
   return (
-    <div className="min-h-screen bg-[#050608] px-5 py-8">
-      <div className="max-w-lg mx-auto space-y-6">
+    <div className="min-h-screen bg-[#050608] px-4 sm:px-5 pt-8 pb-32">
+      <div className="max-w-lg mx-auto space-y-5">
         {/* SALUDO */}
-        <header className="space-y-1">
-          <p className="text-[10px] font-black text-indigo-400/80 uppercase tracking-[0.25em]">LifeHub · Finanzas</p>
-          <h1 className="text-3xl font-black text-white tracking-tight">
-            Hola, {firstName}<span className="text-indigo-500">.</span>
-          </h1>
-          <p className="text-sm font-medium text-slate-500">Registra rápido y sigue con tu día.</p>
+        <header className="flex items-start justify-between gap-3">
+          <div className="space-y-1">
+            <p className="text-[10px] font-black text-indigo-400/80 uppercase tracking-[0.25em]">LifeHub · Finanzas</p>
+            <h1 className="text-3xl font-black text-white tracking-tight">
+              {firstName === 'Hola' ? 'Hola' : `Hola, ${firstName}`}
+              <span className="text-indigo-500">.</span>
+            </h1>
+          </div>
+          <Link
+            href="/hub"
+            className="min-h-11 inline-flex items-center gap-1.5 px-3 rounded-xl border border-white/10 text-[10px] font-black text-slate-400 uppercase tracking-wider hover:text-white"
+          >
+            App <ArrowRight size={13} />
+          </Link>
         </header>
 
-        {/* MES DESTINO + CAMBIAR MES */}
-        <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-5 space-y-3">
-          <div className="flex items-center gap-2">
-            <Sparkles size={14} className="text-amber-400" />
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">
-              Registrando en <span className="text-white">{periodLabel(period)}</span>
-            </p>
-          </div>
-          <MonthSelector period={period} basePath="/inicio" />
-        </div>
+        {!plan.schemaReady ? (
+          <SchemaMissingCard />
+        ) : !plan.seeded ? (
+          <SeedPlanCard />
+        ) : (
+          <>
+            <MonthSelector period={month} basePath="/inicio" />
 
-        {/* BOTONES GRANDES: AGREGAR INGRESO / GASTO */}
-        <QuickAdd categories={categories} dueDate={dueDate} />
+            {/* DISPONIBLE */}
+            <section className="bg-gradient-to-br from-indigo-500/15 to-transparent border border-indigo-500/25 rounded-[2rem] p-6">
+              <p className="flex items-center gap-2 text-[10px] font-black text-indigo-300/90 uppercase tracking-[0.2em]">
+                <Wallet size={14} /> Disponible este mes
+              </p>
+              <p className={`mt-2 text-4xl font-black font-mono leading-none break-all ${v.available >= 0 ? 'text-white' : 'text-rose-400'}`}>
+                {formatCLP(v.available)}
+              </p>
+              <p className="mt-3 text-xs font-bold text-slate-400">
+                Ingresos {formatCLP(v.income)} · gastado {formatCLP(v.spent)}
+              </p>
+            </section>
 
-        {/* ENTRAR A LA APP */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* GASTADO VS PRESUPUESTO */}
+              <section className="bg-slate-900/40 border border-white/5 rounded-[1.5rem] p-4 space-y-2.5">
+                <p className="flex items-center gap-1.5 text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">
+                  <TrendingDown size={13} className="text-rose-400" /> Gastado
+                </p>
+                <p className="text-lg font-black font-mono text-white leading-none">{formatCLP(v.spent)}</p>
+                <UsageBar used={v.expenseBudget > 0 ? v.spent / v.expenseBudget : 0} status={totalStatus} />
+                <p className="text-[11px] font-bold text-slate-500">
+                  de {formatCLP(v.expenseBudget)}
+                  {v.expenseBudget > 0 && ` · ${Math.round((v.spent / v.expenseBudget) * 100)}%`}
+                </p>
+              </section>
+
+              {/* AHORRO ACUMULADO */}
+              <section className="bg-slate-900/40 border border-white/5 rounded-[1.5rem] p-4 space-y-2.5">
+                <p className="flex items-center gap-1.5 text-[9px] font-black text-slate-400 uppercase tracking-[0.15em]">
+                  <PiggyBank size={13} className="text-emerald-400" /> Ahorro acumulado
+                </p>
+                <p className={`text-lg font-black font-mono leading-none ${saved >= 0 ? 'text-emerald-300' : 'text-rose-400'}`}>
+                  {formatCLP(saved)}
+                </p>
+                <p className="text-[11px] font-bold text-slate-500">Meses ya cerrados del plan</p>
+              </section>
+            </div>
+
+            {/* ALERTAS */}
+            {v.alerts.length > 0 && (
+              <section className="bg-amber-500/5 border border-amber-500/20 rounded-[1.5rem] p-4 space-y-2">
+                <p className="flex items-center gap-2 text-[10px] font-black text-amber-300 uppercase tracking-[0.15em]">
+                  <AlertTriangle size={14} /> Atención
+                </p>
+                <ul className="space-y-1.5">
+                  {v.alerts.map((a) => (
+                    <li key={a.concept.id} className="flex items-center justify-between gap-3 text-sm">
+                      <span className="text-slate-200 font-bold truncate">{a.concept.name}</span>
+                      <span className={`text-xs font-black shrink-0 ${a.status === 'cerca' ? 'text-amber-300' : 'text-rose-300'}`}>
+                        {STATUS_LABEL[a.status]}
+                        {a.budget > 0 && ` · ${Math.round(a.used * 100)}%`}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {/* CMR: QUÉ ADELANTAR */}
+            {advances.length > 0 && (
+              <Link
+                href="/finanzas/credits"
+                className="flex items-start gap-3 bg-slate-900/40 border border-white/5 rounded-[1.5rem] p-4 hover:border-white/15"
+              >
+                <Zap size={16} className="text-amber-400 mt-0.5 shrink-0" />
+                <p className="text-sm text-slate-300">
+                  <span className="font-black text-white">CMR:</span> este mes paga {formatCLP(cmrRow!.total)} y adelanta{' '}
+                  {advances.join(' y ')}.
+                </p>
+              </Link>
+            )}
+
+            {/* ÚLTIMOS MOVIMIENTOS */}
+            <section className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[11px] font-black text-white uppercase tracking-[0.15em]">Últimos movimientos</h2>
+                <Link
+                  href={`/finanzas/presupuestos?mes=${month.slice(0, 7)}`}
+                  className="min-h-11 inline-flex items-center text-[10px] font-black text-indigo-400 uppercase tracking-wider"
+                >
+                  Ver presupuesto
+                </Link>
+              </div>
+              <ExpenseList items={recent} data={quick} />
+            </section>
+          </>
+        )}
+
         <Link
           href="/hub"
-          className="flex items-center justify-center gap-2 w-full py-4 rounded-[2rem] border border-white/10 bg-white/5 text-slate-300 font-black text-sm uppercase tracking-wider hover:bg-white/10 hover:text-white transition-all active:scale-95"
+          className="flex items-center justify-center gap-2 w-full min-h-12 rounded-[2rem] border border-white/10 bg-white/5 text-slate-300 font-black text-sm uppercase tracking-wider hover:bg-white/10 hover:text-white transition-all active:scale-95"
         >
           Entrar a la aplicación <ArrowRight size={16} />
         </Link>
-
-        {/* PREFIJADOS DEL MES: marcar como pagado / recibido */}
-        {pending.length > 0 && (
-          <section className="space-y-3 pt-2">
-            <div className="flex items-center gap-2">
-              <ListChecks size={15} className="text-emerald-400" />
-              <h2 className="text-[11px] font-black text-white uppercase tracking-[0.15em]">
-                Prefijados de {periodLabel(period)}
-              </h2>
-              <span className="text-[11px] font-bold text-slate-600">({pending.length})</span>
-            </div>
-            <p className="text-xs font-medium text-slate-500 -mt-1">
-              Marca lo que ya pagaste o recibiste este mes.
-            </p>
-            <div className="space-y-2.5">{pending.map(renderRow)}</div>
-          </section>
-        )}
       </div>
+
+      {plan.seeded && <QuickExpenseFab data={quick} />}
+      <RealtimeRefresh householdId={householdId} />
     </div>
   );
 }

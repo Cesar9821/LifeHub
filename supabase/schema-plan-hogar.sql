@@ -96,6 +96,9 @@ begin
 exception when duplicate_object then null;
 end $$;
 
+-- Quién registró: se completa solo con el usuario de la sesión en cualquier insert.
+alter table public.movements alter column created_by set default auth.uid();
+
 create index if not exists idx_mov_concept on public.movements(concept_id);
 create index if not exists idx_mov_debt_item on public.movements(debt_item_id);
 
@@ -125,6 +128,15 @@ drop trigger if exists on_movement_resolve_concept on public.movements;
 create trigger on_movement_resolve_concept
   before insert or update on public.movements
   for each row execute function public.movement_resolve_concept();
+
+-- FIX: borrar un movimiento confirmado fallaba ("tuple to be deleted was already
+-- modified"). El trigger BEFORE DELETE borraba la transacción y la FK
+-- (on delete set null) modificaba la misma fila que se estaba borrando.
+-- Como AFTER DELETE la fila ya no existe cuando se borra la transacción.
+drop trigger if exists on_movement_delete on public.movements;
+create trigger on_movement_delete
+  after delete on public.movements
+  for each row execute function public.cleanup_movement_transaction();
 
 -- ============================================================================
 --  RLS: solo los miembros del hogar ven y editan sus datos
