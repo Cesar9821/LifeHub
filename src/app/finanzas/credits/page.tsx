@@ -171,8 +171,8 @@ export default async function DeudaCmrPage() {
       />
 
       <p className="text-xs text-slate-500 px-1">
-        Para registrar un pago, usa &quot;+ Gasto&quot; con el concepto <span className="text-slate-300 font-bold">CMR plan casa</span> y
-        elige el ítem. El plan se recalcula solo.
+        El pago del mes se marca en <span className="text-slate-300 font-bold">Mes → Cuentas del mes → Deuda CMR</span>. Si compras algo
+        nuevo en cuotas, agrégalo aquí: sus cuotas se suman al plan y se recalcula solo.
       </p>
     </div>
   );

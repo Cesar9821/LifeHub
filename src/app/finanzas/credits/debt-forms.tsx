@@ -73,10 +73,10 @@ function DebtItemForm({ initial, onDone }: { initial?: DebtItemFields; onDone: (
     if (state.ok) onDone();
   }, [state, onDone]);
   const err = state.fieldErrors ?? {};
-  const num = (name: keyof DebtItemFields, label: string, value?: number) => (
+  const num = (name: keyof DebtItemFields, label: string, value?: number, placeholder = '0', required = true) => (
     <label className="space-y-1.5 flex flex-col">
       <Label>{label}</Label>
-      <NumberInput name={name} required defaultValue={value ?? ''} invalid={!!err[name]} />
+      <NumberInput name={name} required={required} defaultValue={value || ''} placeholder={placeholder} invalid={!!err[name]} />
       {err[name] && <span className="text-[11px] font-bold text-rose-400 px-1">{err[name]}</span>}
     </label>
   );
@@ -94,12 +94,13 @@ function DebtItemForm({ initial, onDone }: { initial?: DebtItemFields; onDone: (
           <Label>Precio</Label>
           <CLPInput name="price" defaultValue={initial?.price || ''} />
         </label>
+        {num('total_installments', 'En cuántas cuotas', initial?.total_installments, 'Ej: 3')}
         <label className="space-y-1.5 flex flex-col">
-          <Label>Cuota</Label>
-          <CLPInput name="installment" decimals={2} required defaultValue={initial?.installment || ''} />
+          <Label>Valor cuota</Label>
+          <CLPInput name="installment" decimals={2} defaultValue={initial?.installment || ''} placeholder="Se calcula" />
+          {err.installment && <span className="text-[11px] font-bold text-rose-400 px-1">{err.installment}</span>}
         </label>
-        {num('total_installments', 'Cuotas totales', initial?.total_installments)}
-        {num('remaining_installments', 'Cuotas que quedan', initial?.remaining_installments)}
+        {num('remaining_installments', 'Cuotas que quedan', initial?.remaining_installments, 'Todas', false)}
         {num('priority', 'Prioridad (1 = primero)', initial?.priority)}
       </div>
       <div className="flex gap-2">
@@ -130,6 +131,10 @@ export function AddDebtItem({ nextPriority }: { nextPriority: number }) {
   return (
     <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-5">
       <h3 className="text-sm font-black text-white uppercase tracking-wider">Nueva compra en cuotas</h3>
+      <p className="mt-1 text-xs text-slate-500">
+        Pon qué compraste, el precio y en cuántas cuotas: el valor de la cuota se calcula solo. Sus cuotas se pagan
+        dentro del pago fijo mensual; si no alcanzan, el pago del mes sube a la suma de las cuotas.
+      </p>
       <DebtItemForm
         initial={{ name: '', price: 0, installment: 0, total_installments: 0, remaining_installments: 0, priority: nextPriority }}
         onDone={() => setOpen(false)}

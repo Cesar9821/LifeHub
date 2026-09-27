@@ -104,6 +104,15 @@ describe('plan CMR', () => {
     expect(p.totalPaid).toBe(20961);
   });
 
+  it('si las cuotas superan el pago fijo, se pagan todas (el mes sube) sin adelantos', () => {
+    const items = [...ITEMS, { id: 'tele', name: 'Tele', installment: 100000, remainingInstallments: 3, priority: 7 }];
+    const nov = computeCmrPlan({ ...base, items }).months.find((m) => m.month === '2026-11-01')!;
+    // Cuotas: 179.146,33 + 100.000 > 250.000
+    expect(Math.round(nov.total)).toBe(279146);
+    expect(nov.advance).toBe(0);
+    expect(nov.items.tele.total).toBe(100000);
+  });
+
   it('agregar un ítem aumenta la deuda y alarga el plan', () => {
     const items = [
       ...ITEMS,

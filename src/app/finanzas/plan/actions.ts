@@ -17,6 +17,7 @@ import {
 import { addMonths, monthOf, monthRange } from '@/lib/plan/months';
 import { SEED_CONCEPTS, SEED_DEBT, SEED_MONTHS, SEED_SETTINGS, SEED_START } from '@/lib/plan/seed';
 import { loadPlan, monthChecklist } from '@/services/plan';
+import { parseSubmitted } from '@/lib/number-input';
 
 function revalidatePlan() {
   // El layout de Finanzas incluye el registro rápido: se revalida todo el módulo.
@@ -484,6 +485,22 @@ export async function payCmrMonth(_prev: FormState, formData: FormData): Promise
   return successState(`${pending.length} cuotas pagadas.`);
 }
 
+/** Deshace el pago CMR del mes: borra los pagos de cuotas registrados en ese mes. */
+export async function undoCmrMonth(formData: FormData) {
+  const month = String(formData.get('month') || '');
+  if (!/^\d{4}-\d{2}-01$/.test(month)) return;
+  const supabase = await createClient();
+  const householdId = await getActiveHouseholdId();
+  const { error } = await supabase
+    .from('movements')
+    .delete()
+    .eq('household_id', householdId)
+    .eq('period_month', month)
+    .not('debt_item_id', 'is', null);
+  failIf(error, 'No se pudo deshacer el pago CMR');
+  revalidatePlan();
+}
+
 export async function saveCmrSettings(_prev: FormState, formData: FormData): Promise<FormState> {
   const parsed = parseForm(
     z.object({
@@ -511,18 +528,28 @@ const debtItemSchema = z.object({
   id: zOptionalText,
   name: zRequiredText('El nombre'),
   price: zAmount,
-  // Viene limpio del input con formato ("47498.33"): puede traer centavos.
-  installment: z.coerce.number({ error: 'Cuota inválida.' }).min(0, 'La cuota no puede ser negativa.'),
-  total_installments: z.coerce.number({ error: 'Número inválido.' }).int().min(0),
-  remaining_installments: z.coerce.number({ error: 'Número inválido.' }).int().min(0),
+  // Opcionales al agregar una compra: la cuota sale de precio / cuotas y las
+  // cuotas que quedan son todas. Llegan limpios del input ("47498.33").
+  installment: z.union([z.string(), z.number()]).optional().transform((v) => parseSubmitted(v)),
+  total_installments: z.coerce.number({ error: 'Número inválido.' }).int().min(1, 'Indica en cuántas cuotas.'),
+  remaining_installments: z.union([z.string(), z.number()]).optional().transform((v) => parseSubmitted(v)),
   priority: z.coerce.number({ error: 'Número inválido.' }).int().min(0),
 });
 
 export async function saveDebtItem(_prev: FormState, formData: FormData): Promise<FormState> {
   const parsed = parseForm(debtItemSchema, formData);
   if (!parsed.success) return parsed.state;
-  const { id, ...fields } = parsed.data;
-  if (fields.remaining_installments > fields.total_installments) {
+  const { id, name, price, total_installments, priority } = parsed.data;
+  const installment =
+    parsed.data.installment && parsed.data.installment > 0
+      ? parsed.data.installment
+      : Math.round((price / total_installments) * 100) / 100;
+  const remaining_installments = parsed.data.remaining_installments ?? total_installments;
+  if (installment <= 0) {
+    return errorState('Revisa los datos ingresados.', { installment: 'Indica el precio o el valor de la cuota.' });
+  }
+  const fields = { name, price, installment, total_installments, remaining_installments, priority };
+  if (remaining_installments > total_installments) {
     return errorState('Revisa los datos ingresados.', {
       remaining_installments: 'No pueden quedar más cuotas que el total.',
     });

@@ -41,6 +41,12 @@ export interface AccountItem {
   paidInfo: string | null;
   /** Último pago registrado (para Deshacer). */
   lastPaymentId: string | null;
+  /** Línea única "Deuda CMR" que agrupa las cuotas del mes. */
+  isCmr?: boolean;
+  /** Cuotas incluidas en la línea CMR. */
+  cmrLines?: number;
+  /** Lo que falta pagar de la línea CMR. */
+  pendingAmount?: number;
 }
 
 /** Valores iniciales de un registro nuevo (ej. al pagar una cuenta del mes). */

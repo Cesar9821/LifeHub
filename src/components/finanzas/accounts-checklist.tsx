@@ -2,7 +2,8 @@
 
 import { useActionState, useEffect, useState } from 'react';
 import { AlertCircle, CheckCircle2, ChevronDown, Circle, Clock, X } from 'lucide-react';
-import { deleteExpense, payCmrMonth } from '@/app/finanzas/plan/actions';
+import Link from 'next/link';
+import { deleteExpense, payCmrMonth, undoCmrMonth } from '@/app/finanzas/plan/actions';
 import { IDLE_STATE } from '@/lib/action';
 import { formatCLP, shortDate } from '@/lib/format';
 import { InlineMessage } from '@/components/ui/inline-message';
@@ -31,7 +32,18 @@ function dueText(item: AccountItem): string {
   return item.dueDate ? `Vence el ${shortDate(item.dueDate)}` : 'Este mes';
 }
 
-function Row({ item, onPay }: { item: AccountItem; onPay: (item: AccountItem) => void }) {
+function subtitle(item: AccountItem): string {
+  const paid = item.state === 'pagado';
+  if (item.isCmr) {
+    const cuotas = `${item.cmrLines} cuota${item.cmrLines === 1 ? '' : 's'}`;
+    if (paid) return `${formatCLP(item.paid)} · ${item.paidInfo ?? ''}`;
+    if (item.paid > 0) return `Faltan ${formatCLP(item.pendingAmount ?? 0)} de ${formatCLP(item.amount)} · ${dueText(item)}`;
+    return `${formatCLP(item.amount)} · ${cuotas} · ${dueText(item)}`;
+  }
+  return paid ? `${formatCLP(item.paid)} · ${item.paidInfo ?? ''}` : `${formatCLP(item.amount)} · ${dueText(item)}`;
+}
+
+function Row({ item, onPay, month }: { item: AccountItem; onPay: (item: AccountItem) => void; month: string }) {
   const isIncome = item.kind === 'income';
   const paid = item.state === 'pagado';
   return (
@@ -42,10 +54,22 @@ function Row({ item, onPay }: { item: AccountItem; onPay: (item: AccountItem) =>
       <div className="min-w-0 flex-1">
         <p className={`text-sm font-bold truncate ${paid ? 'text-slate-400' : 'text-white'}`}>{item.label}</p>
         <p className={`text-[11px] font-medium truncate ${item.state === 'vencido' ? 'text-rose-300' : 'text-slate-500'}`}>
-          {paid ? `${formatCLP(item.paid)} · ${item.paidInfo ?? ''}` : `${formatCLP(item.amount)} · ${dueText(item)}`}
+          {subtitle(item)}
         </p>
       </div>
-      {paid ? (
+      {paid && item.isCmr ? (
+        <ConfirmAction
+          action={undoCmrMonth}
+          fields={{ month }}
+          title="¿Desmarcar la Deuda CMR del mes?"
+          message={`Se borran los pagos de cuotas CMR de este mes (${formatCLP(item.paid)}) y vuelve a quedar por pagar.`}
+          confirmLabel="Desmarcar"
+          triggerTitle="Deshacer"
+          triggerClassName="min-h-11 px-3 text-[11px] font-black text-slate-500 hover:text-white uppercase tracking-wider"
+        >
+          Deshacer
+        </ConfirmAction>
+      ) : paid ? (
         item.lastPaymentId && (
           <ConfirmAction
             action={deleteExpense}
@@ -74,65 +98,82 @@ function Row({ item, onPay }: { item: AccountItem; onPay: (item: AccountItem) =>
   );
 }
 
-/** Pagar de una vez todas las cuotas CMR pendientes del mes. */
-function BulkCmr({ month, lines, data }: { month: string; lines: AccountItem[]; data: QuickData }) {
-  const [open, setOpen] = useState(false);
+/** Hoja para pagar la Deuda CMR del mes: todas las cuotas pendientes de una vez. */
+function CmrPaySheet({
+  item,
+  month,
+  data,
+  onClose,
+}: {
+  item: AccountItem;
+  month: string;
+  data: QuickData;
+  onClose: () => void;
+}) {
   const [state, action] = useActionState(payCmrMonth, IDLE_STATE);
   const [paidBy, setPaidBy] = useState(data.me ?? '');
   const [method, setMethod] = useState('transferencia');
-  const total = lines.reduce((a, l) => a + l.amount, 0);
+  const total = item.pendingAmount ?? item.amount;
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (state.ok) setOpen(false);
-  }, [state]);
-
-  if (!open) {
-    return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="w-full min-h-11 rounded-xl border border-rose-500/25 bg-rose-500/10 text-rose-200 text-xs font-black uppercase tracking-wider hover:bg-rose-500/15"
-      >
-        Pagar las {lines.length} cuotas CMR · {formatCLP(total)}
-      </button>
-    );
-  }
+    if (state.ok) onClose();
+  }, [state, onClose]);
 
   const chip = (active: boolean) =>
     `min-h-11 px-4 rounded-xl text-xs font-black border ${active ? 'bg-white text-black border-white' : 'bg-black/30 text-slate-400 border-white/10'}`;
 
   return (
-    <form action={action} className="space-y-3 bg-black/30 border border-white/10 rounded-2xl p-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-black text-white">Pagar cuotas CMR · {formatCLP(total)}</p>
-        <button type="button" onClick={() => setOpen(false)} className="p-2 text-slate-500 hover:text-white" aria-label="Cerrar">
-          <X size={18} />
-        </button>
-      </div>
-      <InlineMessage state={state} />
-      <input type="hidden" name="month" value={month} />
-      <input type="hidden" name="paid_by" value={paidBy} />
-      <input type="hidden" name="payment_method" value={method} />
-      <input type="hidden" name="date" value={lines[0]?.payDate ?? data.today} />
-      <div className="flex flex-wrap gap-2">
-        {[...data.people, 'Ambos'].map((p) => (
-          <button key={p} type="button" onClick={() => setPaidBy(p)} className={chip(paidBy === p)}>
-            {p}
+    <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
+      <form
+        action={action}
+        role="dialog"
+        aria-modal="true"
+        onClick={(e) => e.stopPropagation()}
+        className="w-full sm:max-w-md space-y-4 bg-[#0F1117] border border-white/10 rounded-t-[2rem] sm:rounded-[2rem] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-black text-white uppercase tracking-wider">Pagar Deuda CMR</h2>
+          <button type="button" onClick={onClose} className="p-2.5 text-slate-500 hover:text-white" aria-label="Cerrar">
+            <X size={20} />
           </button>
-        ))}
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {METHODS.map((m) => (
-          <button key={m.value} type="button" onClick={() => setMethod(m.value)} className={chip(method === m.value)}>
-            {m.label}
-          </button>
-        ))}
-      </div>
-      <SubmitButton pendingText="Pagando…" className="w-full min-h-12 bg-rose-600 text-white hover:bg-rose-500">
-        Confirmar pago de {lines.length} cuotas
-      </SubmitButton>
-    </form>
+        </div>
+        <div className="bg-black/30 border border-white/10 rounded-2xl p-4">
+          <p className="text-3xl font-black font-mono text-white">{formatCLP(total)}</p>
+          <p className="mt-1 text-xs font-bold text-slate-400">
+            {item.cmrLines} cuota{item.cmrLines === 1 ? '' : 's'} del plan (cuota + adelanto).{' '}
+            <Link href="/finanzas/credits" className="text-indigo-400">Ver detalle</Link>
+          </p>
+        </div>
+        <InlineMessage state={state} />
+        <input type="hidden" name="month" value={month} />
+        <input type="hidden" name="paid_by" value={paidBy} />
+        <input type="hidden" name="payment_method" value={method} />
+        <input type="hidden" name="date" value={item.payDate} />
+        <div className="space-y-1.5">
+          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Quién pagó</p>
+          <div className="flex flex-wrap gap-2">
+            {[...data.people, 'Ambos'].map((p) => (
+              <button key={p} type="button" onClick={() => setPaidBy(p)} className={chip(paidBy === p)}>
+                {p}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Medio de pago</p>
+          <div className="flex flex-wrap gap-2">
+            {METHODS.map((m) => (
+              <button key={m.value} type="button" onClick={() => setMethod(m.value)} className={chip(method === m.value)}>
+                {m.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <SubmitButton pendingText="Pagando…" className="w-full min-h-12 bg-rose-600 text-white hover:bg-rose-500">
+          Confirmar pago
+        </SubmitButton>
+      </form>
+    </div>
   );
 }
 
@@ -152,8 +193,13 @@ export function AccountsChecklist({
   const [paying, setPaying] = useState<ExpensePreset | null>(null);
   const [payingTitle, setPayingTitle] = useState('');
   const [showPaid, setShowPaid] = useState(false);
+  const [payingCmr, setPayingCmr] = useState<AccountItem | null>(null);
 
   const onPay = (item: AccountItem) => {
+    if (item.isCmr) {
+      setPayingCmr(item);
+      return;
+    }
     setPayingTitle(item.kind === 'income' ? `Recibí ${item.label}` : `Pagar ${item.label}`);
     setPaying({
       kind: item.kind,
@@ -176,7 +222,6 @@ export function AccountsChecklist({
   const toPay = pending.filter((i) => i.kind === 'expense').reduce((a, i) => a + i.amount, 0);
   const toReceive = pending.filter((i) => i.kind === 'income');
   const pendingExpenses = pending.filter((i) => i.kind === 'expense');
-  const cmrPending = pendingExpenses.filter((i) => i.debtItemId);
 
   return (
     <section className="space-y-3">
@@ -196,7 +241,7 @@ export function AccountsChecklist({
       {toReceive.length > 0 && (
         <ul className="space-y-2">
           {toReceive.map((i) => (
-            <Row key={i.key} item={i} onPay={onPay} />
+            <Row key={i.key} item={i} onPay={onPay} month={month} />
           ))}
         </ul>
       )}
@@ -204,7 +249,7 @@ export function AccountsChecklist({
       {pendingExpenses.length > 0 ? (
         <ul className="space-y-2">
           {pendingExpenses.map((i) => (
-            <Row key={i.key} item={i} onPay={onPay} />
+            <Row key={i.key} item={i} onPay={onPay} month={month} />
           ))}
         </ul>
       ) : (
@@ -212,8 +257,6 @@ export function AccountsChecklist({
           ✓ Todas las cuentas del mes están pagadas
         </p>
       )}
-
-      {cmrPending.length >= 2 && <BulkCmr month={month} lines={cmrPending} data={data} />}
 
       {paid.length > 0 && (
         <>
@@ -228,12 +271,14 @@ export function AccountsChecklist({
           {showPaid && (
             <ul className="space-y-2">
               {paid.map((i) => (
-                <Row key={i.key} item={i} onPay={onPay} />
+                <Row key={i.key} item={i} onPay={onPay} month={month} />
               ))}
             </ul>
           )}
         </>
       )}
+
+      {payingCmr && <CmrPaySheet item={payingCmr} month={month} data={data} onClose={() => setPayingCmr(null)} />}
 
       <ExpenseSheet
         key={paying ? `${paying.concept_id}:${paying.debt_item_id ?? ''}` : 'none'}

@@ -477,31 +477,70 @@ export function monthChecklist(plan: PlanData, month: string): ChecklistItem[] {
   });
 }
 
-/** Cuentas del mes listas para la UI (con quién pagó y el último pago). */
+const STATE_ORDER: Record<ChecklistState, number> = { vencido: 0, vence_hoy: 1, por_pagar: 2, pagado: 3 };
+
+function paidInfoOf(p: { paidBy: string | null; method: string | null; date: string } | null): string | null {
+  return p ? [p.paidBy, methodLabel(p.method), shortDate(p.date)].filter(Boolean).join(' · ') : null;
+}
+
+/**
+ * Cuentas del mes listas para la UI (con quién pagó y el último pago).
+ * Las cuotas CMR se juntan en una sola línea "Deuda CMR" con el total del mes;
+ * el detalle por ítem se ve en la pantalla de Deuda.
+ */
 export function accountItems(plan: PlanData, items: ChecklistItem[]): AccountItem[] {
   const conceptById = new Map(plan.concepts.map((c) => [c.id, c]));
-  return items.map((i) => {
-    const last = i.payments[0] ?? null; // los movimientos vienen del más nuevo al más viejo
-    const paidInfo = last
-      ? [last.paidBy, methodLabel(last.method), shortDate(last.date)].filter(Boolean).join(' · ')
-      : null;
-    return {
-      key: i.key,
-      kind: i.kind,
-      conceptId: i.conceptId,
-      debtItemId: i.debtItemId,
-      label: i.label,
-      group: i.group,
-      amount: i.amount,
-      dueDate: i.dueDate,
-      state: i.state,
-      paid: i.paid,
-      payDate: i.payDate,
-      person: conceptById.get(i.conceptId)?.person ?? null,
-      paidInfo,
-      lastPaymentId: last?.id ?? null,
-    };
-  });
+  const out: AccountItem[] = items
+    .filter((i) => !i.debtItemId)
+    .map((i) => {
+      const last = i.payments[0] ?? null; // los movimientos vienen del más nuevo al más viejo
+      return {
+        key: i.key,
+        kind: i.kind,
+        conceptId: i.conceptId,
+        debtItemId: null,
+        label: i.label,
+        group: i.group,
+        amount: i.amount,
+        dueDate: i.dueDate,
+        state: i.state,
+        paid: i.paid,
+        payDate: i.payDate,
+        person: conceptById.get(i.conceptId)?.person ?? null,
+        paidInfo: paidInfoOf(last),
+        lastPaymentId: last?.id ?? null,
+      };
+    });
+
+  const cmr = items.filter((i) => i.debtItemId);
+  if (cmr.length > 0) {
+    const unpaid = cmr.filter((i) => i.state !== 'pagado');
+    const state = unpaid.length === 0 ? 'pagado' : [...unpaid].sort((a, b) => STATE_ORDER[a.state] - STATE_ORDER[b.state])[0].state;
+    const last = cmr.flatMap((i) => i.payments).sort((a, b) => b.date.localeCompare(a.date))[0] ?? null;
+    out.push({
+      key: 'cmr',
+      kind: 'expense',
+      conceptId: cmr[0].conceptId,
+      debtItemId: null,
+      label: 'Deuda CMR',
+      group: 'Deudas',
+      amount: cmr.reduce((a, i) => a + i.amount, 0),
+      dueDate: cmr[0].dueDate,
+      state,
+      paid: cmr.reduce((a, i) => a + i.paid, 0),
+      payDate: cmr[0].payDate,
+      person: null,
+      paidInfo: paidInfoOf(last),
+      lastPaymentId: null,
+      isCmr: true,
+      cmrLines: cmr.length,
+      pendingAmount: unpaid.reduce((a, i) => a + i.amount, 0),
+    });
+  }
+
+  return out.sort(
+    (a, b) => STATE_ORDER[a.state] - STATE_ORDER[b.state] || (a.dueDate ?? '9999').localeCompare(b.dueDate ?? '9999')
+  );
 }
 
 /* ------------------------------------------------------------------ */
