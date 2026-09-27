@@ -1,6 +1,9 @@
 import React from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth';
+import { loadPlanPage } from '@/services/plan';
+import { QuickExpenseFab } from '@/components/finanzas/expense-sheet';
+import { RealtimeRefresh } from '@/components/finanzas/realtime-refresh';
 import DashboardShell from './dashboard-shell';
 
 function initialsFrom(name: string): string {
@@ -27,9 +30,16 @@ export default async function DashboardLayout({
   const userName =
     profile?.full_name || user.email?.split('@')[0] || 'Usuario';
 
+  // Registro rápido y tiempo real disponibles en todas las pantallas de Finanzas.
+  const { plan, quick, householdId } = await loadPlanPage();
+
   return (
-    <DashboardShell userName={userName} userInitials={initialsFrom(userName)}>
-      {children}
-    </DashboardShell>
+    <>
+      <DashboardShell userName={userName} userInitials={initialsFrom(userName)}>
+        {children}
+      </DashboardShell>
+      {plan.seeded && <QuickExpenseFab data={quick} />}
+      <RealtimeRefresh householdId={householdId} />
+    </>
   );
 }

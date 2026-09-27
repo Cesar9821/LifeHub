@@ -32,6 +32,9 @@ function revalidateAll() {
   revalidatePath('/finanzas/movimientos');
   revalidatePath('/finanzas/dashboard');
   revalidatePath('/finanzas/performance');
+  revalidatePath('/finanzas/presupuestos');
+  revalidatePath('/finanzas/credits');
+  revalidatePath('/finanzas/resumen');
 }
 
 /**

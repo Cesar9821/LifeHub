@@ -7,6 +7,7 @@ import {
   shiftPeriod,
   type MonthSummary,
 } from './movements';
+import { debtItemsView, loadPlan, monthView } from './plan';
 
 export interface DashboardData {
   period: string;
@@ -46,7 +47,7 @@ export async function getDashboardData(
   const supabase = await createClient();
   const householdId = await getActiveHouseholdId();
 
-  const [movements, recurringRes, savingsRes, creditsRes, budgetsRes] = await Promise.all([
+  const [movements, recurringRes, savingsRes, creditsRes, plan] = await Promise.all([
     getMovements(period),
     supabase
       .from('recurring_items')
@@ -61,10 +62,7 @@ export async function getDashboardData(
       .from('credits')
       .select('remaining_amount')
       .eq('household_id', householdId),
-    supabase
-      .from('budgets')
-      .select('category, amount')
-      .eq('household_id', householdId),
+    loadPlan(),
   ]);
 
   const month = summarize(movements);
@@ -105,27 +103,28 @@ export async function getDashboardData(
   }
   const byPerson = [...personMap.entries()].map(([user_id, v]) => ({ user_id, income: v.income, expense: v.expense }));
 
-  // Presupuesto global del mes (suma de límites vs gastado en esas categorías)
-  const budgetsData = (budgetsRes.data as { category: string; amount: number }[]) || [];
-  const budgetTotal = budgetsData.reduce((a, b) => a + Number(b.amount), 0);
-  const budgetSpent = budgetsData.reduce((a, b) => a + (catMap.get(b.category) || 0), 0);
+  // Presupuesto y planificado del mes: salen del plan del hogar si está cargado;
+  // si no, de las plantillas recurrentes.
+  const planMonth = plan.seeded ? monthView(plan, period) : null;
+  const budgetTotal = planMonth?.expenseBudget ?? 0;
+  const budgetSpent = planMonth?.spent ?? 0;
 
   const recurring = recurringRes.data || [];
-  const plannedIncome = recurring
-    .filter((r) => r.kind === 'income')
-    .reduce((a, r) => a + Number(r.amount), 0);
-  const plannedExpense = recurring
-    .filter((r) => r.kind === 'expense')
-    .reduce((a, r) => a + Number(r.amount), 0);
+  const plannedIncome = planMonth
+    ? planMonth.incomes.reduce((a, r) => a + r.budget, 0)
+    : recurring.filter((r) => r.kind === 'income').reduce((a, r) => a + Number(r.amount), 0);
+  const plannedExpense = planMonth
+    ? planMonth.expenseBudget
+    : recurring.filter((r) => r.kind === 'expense').reduce((a, r) => a + Number(r.amount), 0);
 
   const totalSavings = (savingsRes.data || []).reduce(
     (a, s) => a + Number(s.current_amount || 0),
     0
   );
-  const totalDebt = (creditsRes.data || []).reduce(
-    (a, c) => a + Number(c.remaining_amount || 0),
-    0
-  );
+  // Deuda: saldo del plan CMR + créditos antiguos que queden.
+  const totalDebt =
+    (plan.seeded ? debtItemsView(plan, period).reduce((a, d) => a + d.balance, 0) : 0) +
+    (creditsRes.data || []).reduce((a, c) => a + Number(c.remaining_amount || 0), 0);
 
   // Tendencia de los últimos 6 meses (incluyendo el actual)
   const periods = Array.from({ length: 6 }, (_, i) =>

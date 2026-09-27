@@ -20,9 +20,10 @@ import {
   LogOut,
   ArrowLeft,
   PieChart,
-  Tag,
   Repeat,
-  Link2
+  Link2,
+  Zap,
+  CalendarRange
 } from 'lucide-react';
 
 export default function DashboardShell({
@@ -44,13 +45,14 @@ export default function DashboardShell({
   }, [pathname]);
 
   const menuItems = [
+    { icon: <Zap size={18} />, label: 'Inicio rápido', href: '/inicio' },
     { icon: <LayoutDashboard size={18} />, label: 'Dashboard', href: '/finanzas/dashboard' },
+    { icon: <PieChart size={18} />, label: 'Presupuesto', href: '/finanzas/presupuestos' },
+    { icon: <CreditCard size={18} />, label: 'Deuda CMR', href: '/finanzas/credits' },
+    { icon: <CalendarRange size={18} />, label: 'Resumen anual', href: '/finanzas/resumen' },
     { icon: <Activity size={18} />, label: 'Movimientos', href: '/finanzas/movimientos' },
     { icon: <Repeat size={18} />, label: 'Planificación', href: '/finanzas/planificacion' },
-    { icon: <PieChart size={18} />, label: 'Presupuestos', href: '/finanzas/presupuestos' },
     { icon: <Target size={18} />, label: 'Ahorros', href: '/finanzas/savings' },
-    { icon: <CreditCard size={18} />, label: 'Créditos', href: '/finanzas/credits' },
-    { icon: <Tag size={18} />, label: 'Categorías', href: '/finanzas/categories' },
     { icon: <BarChart3 size={18} />, label: 'Rendimiento', href: '/finanzas/performance' },
     { icon: <Link2 size={18} />, label: 'Conexiones', href: '/finanzas/conexiones' },
     { icon: <Settings size={18} />, label: 'Ajustes', href: '/finanzas/ajustes' },

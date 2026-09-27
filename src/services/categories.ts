@@ -1,54 +1,35 @@
 import { createClient } from '@/lib/supabase/server';
 import { getActiveHouseholdId } from '@/lib/auth';
 
-export interface Category {
-  id: string;
-  name: string;
-  kind: 'income' | 'expense';
-  color: string;
-  icon: string;
-}
-
 /**
- * Devuelve todas las categorías del hogar, ordenadas.
- * Es la única fuente de verdad para las categorías (no más listas hardcodeadas).
- */
-export async function getCategories(): Promise<Category[]> {
-  const supabase = await createClient();
-  const householdId = await getActiveHouseholdId();
-
-  const { data, error } = await supabase
-    .from('categories')
-    .select('id, name, kind, color, icon')
-    .eq('household_id', householdId)
-    .order('kind', { ascending: true })
-    .order('name', { ascending: true });
-
-  if (error) {
-    console.error('Error cargando categorías:', error.message);
-    return [];
-  }
-  return (data as Category[]) || [];
-}
-
-/**
- * Solo los nombres de categorías de gasto (para selects de gasto).
- */
-export async function getExpenseCategoryNames(): Promise<string[]> {
-  const cats = await getCategories();
-  return cats.filter((c) => c.kind === 'expense').map((c) => c.name);
-}
-
-/**
- * Nombres separados por tipo, útil para formularios que cambian según ingreso/gasto.
+ * Nombres de los conceptos del presupuesto separados por tipo, para los
+ * selects de categoría (Movimientos, Planificación). Los conceptos del plan
+ * del hogar son la única fuente de categorías; al guardar, la base de datos
+ * vincula el movimiento a su concepto por nombre.
  */
 export async function getCategoryNamesByKind(): Promise<{
   income: string[];
   expense: string[];
 }> {
-  const cats = await getCategories();
+  const supabase = await createClient();
+  const householdId = await getActiveHouseholdId();
+
+  const { data, error } = await supabase
+    .from('budget_concepts')
+    .select('name, kind, is_debt_plan')
+    .eq('household_id', householdId)
+    .eq('archived', false)
+    .order('sort')
+    .order('name');
+
+  if (error) {
+    console.error('Error cargando conceptos:', error.message);
+    return { income: [], expense: [] };
+  }
+  const rows = (data as { name: string; kind: string; is_debt_plan: boolean }[]) || [];
   return {
-    income: cats.filter((c) => c.kind === 'income').map((c) => c.name),
-    expense: cats.filter((c) => c.kind === 'expense').map((c) => c.name),
+    income: rows.filter((c) => c.kind === 'income').map((c) => c.name),
+    // Las cuotas del plan CMR se registran con su ítem desde "+ Gasto".
+    expense: rows.filter((c) => c.kind === 'expense' && !c.is_debt_plan).map((c) => c.name),
   };
 }
