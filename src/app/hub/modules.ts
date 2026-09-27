@@ -30,7 +30,7 @@ export const MODULES: AppModule[] = [
     name: 'Finanzas',
     tagline: 'Dinero bajo control',
     description: 'Movimientos, planificación mensual, ahorros y créditos.',
-    href: '/finanzas/dashboard',
+    href: '/finanzas',
     icon: Wallet,
     status: 'active',
     accent: {

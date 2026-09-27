@@ -1,10 +1,25 @@
 import React from 'react';
+import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth';
 import { loadPlanPage } from '@/services/plan';
 import { QuickExpenseFab } from '@/components/finanzas/expense-sheet';
 import { RealtimeRefresh } from '@/components/finanzas/realtime-refresh';
 import DashboardShell from './dashboard-shell';
+
+// Ícono y nombre propios al agregar Finanzas a la pantalla de inicio del iPhone.
+export const metadata: Metadata = {
+  title: 'Finanzas',
+  appleWebApp: {
+    capable: true,
+    title: 'Finanzas',
+    statusBarStyle: 'black-translucent',
+  },
+  icons: {
+    icon: '/icon-inicio-192.png',
+    apple: '/apple-icon-inicio.png',
+  },
+};
 
 function initialsFrom(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);

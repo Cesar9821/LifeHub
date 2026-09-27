@@ -73,6 +73,83 @@ async function countFor(
   }
 }
 
+type Db = ReturnType<typeof createAdminClient>;
+
+/**
+ * Cuentas del mes (plan del hogar) que vencen hoy o ya vencieron y no se
+ * han pagado. Las cuotas CMR solo cuentan desde el mes de inicio del plan.
+ */
+async function dueAccounts(db: Db, hids: string[], period: string, today: string): Promise<string[]> {
+  try {
+    const day = Number(today.slice(8, 10));
+    const { data: concepts } = await db
+      .from('budget_concepts')
+      .select('id, name, is_debt_plan, household_id')
+      .in('household_id', hids)
+      .eq('kind', 'expense')
+      .eq('pay_mode', 'cuenta')
+      .eq('archived', false)
+      .not('due_day', 'is', null)
+      .lte('due_day', day);
+    const list = (concepts as { id: string; name: string; is_debt_plan: boolean; household_id: string }[]) || [];
+    if (list.length === 0) return [];
+    const ids = list.map((c) => c.id);
+    const [{ data: amounts }, { data: paid }, { data: settings }] = await Promise.all([
+      db.from('budget_amounts').select('concept_id, amount').in('concept_id', ids).eq('month', period),
+      db.from('movements').select('concept_id').in('concept_id', ids).eq('status', 'confirmed').eq('period_month', period),
+      db.from('finance_settings').select('household_id, cmr_start_month').in('household_id', hids),
+    ]);
+    const budget = new Map(((amounts as { concept_id: string; amount: number }[]) || []).map((a) => [a.concept_id, Number(a.amount)]));
+    const paidIds = new Set(((paid as { concept_id: string }[]) || []).map((p) => p.concept_id));
+    const cmrStart = new Map(
+      ((settings as { household_id: string; cmr_start_month: string }[]) || []).map((r) => [r.household_id, r.cmr_start_month])
+    );
+    return list
+      .filter((c) => !paidIds.has(c.id))
+      .filter((c) =>
+        c.is_debt_plan ? (cmrStart.get(c.household_id) ?? '9999') <= period : (budget.get(c.id) ?? 0) > 0
+      )
+      .map((c) => c.name);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Disponible del mes como lo muestra la app: ingresos (lo registrado de cada
+ * sueldo o, si no hay registro, lo presupuestado) menos lo gastado real.
+ */
+async function monthAvailable(db: Db, hids: string[], period: string): Promise<number> {
+  const [{ data: incomeConcepts }, { data: mv }] = await Promise.all([
+    db.from('budget_concepts').select('id').in('household_id', hids).eq('kind', 'income').eq('archived', false),
+    db
+      .from('movements')
+      .select('kind, concept_id, actual_amount, estimated_amount')
+      .in('household_id', hids)
+      .eq('status', 'confirmed')
+      .eq('period_month', period),
+  ]);
+  const incomeIds = new Set(((incomeConcepts as { id: string }[]) || []).map((c) => c.id));
+  const { data: amounts } =
+    incomeIds.size > 0
+      ? await db.from('budget_amounts').select('concept_id, amount').in('concept_id', [...incomeIds]).eq('month', period)
+      : { data: [] };
+
+  const actual = new Map<string, number>();
+  let otherIncome = 0;
+  let spent = 0;
+  for (const m of (mv as { kind: string; concept_id: string | null; actual_amount: number | null; estimated_amount: number }[]) || []) {
+    const amt = Number(m.actual_amount ?? m.estimated_amount) || 0;
+    if (m.kind === 'expense') spent += amt;
+    else if (m.concept_id && incomeIds.has(m.concept_id)) actual.set(m.concept_id, (actual.get(m.concept_id) ?? 0) + amt);
+    else otherIncome += amt;
+  }
+  const budget = new Map(((amounts as { concept_id: string; amount: number }[]) || []).map((a) => [a.concept_id, Number(a.amount)]));
+  let income = otherIncome;
+  for (const id of incomeIds) income += (actual.get(id) ?? 0) > 0 ? actual.get(id)! : budget.get(id) ?? 0;
+  return income - spent;
+}
+
 export async function GET(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
   const auth = request.headers.get('authorization');
@@ -186,10 +263,9 @@ export async function GET(request: NextRequest) {
       const pending: { text: string; url: string }[] = [];
 
       if (prefs.finanzas && hids.length > 0) {
-        const n = await countFor(db, () =>
-          db.from('movements').select('id', { count: 'exact', head: true }).in('household_id', hids).eq('status', 'pending').lte('due_date', today)
-        );
-        if (n > 0) pending.push({ text: `💰 ${n} pago${n > 1 ? 's' : ''} por confirmar`, url: '/finanzas/movimientos' });
+        const due = await dueAccounts(db, hids, period, today);
+        if (due.length === 1) pending.push({ text: `💰 Falta pagar ${due[0]}`, url: '/finanzas' });
+        else if (due.length > 1) pending.push({ text: `💰 ${due.length} cuentas por pagar`, url: '/finanzas' });
       }
 
       if (prefs.mentalidad) {
@@ -236,22 +312,12 @@ export async function GET(request: NextRequest) {
 
       // Saldo bajo (Finanzas)
       if (prefs.low_balance_enabled && prefs.finanzas && hids.length > 0) {
-        const { data: mv } = await db
-          .from('movements')
-          .select('kind, actual_amount, estimated_amount')
-          .in('household_id', hids)
-          .eq('status', 'confirmed')
-          .eq('period_month', period);
-        let balance = 0;
-        for (const m of (mv as { kind: string; actual_amount: number | null; estimated_amount: number }[]) || []) {
-          const amt = Number(m.actual_amount ?? m.estimated_amount) || 0;
-          balance += m.kind === 'income' ? amt : -amt;
-        }
+        const balance = await monthAvailable(db, hids, period);
         if (balance < Number(prefs.low_balance_threshold)) {
           await deliver(userId, subs, 'low-balance', {
             title: '💸 Saldo bajo',
             body: `Te queda ${formatCLP(balance)} este mes. Ojo con los gastos.`,
-            url: '/finanzas/dashboard',
+            url: '/finanzas',
             tag: 'low-balance',
           });
         }

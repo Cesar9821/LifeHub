@@ -1,17 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { getActiveHouseholdId } from '@/lib/auth';
 
-export interface RecurringItem {
-  id: string;
-  description: string;
-  kind: 'income' | 'expense';
-  amount: number;
-  is_variable: boolean;
-  due_day: number;
-  category: string;
-  is_active: boolean;
-}
-
 export type MovementStatus = 'pending' | 'confirmed';
 export type DateState = 'overdue' | 'today' | 'upcoming';
 
@@ -91,76 +80,6 @@ function dateStateOf(dueDate: string): DateState {
   if (due.getTime() < today.getTime()) return 'overdue';
   if (due.getTime() === today.getTime()) return 'today';
   return 'upcoming';
-}
-
-/** Construye una fecha YYYY-MM-DD para un día dentro de un mes, sin desbordar. */
-function dateForDay(period: string, day: number): string {
-  const [y, m] = period.split('-').map(Number);
-  const lastDay = new Date(y, m, 0).getDate(); // último día del mes m
-  const safeDay = Math.min(day, lastDay);
-  return `${y}-${String(m).padStart(2, '0')}-${String(safeDay).padStart(2, '0')}`;
-}
-
-/** Todas las plantillas recurrentes del hogar. */
-export async function getRecurringItems(): Promise<RecurringItem[]> {
-  const supabase = await createClient();
-  const householdId = await getActiveHouseholdId();
-  const { data, error } = await supabase
-    .from('recurring_items')
-    .select('*')
-    .eq('household_id', householdId)
-    .order('due_day', { ascending: true });
-  if (error) {
-    console.error('Error cargando recurrentes:', error.message);
-    return [];
-  }
-  return (data as RecurringItem[]) || [];
-}
-
-/**
- * Genera los movimientos pendientes del mes a partir de las plantillas activas,
- * si aún no existen. Idempotente gracias al índice único (recurring_id, period).
- */
-export async function ensureMonthGenerated(period = periodOf()): Promise<void> {
-  const supabase = await createClient();
-  const householdId = await getActiveHouseholdId();
-
-  const [{ data: recurring }, { data: existing }] = await Promise.all([
-    supabase
-      .from('recurring_items')
-      .select('*')
-      .eq('household_id', householdId)
-      .eq('is_active', true),
-    supabase
-      .from('movements')
-      .select('recurring_id')
-      .eq('household_id', householdId)
-      .eq('period_month', period)
-      .not('recurring_id', 'is', null),
-  ]);
-
-  if (!recurring || recurring.length === 0) return;
-
-  const alreadyGenerated = new Set((existing || []).map((m) => m.recurring_id));
-  const toInsert = recurring
-    .filter((r) => !alreadyGenerated.has(r.id))
-    .map((r) => ({
-      household_id: householdId,
-      recurring_id: r.id,
-      description: r.description,
-      kind: r.kind,
-      category: r.category,
-      estimated_amount: r.amount,
-      actual_amount: null,
-      status: 'pending',
-      due_date: dateForDay(period, r.due_day),
-      period_month: period,
-    }));
-
-  if (toInsert.length > 0) {
-    const { error } = await supabase.from('movements').insert(toInsert);
-    if (error) console.error('Error generando movimientos del mes:', error.message);
-  }
 }
 
 /** Movimientos de un mes, con derivados calculados. */

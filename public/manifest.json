@@ -5,7 +5,7 @@
   "description": "Tu sistema personal: finanzas, mentalidad, familia y metas en un solo lugar.",
   "lang": "es-CL",
   "dir": "ltr",
-  "start_url": "/inicio",
+  "start_url": "/finanzas",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",

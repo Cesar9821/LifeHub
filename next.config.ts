@@ -7,16 +7,22 @@ const nextConfig: NextConfig = {
   // Redirige rutas antiguas a la nueva estructura de módulos.
   async redirects() {
     return [
-      { source: '/dashboard', destination: '/finanzas/dashboard', permanent: false },
+      // Pantalla de inicio rápido (antes /inicio) → Mes de Finanzas
+      { source: '/inicio', destination: '/finanzas', permanent: false },
+      { source: '/dashboard', destination: '/finanzas', permanent: false },
       { source: '/transactions', destination: '/finanzas/movimientos', permanent: false },
-      { source: '/fixed-expenses', destination: '/finanzas/planificacion', permanent: false },
+      { source: '/fixed-expenses', destination: '/finanzas/presupuestos', permanent: false },
       { source: '/savings', destination: '/finanzas/savings', permanent: false },
       { source: '/credits', destination: '/finanzas/credits', permanent: false },
-      { source: '/performance', destination: '/finanzas/performance', permanent: false },
-      // Módulos fusionados
+      { source: '/performance', destination: '/finanzas/resumen', permanent: false },
+      // Pantallas fusionadas en el plan del hogar
+      { source: '/finanzas/dashboard', destination: '/finanzas', permanent: false },
+      { source: '/finanzas/performance', destination: '/finanzas/resumen', permanent: false },
+      { source: '/finanzas/planificacion', destination: '/finanzas/presupuestos', permanent: false },
+      { source: '/finanzas/categories', destination: '/finanzas/presupuestos', permanent: false },
       { source: '/finanzas/transactions', destination: '/finanzas/movimientos', permanent: false },
-      { source: '/finanzas/fixed-expenses', destination: '/finanzas/planificacion', permanent: false },
-      { source: '/finanzas/budgets', destination: '/finanzas/planificacion', permanent: false },
+      { source: '/finanzas/fixed-expenses', destination: '/finanzas/presupuestos', permanent: false },
+      { source: '/finanzas/budgets', destination: '/finanzas/presupuestos', permanent: false },
     ];
   },
 };

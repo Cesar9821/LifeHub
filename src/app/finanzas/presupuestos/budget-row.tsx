@@ -2,11 +2,12 @@
 
 import { useActionState, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Archive, Pencil, Type } from 'lucide-react';
-import { renameConcept, setBudgetAmount, setConceptArchived } from '@/app/finanzas/plan/actions';
+import { Archive, Pencil, Settings2 } from 'lucide-react';
+import { setBudgetAmount, setConceptArchived, updateConcept } from '@/app/finanzas/plan/actions';
 import { IDLE_STATE } from '@/lib/action';
 import { formatCLP } from '@/lib/format';
 import type { BudgetStatus } from '@/lib/plan/budget';
+import type { ChecklistState } from '@/lib/plan/checklist';
 import { CLPInput } from '@/components/ui/clp-input';
 import { InlineMessage } from '@/components/ui/inline-message';
 import { SubmitButton } from '@/components/ui/submit-button';
@@ -27,7 +28,17 @@ interface Props {
   used?: number;
   isDebtPlan?: boolean;
   person?: string | null;
+  payMode: 'cuenta' | 'bolsa';
+  dueDay: number | null;
+  payState: ChecklistState | null;
 }
+
+const PAY_CHIP: Record<ChecklistState, { label: string; cls: string }> = {
+  pagado: { label: 'Pagado ✓', cls: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25' },
+  por_pagar: { label: 'Por pagar', cls: 'bg-white/5 text-slate-300 border-white/15' },
+  vence_hoy: { label: 'Vence hoy', cls: 'bg-amber-500/10 text-amber-300 border-amber-500/30' },
+  vencido: { label: 'Vencido', cls: 'bg-rose-500/15 text-rose-300 border-rose-500/30' },
+};
 
 function AmountForm({ conceptId, month, budget, onDone }: { conceptId: string; month: string; budget: number; onDone: () => void }) {
   const [state, action] = useActionState(setBudgetAmount, IDLE_STATE);
@@ -58,8 +69,23 @@ function AmountForm({ conceptId, month, budget, onDone }: { conceptId: string; m
   );
 }
 
-function RenameForm({ conceptId, name, group, onDone }: { conceptId: string; name: string; group: string; onDone: () => void }) {
-  const [state, action] = useActionState(renameConcept, IDLE_STATE);
+function EditForm({
+  conceptId,
+  name,
+  group,
+  payMode,
+  dueDay,
+  onDone,
+}: {
+  conceptId: string;
+  name: string;
+  group: string;
+  payMode: 'cuenta' | 'bolsa';
+  dueDay: number | null;
+  onDone: () => void;
+}) {
+  const [state, action] = useActionState(updateConcept, IDLE_STATE);
+  const [mode, setMode] = useState(payMode);
   useEffect(() => {
     if (state.ok) onDone();
   }, [state, onDone]);
@@ -71,8 +97,46 @@ function RenameForm({ conceptId, name, group, onDone }: { conceptId: string; nam
         <input name="name" defaultValue={name} required className={`${fieldBase} min-h-11`} placeholder="Nombre" />
         <input name="group_name" defaultValue={group} required className={`${fieldBase} min-h-11`} placeholder="Grupo" />
       </div>
+      <input type="hidden" name="pay_mode" value={mode} />
+      <div className="grid grid-cols-2 gap-2">
+        {(
+          [
+            ['cuenta', 'Cuenta del mes', 'Se paga una vez'],
+            ['bolsa', 'Gasto variable', 'Varias compras'],
+          ] as const
+        ).map(([value, label, hint]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setMode(value)}
+            className={`min-h-12 rounded-xl border px-3 py-2 text-left ${
+              mode === value ? 'border-indigo-400 bg-indigo-500/10' : 'border-white/10'
+            }`}
+          >
+            <span className="block text-xs font-black text-white">{label}</span>
+            <span className="block text-[10px] text-slate-500">{hint}</span>
+          </button>
+        ))}
+      </div>
+      {mode === 'cuenta' && (
+        <label className="flex items-center gap-3 text-xs font-bold text-slate-400">
+          Vence el día
+          <input
+            name="due_day"
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={31}
+            defaultValue={dueDay ?? ''}
+            placeholder="—"
+            className={`${fieldBase} min-h-11 w-24`}
+          />
+          <span className="text-slate-600">(opcional)</span>
+        </label>
+      )}
+      {state.fieldErrors?.due_day && <p className="text-[11px] font-bold text-rose-400">{state.fieldErrors.due_day}</p>}
       <div className="flex gap-2">
-        <SubmitButton pendingText="Guardando…" className="flex-1 min-h-11">Renombrar</SubmitButton>
+        <SubmitButton pendingText="Guardando…" className="flex-1 min-h-11">Guardar</SubmitButton>
         <button type="button" onClick={onDone} className="min-h-11 px-4 text-xs font-bold text-slate-500 hover:text-white">
           Cancelar
         </button>
@@ -82,7 +146,7 @@ function RenameForm({ conceptId, name, group, onDone }: { conceptId: string; nam
 }
 
 export default function BudgetRow(p: Props) {
-  const [mode, setMode] = useState<'view' | 'amount' | 'rename'>('view');
+  const [mode, setMode] = useState<'view' | 'amount' | 'edit'>('view');
   const close = () => setMode('view');
   const isIncome = p.kind === 'income';
   const remaining = p.budget - p.actual;
@@ -98,10 +162,12 @@ export default function BudgetRow(p: Props) {
                 Presupuesto {formatCLP(p.budget)}
                 {p.actual > 0 && <> · registrado {formatCLP(p.actual)}</>}
                 {p.person && <> · {p.person}</>}
+                {p.dueDay && <> · día {p.dueDay}</>}
               </>
             ) : (
               <>
                 {formatCLP(p.actual)} de {formatCLP(p.budget)}
+                {p.payMode === 'cuenta' && p.dueDay && <> · vence día {p.dueDay}</>}
                 {p.budget > 0 && (
                   <>
                     {' · '}
@@ -114,7 +180,13 @@ export default function BudgetRow(p: Props) {
             )}
           </p>
         </div>
-        {p.status && <StatusChip status={p.status} />}
+        {p.payState && p.status !== 'pasado' ? (
+          <span className={`inline-flex items-center px-2.5 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider whitespace-nowrap ${PAY_CHIP[p.payState].cls}`}>
+            {isIncome ? (p.payState === 'pagado' ? 'Recibido ✓' : 'Por recibir') : PAY_CHIP[p.payState].label}
+          </span>
+        ) : (
+          p.status && <StatusChip status={p.status} />
+        )}
       </div>
 
       {!isIncome && p.status && (
@@ -139,8 +211,8 @@ export default function BudgetRow(p: Props) {
               <Pencil size={13} /> Monto
             </button>
           )}
-          <button type="button" onClick={() => setMode('rename')} className="min-h-11 inline-flex items-center gap-1.5 px-2 text-[11px] font-black text-slate-400 hover:text-white uppercase tracking-wider">
-            <Type size={13} /> Renombrar
+          <button type="button" onClick={() => setMode('edit')} className="min-h-11 inline-flex items-center gap-1.5 px-2 text-[11px] font-black text-slate-400 hover:text-white uppercase tracking-wider">
+            <Settings2 size={13} /> Editar
           </button>
           {!p.isDebtPlan && (
             <ConfirmAction
@@ -158,7 +230,16 @@ export default function BudgetRow(p: Props) {
       )}
 
       {mode === 'amount' && <AmountForm conceptId={p.conceptId} month={p.month} budget={p.budget} onDone={close} />}
-      {mode === 'rename' && <RenameForm conceptId={p.conceptId} name={p.name} group={p.group} onDone={close} />}
+      {mode === 'edit' && (
+        <EditForm
+          conceptId={p.conceptId}
+          name={p.name}
+          group={p.group}
+          payMode={p.payMode}
+          dueDay={p.dueDay}
+          onDone={close}
+        />
+      )}
     </div>
   );
 }

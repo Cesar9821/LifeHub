@@ -57,7 +57,7 @@ export async function updateSession(request: NextRequest) {
   // Con sesión y visitando login/register -> a la pantalla de inicio rápido
   if (user && (pathname.startsWith('/login') || pathname.startsWith('/register'))) {
     const url = request.nextUrl.clone();
-    url.pathname = '/inicio';
+    url.pathname = '/finanzas';
     return NextResponse.redirect(url);
   }
 

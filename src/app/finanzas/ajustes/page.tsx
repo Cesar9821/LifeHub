@@ -1,28 +1,24 @@
-import { Settings, Download, Database, ShieldCheck, Users, Crown, UserMinus, Home } from 'lucide-react';
+import Link from 'next/link';
+import { Settings, Download, Database, ShieldCheck, Users, Crown, UserMinus, Home, Link2, ArrowRight } from 'lucide-react';
 import { getHouseholdMembers, getHouseholdName, isHouseholdOwner } from '@/services/household';
 import { removeMember, renameHousehold } from './actions';
 import InviteMember from './invite-member';
 
 const EXPORTS = [
   {
-    tipo: 'movimientos',
-    title: 'Movimientos',
-    desc: 'Todo tu historial: pendientes y confirmados, con montos estimados y reales.',
+    tipo: 'gastos',
+    title: 'Gastos e ingresos',
+    desc: 'Todo lo registrado: concepto, monto, quién pagó y medio de pago.',
   },
   {
-    tipo: 'planificacion',
-    title: 'Planificación',
-    desc: 'Tus ingresos y gastos fijos configurados.',
+    tipo: 'presupuesto',
+    title: 'Presupuesto',
+    desc: 'Monto de cada concepto mes a mes, como la hoja del Excel.',
   },
   {
     tipo: 'ahorros',
     title: 'Ahorros',
     desc: 'Metas de ahorro con su progreso actual.',
-  },
-  {
-    tipo: 'creditos',
-    title: 'Créditos',
-    desc: 'Deudas, cuotas pagadas y saldo pendiente.',
   },
 ];
 
@@ -158,6 +154,21 @@ export default async function AjustesPage() {
           </div>
         )}
       </div>
+
+      {/* CONEXIONES */}
+      <Link
+        href="/finanzas/conexiones"
+        className="flex items-center justify-between gap-4 bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 hover:border-white/15 transition-all"
+      >
+        <div className="flex items-center gap-3">
+          <Link2 size={18} className="text-sky-400 shrink-0" />
+          <div>
+            <p className="text-sm font-black text-white">Mercado Pago</p>
+            <p className="text-xs text-slate-500 font-medium">Conecta tu cuenta y sincroniza tus pagos.</p>
+          </div>
+        </div>
+        <ArrowRight size={16} className="text-slate-500 shrink-0" />
+      </Link>
 
       {/* RESPALDO */}
       <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-8 backdrop-blur-xl">

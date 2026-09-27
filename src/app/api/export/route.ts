@@ -27,7 +27,7 @@ export async function GET(request: Request) {
   const householdId = await getActiveHouseholdId();
 
   const { searchParams } = new URL(request.url);
-  const dataset = searchParams.get('tipo') || 'movimientos';
+  const dataset = searchParams.get('tipo') || 'gastos';
 
   let csv = '';
   let filename = 'export.csv';
@@ -81,53 +81,6 @@ export async function GET(request: Request) {
       });
     csv = toCsv(rows, header);
     filename = 'finanzas-presupuesto.csv';
-  } else if (dataset === 'movimientos') {
-    const { data } = await supabase
-      .from('movements')
-      .select(
-        'due_date, period_month, description, kind, category, estimated_amount, actual_amount, status, confirmed_at'
-      )
-      .eq('household_id', householdId)
-      .order('due_date', { ascending: false });
-
-    const rows = (data || []).map((m) => ({
-      Fecha: m.due_date,
-      Mes: String(m.period_month).slice(0, 7),
-      Descripcion: m.description,
-      Tipo: m.kind === 'income' ? 'Ingreso' : 'Gasto',
-      Categoria: m.category,
-      MontoEstimado: m.estimated_amount,
-      MontoReal: m.actual_amount ?? '',
-      Estado: m.status === 'confirmed' ? 'Confirmado' : 'Pendiente',
-      ConfirmadoEl: m.confirmed_at ? String(m.confirmed_at).slice(0, 10) : '',
-    }));
-
-    csv = toCsv(rows, [
-      'Fecha', 'Mes', 'Descripcion', 'Tipo', 'Categoria',
-      'MontoEstimado', 'MontoReal', 'Estado', 'ConfirmadoEl',
-    ]);
-    filename = 'lifehub-movimientos.csv';
-  } else if (dataset === 'planificacion') {
-    const { data } = await supabase
-      .from('recurring_items')
-      .select('description, kind, amount, is_variable, due_day, category, is_active')
-      .eq('household_id', householdId)
-      .order('due_day', { ascending: true });
-
-    const rows = (data || []).map((r) => ({
-      Descripcion: r.description,
-      Tipo: r.kind === 'income' ? 'Ingreso' : 'Gasto',
-      Monto: r.amount,
-      MontoVariable: r.is_variable ? 'Si' : 'No',
-      DiaDelMes: r.due_day,
-      Categoria: r.category,
-      Activo: r.is_active ? 'Si' : 'No',
-    }));
-
-    csv = toCsv(rows, [
-      'Descripcion', 'Tipo', 'Monto', 'MontoVariable', 'DiaDelMes', 'Categoria', 'Activo',
-    ]);
-    filename = 'lifehub-planificacion.csv';
   } else if (dataset === 'ahorros') {
     const { data } = await supabase
       .from('savings')
@@ -143,27 +96,6 @@ export async function GET(request: Request) {
 
     csv = toCsv(rows, ['Nombre', 'MontoActual', 'Objetivo', 'Creado']);
     filename = 'lifehub-ahorros.csv';
-  } else if (dataset === 'creditos') {
-    const { data } = await supabase
-      .from('credits')
-      .select(
-        'name, total_amount, remaining_amount, installment_value, paid_installments, total_installments'
-      )
-      .eq('household_id', householdId);
-
-    const rows = (data || []).map((c) => ({
-      Nombre: c.name,
-      MontoTotal: c.total_amount,
-      SaldoPendiente: c.remaining_amount,
-      ValorCuota: c.installment_value,
-      CuotasPagadas: c.paid_installments,
-      CuotasTotales: c.total_installments,
-    }));
-
-    csv = toCsv(rows, [
-      'Nombre', 'MontoTotal', 'SaldoPendiente', 'ValorCuota', 'CuotasPagadas', 'CuotasTotales',
-    ]);
-    filename = 'lifehub-creditos.csv';
   } else {
     return NextResponse.json({ error: 'Tipo de export no válido' }, { status: 400 });
   }

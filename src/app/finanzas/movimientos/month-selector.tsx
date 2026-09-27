@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
-import { shiftPeriod, periodLabel, isCurrentPeriod, periodOf } from '@/services/movements';
+import { shiftPeriod, periodLabel, isCurrentPeriod } from '@/services/movements';
 
 /**
  * Navegación entre meses. Usa el query param ?mes=YYYY-MM

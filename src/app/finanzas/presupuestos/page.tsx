@@ -37,11 +37,17 @@ export default async function PresupuestoPage({
     </div>
   );
 
-  if (!plan.schemaReady || !plan.seeded) {
+  if (!plan.schemaReady || !plan.seeded || !plan.checklistReady) {
     return (
       <div className="space-y-8 pb-20 max-w-2xl">
         {header}
-        {!plan.schemaReady ? <SchemaMissingCard /> : <SeedPlanCard />}
+        {!plan.schemaReady ? (
+          <SchemaMissingCard />
+        ) : !plan.checklistReady ? (
+          <SchemaMissingCard file="schema-plan-hogar-v2.sql" />
+        ) : (
+          <SeedPlanCard />
+        )}
       </div>
     );
   }
@@ -88,6 +94,9 @@ export default async function PresupuestoPage({
             budget={r.budget}
             actual={r.actual}
             person={r.concept.person}
+            payMode={r.concept.pay_mode}
+            dueDay={r.concept.due_day}
+            payState={v.checklist.find((i) => i.conceptId === r.concept.id)?.state ?? null}
           />
         ))}
         {v.otherIncome > 0 && (
@@ -111,6 +120,9 @@ export default async function PresupuestoPage({
               status={r.status}
               used={r.used}
               isDebtPlan={r.concept.is_debt_plan}
+              payMode={r.concept.pay_mode}
+              dueDay={r.concept.due_day}
+              payState={r.payState}
             />
           ))}
         </Section>
@@ -119,7 +131,7 @@ export default async function PresupuestoPage({
       {v.unassignedSpent > 0 && (
         <p className="text-sm text-slate-400 bg-slate-900/30 border border-white/5 rounded-2xl p-4">
           <span className="font-black text-white">{formatCLP(v.unassignedSpent)}</span> en gastos sin concepto (por
-          ejemplo, sincronizados de Mercado Pago). Edítalos desde el Inicio para asignarles uno.
+          ejemplo, sincronizados de Mercado Pago). Edítalos desde Movimientos para asignarles uno.
         </p>
       )}
 

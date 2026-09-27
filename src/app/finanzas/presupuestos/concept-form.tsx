@@ -22,6 +22,7 @@ export default function ConceptForm({
   const [state, action] = useActionState(addConcept, IDLE_STATE);
   const [open, setOpen] = useState(false);
   const [kind, setKind] = useState<'income' | 'expense'>('expense');
+  const [payMode, setPayMode] = useState<'cuenta' | 'bolsa'>('bolsa');
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -45,6 +46,7 @@ export default function ConceptForm({
       <h3 className="text-sm font-black text-white uppercase tracking-wider">Nuevo concepto</h3>
       <input type="hidden" name="kind" value={kind} />
       <input type="hidden" name="month" value={month} />
+      <input type="hidden" name="pay_mode" value={payMode} />
       <InlineMessage state={state} />
 
       <div className="grid grid-cols-2 gap-2 p-1 bg-black/30 rounded-2xl border border-white/5">
@@ -87,6 +89,33 @@ export default function ConceptForm({
         )}
         <CLPInput name="amount" placeholder="Monto mensual" />
       </div>
+      <div className="grid grid-cols-2 gap-2">
+        {(
+          [
+            ['cuenta', 'Cuenta del mes', 'Se paga una vez (arriendo, luz)'],
+            ['bolsa', 'Gasto variable', 'Varias compras (súper, ocio)'],
+          ] as const
+        ).map(([value, label, hint]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setPayMode(value)}
+            className={`min-h-12 rounded-xl border px-3 py-2 text-left ${
+              payMode === value ? 'border-indigo-400 bg-indigo-500/10' : 'border-white/10'
+            }`}
+          >
+            <span className="block text-xs font-black text-white">{label}</span>
+            <span className="block text-[10px] text-slate-500">{hint}</span>
+          </button>
+        ))}
+      </div>
+      {payMode === 'cuenta' && (
+        <label className="flex items-center gap-3 text-xs font-bold text-slate-400">
+          Vence el día
+          <input name="due_day" type="number" inputMode="numeric" min={1} max={31} placeholder="—" className={`${fieldBase} min-h-11 w-24`} />
+          <span className="text-slate-600">(opcional)</span>
+        </label>
+      )}
       <p className="text-[11px] text-slate-500">El monto se aplica desde este mes hasta el final del plan.</p>
 
       <div className="flex gap-2">
