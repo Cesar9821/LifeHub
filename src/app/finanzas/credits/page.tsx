@@ -1,193 +1,179 @@
-import { createClient } from '@/lib/supabase/server';
-import { CreditCard, Calendar, ArrowDownCircle, PieChart, ShieldAlert, TrendingDown, Trash2, Target } from 'lucide-react';
-import CreditForm from './credit-form';
-import { deleteCredit } from './actions';
-import CreditPayment from './credit-payment';
+import { CalendarCheck, CreditCard, Zap } from 'lucide-react';
+import { formatCLP } from '@/lib/format';
+import { monthShort } from '@/lib/plan/months';
+import { debtItemsView, defaultMonth, loadPlanPage } from '@/services/plan';
+import { SchemaMissingCard, SeedPlanCard } from '@/components/finanzas/seed-plan-card';
+import DebtChart, { ITEM_COLORS } from './debt-chart';
+import { AddDebtItem, CmrSettingsForm, DebtItemCard } from './debt-forms';
 
-export default async function CreditsPage() {
-  const supabase = await createClient();
+export const dynamic = 'force-dynamic';
 
-  const { data: credits } = await supabase
-    .from('credits')
-    .select('*')
-    .order('created_at', { ascending: false });
+export default async function DeudaCmrPage() {
+  const { plan } = await loadPlanPage();
 
-  const totalDebt = credits?.reduce((acc, curr) => acc + Number(curr.remaining_amount), 0) || 0;
-  const totalMonthly = credits?.reduce((acc, curr) => acc + Number(curr.installment_value), 0) || 0;
+  const header = (
+    <div className="space-y-3">
+      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-slate-800 bg-slate-900/50 w-fit">
+        <CreditCard size={14} className="text-rose-400" />
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Plan casa</span>
+      </div>
+      <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tighter italic leading-none">
+        Deuda CMR<span className="text-rose-500">.</span>
+      </h1>
+    </div>
+  );
 
-  // Estrategia bola de nieve: ataca primero la deuda más chica.
-  const snowball = (credits || [])
-    .filter((c) => Number(c.remaining_amount) > 0)
-    .sort((a, b) => Number(a.remaining_amount) - Number(b.remaining_amount))[0];
+  if (!plan.schemaReady || !plan.seeded) {
+    return (
+      <div className="space-y-8 pb-20 max-w-2xl">
+        {header}
+        {!plan.schemaReady ? <SchemaMissingCard /> : <SeedPlanCard />}
+      </div>
+    );
+  }
 
-  const inputStyles = "bg-slate-900/50 border border-slate-800 rounded-xl p-3 text-sm text-white placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-rose-500/50 focus:border-rose-500 transition-all backdrop-blur-md w-full appearance-none";
+  const month = defaultMonth(plan);
+  const items = debtItemsView(plan, month);
+  const activeItems = plan.debtItems.filter((d) => !d.archived);
+  const colorOf = new Map(activeItems.map((d, i) => [d.id, ITEM_COLORS[i % ITEM_COLORS.length]]));
+
+  const total = plan.cmr.totalInitial;
+  const paid = Math.min(total, plan.cmr.totalPaid);
+  const pct = total > 0 ? paid / total : 0;
+  const balance = items.reduce((a, i) => a + i.balance, 0);
+
+  const thisMonth = plan.cmr.months.find((m) => m.month === month);
+  const advances = items
+    .filter((i) => i.thisMonth.advance > 0)
+    .map((i) => `${formatCLP(i.thisMonth.advance)} al ${i.item.name}`);
+
+  // Meses con pago (desde el inicio del plan CMR) para el gráfico y la tabla.
+  const planMonths = plan.cmr.months.filter((m) => m.month >= plan.settings.cmrStartMonth && (m.total > 0.5 || m.paid > 0));
+  const chartRows = planMonths.map((m) => {
+    const row: Record<string, number | string> = { label: monthShort(m.month) };
+    for (const d of activeItems) row[d.id] = Math.round(m.items[d.id]?.total ?? 0);
+    return row;
+  });
 
   return (
-    <div className="space-y-8 md:space-y-12 pb-20">
+    <div className="space-y-8 pb-28">
+      {header}
 
-      {/* HEADER */}
-      <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-8">
-        <div className="flex flex-col gap-4">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-slate-800 bg-slate-900/50 backdrop-blur-md w-fit">
-            <CreditCard size={14} className="text-rose-500" />
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Gestión de Pasivos</span>
+      {/* PROGRESO */}
+      <section className="bg-gradient-to-br from-rose-500/10 to-transparent border border-rose-500/20 rounded-[2rem] p-6 space-y-4">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-[10px] font-black text-rose-300/90 uppercase tracking-[0.2em]">Pagado del plan</p>
+            <p className="mt-1.5 text-3xl sm:text-4xl font-black font-mono text-white leading-none">
+              {formatCLP(paid)} <span className="text-base text-slate-500">/ {formatCLP(total)}</span>
+            </p>
           </div>
-          <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-white tracking-tighter italic leading-none">
-            Créditos<span className="text-rose-600">.</span>
-          </h1>
-          <p className="text-slate-500 font-bold text-xs uppercase tracking-[0.3em] max-w-md">
-            Control de apalancamiento y amortización de deuda
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="bg-rose-500/5 border border-rose-500/10 p-5 md:px-8 rounded-[2rem] backdrop-blur-xl flex items-center gap-4 group hover:border-rose-500/30 transition-all">
-            <div className="p-3 bg-rose-500 rounded-xl shadow-[0_0_20px_rgba(244,63,94,0.2)] group-hover:scale-110 transition-transform">
-              <TrendingDown size={20} className="text-white" />
-            </div>
-            <div>
-              <p className="text-[9px] font-black text-rose-500/60 uppercase tracking-[0.2em] mb-1">Deuda Total</p>
-              <p className="text-2xl font-black text-white font-mono leading-none">
-                ${totalDebt.toLocaleString('es-CL')}
-              </p>
-            </div>
-          </div>
-          <div className="bg-slate-800/30 border border-white/5 p-5 md:px-8 rounded-[2rem] backdrop-blur-xl">
-            <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Cuotas / Mes</p>
-            <p className="text-2xl font-black text-slate-300 font-mono leading-none">
-              ${totalMonthly.toLocaleString('es-CL')}
+          <div className="text-right">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Termina</p>
+            <p className="mt-1.5 flex items-center justify-end gap-1.5 text-lg font-black text-emerald-300">
+              <CalendarCheck size={16} /> {plan.cmr.payoffMonth ? monthShort(plan.cmr.payoffMonth) : '—'}
             </p>
           </div>
         </div>
-      </div>
+        <div className="h-2.5 w-full bg-white/5 rounded-full overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-rose-500 to-amber-400 rounded-full" style={{ width: `${Math.round(pct * 100)}%` }} />
+        </div>
+        <p className="text-xs font-bold text-slate-400">
+          {Math.round(pct * 100)}% pagado · saldo {formatCLP(balance)}
+        </p>
+      </section>
 
-      {/* FORMULARIO */}
-      <section className="relative z-10">
-        <div className="bg-slate-900/40 border border-white/5 p-6 md:p-8 rounded-[2.5rem] backdrop-blur-xl">
-          <div className="flex items-center gap-3 mb-8">
-            <ShieldAlert size={18} className="text-rose-500" />
-            <h2 className="text-white font-black text-lg uppercase tracking-tighter">Registrar Nueva Obligación</h2>
-          </div>
-          <CreditForm inputStyles={inputStyles} />
+      {/* ESTE MES */}
+      <section className="flex items-start gap-3 bg-slate-900/40 border border-white/5 rounded-[2rem] p-5">
+        <Zap size={18} className="text-amber-400 mt-0.5 shrink-0" />
+        <div className="space-y-1">
+          <p className="text-sm font-black text-white">
+            {monthShort(month)}: paga {formatCLP(Math.round(thisMonth?.total ?? 0))}
+          </p>
+          <p className="text-sm text-slate-400">
+            {month < plan.settings.cmrStartMonth
+              ? `El plan parte en ${monthShort(plan.settings.cmrStartMonth)}. Este mes solo se paga la boleta actual.`
+              : advances.length > 0
+              ? `Este mes adelanta ${advances.join(' y ')}.`
+              : 'Este mes solo se pagan las cuotas.'}
+          </p>
         </div>
       </section>
 
-      {/* ESTRATEGIA BOLA DE NIEVE */}
-      {snowball && (
-        <div className="bg-gradient-to-br from-rose-500/10 to-transparent border border-rose-500/20 rounded-[2rem] p-6 flex items-start gap-3">
-          <Target size={20} className="text-rose-400 shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-black text-white uppercase tracking-tight">Estrategia bola de nieve</p>
-            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-              Ataca primero <b className="text-rose-300">{snowball.name}</b> (${Number(snowball.remaining_amount).toLocaleString('es-CL')}), la deuda más chica. Al liquidarla, suma su cuota a la siguiente y acelera. El impulso es real.
-            </p>
+      {/* GRÁFICO + TABLA */}
+      {planMonths.length > 0 && (
+        <section className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-5 space-y-5">
+          <h2 className="text-sm font-black text-white uppercase tracking-wider">Plan mes a mes</h2>
+          <DebtChart rows={chartRows} items={activeItems.map((d) => ({ id: d.id, name: d.name }))} />
+          <div className="overflow-x-auto -mx-5 px-5">
+            <table className="w-full text-xs min-w-[520px]">
+              <thead>
+                <tr className="text-slate-500 text-[10px] uppercase tracking-wider">
+                  <th className="text-left font-black py-2 pr-3">Mes</th>
+                  <th className="text-right font-black py-2 px-2">Cuotas</th>
+                  <th className="text-right font-black py-2 px-2">Adelanto</th>
+                  <th className="text-right font-black py-2 px-2">Total</th>
+                  <th className="text-right font-black py-2 pl-2">Deuda al cierre</th>
+                </tr>
+              </thead>
+              <tbody className="font-mono">
+                {planMonths.map((m) => (
+                  <tr key={m.month} className={`border-t border-white/5 ${m.month === month ? 'text-white' : 'text-slate-300'}`}>
+                    <td className="py-2 pr-3 font-sans font-bold">
+                      {monthShort(m.month)}
+                      {m.source === 'real' && <span className="ml-1.5 text-[9px] text-emerald-400 uppercase">real</span>}
+                    </td>
+                    <td className="text-right py-2 px-2">{formatCLP(m.total - m.advance)}</td>
+                    <td className="text-right py-2 px-2 text-amber-300">{m.advance > 0.5 ? formatCLP(m.advance) : '–'}</td>
+                    <td className="text-right py-2 px-2 font-black">{formatCLP(m.total)}</td>
+                    <td className="text-right py-2 pl-2 text-slate-500">{formatCLP(m.remainingAfter)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
+        </section>
       )}
 
-      {/* GRID DE CRÉDITOS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
-        {credits && credits.length > 0 ? (
-          credits.map((item) => {
-            const vCuota = Number(item.installment_value) || 0;
-            const pCuotas = Number(item.paid_installments) || 0;
-            const tCuotas = Number(item.total_installments) || 1;
-            const saldoRestante = Number(item.remaining_amount) || 0;
-            const totalCTC = Number(item.total_amount) || 0;
-            const progress = Math.min(100, (pCuotas / tCuotas) * 100);
-            const cuotasRestantes = tCuotas - pCuotas;
+      {/* ÍTEMS */}
+      <section className="space-y-3">
+        <h2 className="text-[11px] font-black text-white uppercase tracking-[0.15em] px-1">Compras en cuotas</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {items.map((v) => (
+            <DebtItemCard
+              key={v.item.id}
+              item={{
+                id: v.item.id,
+                name: v.item.name,
+                price: v.item.price,
+                installment: v.item.installment,
+                total_installments: v.item.total_installments,
+                remaining_installments: v.item.remaining_installments,
+                priority: v.item.priority,
+              }}
+              color={colorOf.get(v.item.id) ?? ITEM_COLORS[0]}
+              balance={v.balance}
+              paid={v.paid}
+              remainingInstallments={v.remainingInstallments}
+              interest={v.interest}
+              status={v.status}
+              thisMonth={v.thisMonth}
+            />
+          ))}
+        </div>
+        <AddDebtItem nextPriority={activeItems.reduce((a, d) => Math.max(a, d.priority), 0) + 1} />
+      </section>
 
-            return (
-              <div key={item.id} className="group p-5 md:p-8 bg-[#0A0C10] border border-white/5 rounded-[2rem] md:rounded-[3rem] shadow-2xl relative overflow-hidden transition-all hover:border-rose-500/20 flex flex-col justify-between">
-                <div className="absolute -right-20 -top-20 w-48 h-48 bg-rose-500/5 blur-[70px] group-hover:bg-rose-500/10 transition-all duration-700" />
+      <CmrSettingsForm
+        fixedPayment={plan.settings.cmrFixedPayment}
+        startMonth={plan.settings.cmrStartMonth}
+        months={plan.months.map((m) => ({ value: m, label: monthShort(m) }))}
+      />
 
-                <div className="relative z-10 mb-6">
-                  <div className="flex justify-between items-start gap-4">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-xl md:text-2xl font-black text-white italic tracking-tight uppercase truncate leading-tight">
-                        {item.name}
-                      </h3>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        <div className="flex items-center gap-1 text-[9px] font-black text-slate-400 uppercase tracking-widest bg-white/5 px-2.5 py-1 rounded-full border border-white/5">
-                          <Calendar size={10} className="text-rose-500" /> {pCuotas} / {tCuotas} cuotas
-                        </div>
-                        <div className="flex items-center gap-1 text-[9px] font-black text-rose-500 uppercase tracking-widest bg-rose-500/5 px-2.5 py-1 rounded-full border border-rose-500/10">
-                          <PieChart size={10} /> {progress.toFixed(0)}% pagado
-                        </div>
-                        {cuotasRestantes > 0 && (
-                          <div className="text-[9px] font-black text-slate-500 uppercase tracking-widest bg-slate-800/50 px-2.5 py-1 rounded-full border border-white/5">
-                            {cuotasRestantes} cuota{cuotasRestantes !== 1 ? 's' : ''} restante{cuotasRestantes !== 1 ? 's' : ''}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      <div className="text-right bg-slate-900/50 p-3 rounded-xl border border-white/5">
-                        <span className="text-[8px] font-black text-slate-500 uppercase block mb-1">Cuota</span>
-                        <p className="text-lg font-mono font-black text-white">${vCuota.toLocaleString('es-CL')}</p>
-                      </div>
-                      <form action={async () => {
-                        'use server';
-                        await deleteCredit(item.id);
-                      }}>
-                        <button type="submit" className="p-2.5 rounded-xl text-slate-700 hover:text-rose-500 hover:bg-rose-500/10 transition-all">
-                          <Trash2 size={16} />
-                        </button>
-                      </form>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 mb-6 relative z-10">
-                  <div className="p-4 rounded-[1.5rem] bg-slate-950 border border-white/5">
-                    <span className="text-[8px] font-black text-slate-600 uppercase block mb-1 tracking-widest">CTC Total</span>
-                    <span className="text-base font-mono font-black text-slate-400 block truncate">
-                      ${totalCTC.toLocaleString('es-CL')}
-                    </span>
-                  </div>
-                  <div className="p-4 rounded-[1.5rem] bg-rose-950/20 border border-rose-500/20">
-                    <span className="text-[8px] font-black text-rose-500 uppercase block mb-1 tracking-widest">Saldo Pendiente</span>
-                    <span className="text-base font-mono font-black text-rose-400 block truncate">
-                      ${saldoRestante.toLocaleString('es-CL')}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-2 relative z-10">
-                  <div className="flex justify-between items-end">
-                    <span className="text-[9px] font-black uppercase text-slate-500 tracking-[0.2em]">Amortización</span>
-                    <span className="text-xs font-mono font-black text-rose-400">{progress.toFixed(1)}%</span>
-                  </div>
-                  <div className="relative w-full h-4 bg-slate-900 rounded-full border border-white/5 overflow-hidden p-[2px]">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-rose-800 via-rose-600 to-rose-400 shadow-[0_0_15px_rgba(244,63,94,0.3)] transition-all duration-1000 ease-out"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-
-                  <div className="pt-4 mt-4 border-t border-white/5">
-                    <CreditPayment
-                      id={item.id}
-                      installmentValue={vCuota}
-                      isFinished={pCuotas >= tCuotas}
-                    />
-                  </div>
-                </div>
-              </div>
-            );
-          })
-        ) : (
-          <div className="col-span-full p-12 md:p-24 text-center border-2 border-dashed border-slate-800 rounded-[2rem] md:rounded-[3.5rem] bg-slate-950/20">
-            <div className="inline-flex p-4 md:p-6 bg-slate-900 rounded-full text-slate-700 mb-6 border border-white/5">
-              <ArrowDownCircle size={32} className="opacity-20" />
-            </div>
-            <p className="text-slate-500 italic font-black uppercase tracking-[0.2em] text-xs md:text-sm">
-              Libre de pasivos detectados
-            </p>
-          </div>
-        )}
-      </div>
+      <p className="text-xs text-slate-500 px-1">
+        Para registrar un pago, usa &quot;+ Gasto&quot; con el concepto <span className="text-slate-300 font-bold">CMR plan casa</span> y
+        elige el ítem. El plan se recalcula solo.
+      </p>
     </div>
   );
 }

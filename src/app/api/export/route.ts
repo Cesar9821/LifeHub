@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server';
 import { getActiveHouseholdId } from '@/lib/auth';
 import { NextResponse } from 'next/server';
+import { conceptBudget, loadPlan } from '@/services/plan';
+import { monthShort } from '@/lib/plan/months';
+import { methodLabel } from '@/components/finanzas/labels';
 
 /** Escapa un valor para CSV (comillas, comas, saltos de línea). */
 function esc(value: unknown): string {
@@ -29,7 +32,56 @@ export async function GET(request: Request) {
   let csv = '';
   let filename = 'export.csv';
 
-  if (dataset === 'movimientos') {
+  if (dataset === 'gastos') {
+    // Gastos e ingresos reales del plan, con concepto, quién pagó y medio de pago.
+    const [{ data: movs }, { data: concepts }, { data: debts }] = await Promise.all([
+      supabase
+        .from('movements')
+        .select('due_date, period_month, kind, description, concept_id, debt_item_id, paid_by, payment_method, actual_amount, estimated_amount')
+        .eq('household_id', householdId)
+        .eq('status', 'confirmed')
+        .order('due_date', { ascending: false }),
+      supabase.from('budget_concepts').select('id, name, group_name').eq('household_id', householdId),
+      supabase.from('debt_items').select('id, name').eq('household_id', householdId),
+    ]);
+    const conceptById = new Map((concepts || []).map((c) => [c.id, c]));
+    const debtById = new Map((debts || []).map((d) => [d.id, d.name]));
+
+    const rows = (movs || []).map((m) => {
+      const c = m.concept_id ? conceptById.get(m.concept_id) : undefined;
+      return {
+        Fecha: m.due_date,
+        Mes: String(m.period_month).slice(0, 7),
+        Tipo: m.kind === 'income' ? 'Ingreso' : 'Gasto',
+        Grupo: c?.group_name ?? '',
+        Concepto: c?.name ?? '',
+        Detalle: m.description,
+        Monto: m.actual_amount ?? m.estimated_amount,
+        QuienPago: m.paid_by ?? '',
+        MedioDePago: methodLabel(m.payment_method),
+        ItemDeuda: m.debt_item_id ? debtById.get(m.debt_item_id) ?? '' : '',
+      };
+    });
+    csv = toCsv(rows, ['Fecha', 'Mes', 'Tipo', 'Grupo', 'Concepto', 'Detalle', 'Monto', 'QuienPago', 'MedioDePago', 'ItemDeuda']);
+    filename = 'finanzas-gastos.csv';
+  } else if (dataset === 'presupuesto') {
+    // Una fila por concepto, una columna por mes (como la hoja "Presupuesto").
+    const plan = await loadPlan();
+    const header = ['Tipo', 'Grupo', 'Concepto', ...plan.months.map(monthShort)];
+    const rows = plan.concepts
+      .filter((c) => !c.archived)
+      .map((c) => {
+        const row: Record<string, unknown> = {
+          Tipo: c.kind === 'income' ? 'Ingreso' : 'Gasto',
+          Grupo: c.group_name,
+          Concepto: c.name,
+        };
+        plan.months.forEach((m) => (row[monthShort(m)] = Math.round(conceptBudget(plan, c, m))));
+        return row;
+      });
+    csv = toCsv(rows, header);
+    filename = 'finanzas-presupuesto.csv';
+  } else if (dataset === 'movimientos') {
     const { data } = await supabase
       .from('movements')
       .select(

@@ -1,116 +1,189 @@
-import { PieChart, Trash2, AlertTriangle } from 'lucide-react';
-import { getBudgets, summarizeBudgets } from '@/services/budgets';
-import { getExpenseCategoryNames } from '@/services/categories';
+import { CalendarPlus, Download, PieChart, RotateCcw } from 'lucide-react';
 import { formatCLP } from '@/lib/format';
-import BudgetForm from './budget-form';
-import { deleteBudget } from './actions';
+import { budgetStatus } from '@/lib/plan/budget';
+import { addMonths, monthShort } from '@/lib/plan/months';
+import { defaultMonth, loadPlanPage, monthView } from '@/services/plan';
+import { extendPlan, setConceptArchived } from '@/app/finanzas/plan/actions';
+import MonthSelector from '@/app/finanzas/movimientos/month-selector';
+import { SchemaMissingCard, SeedPlanCard } from '@/components/finanzas/seed-plan-card';
+import { StatusChip, UsageBar } from '@/components/finanzas/status-chip';
+import { SubmitButton } from '@/components/ui/submit-button';
+import BudgetRow from './budget-row';
+import ConceptForm from './concept-form';
 
 export const dynamic = 'force-dynamic';
 
-function barColor(percent: number): string {
-  if (percent > 100) return 'bg-rose-500';
-  if (percent >= 80) return 'bg-amber-500';
-  return 'bg-emerald-500';
-}
+export default async function PresupuestoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mes?: string }>;
+}) {
+  const params = await searchParams;
+  const { plan } = await loadPlanPage();
+  const month = defaultMonth(plan, params?.mes);
 
-function textColor(percent: number): string {
-  if (percent > 100) return 'text-rose-400';
-  if (percent >= 80) return 'text-amber-400';
-  return 'text-emerald-400';
-}
-
-export default async function PresupuestosPage() {
-  const [budgets, categories] = await Promise.all([getBudgets(), getExpenseCategoryNames()]);
-  const summary = summarizeBudgets(budgets);
-
-  return (
-    <div className="max-w-4xl mx-auto space-y-8 md:space-y-10 pb-20">
-      {/* HEADER */}
-      <div className="flex flex-col gap-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/5 w-fit">
-          <PieChart size={12} className="text-emerald-400" />
-          <span className="text-[9px] md:text-[10px] font-bold text-emerald-400/80 uppercase tracking-[0.2em]">
-            Límites del mes
-          </span>
+  const header = (
+    <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+      <div className="space-y-3">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-slate-800 bg-slate-900/50 w-fit">
+          <PieChart size={14} className="text-indigo-400" />
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Plan del hogar</span>
         </div>
-        <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter italic">
-          Presupuestos<span className="text-emerald-500">.</span>
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tighter italic leading-none">
+          Presupuesto<span className="text-indigo-500">.</span>
         </h1>
       </div>
+      {plan.seeded && <MonthSelector period={month} basePath="/finanzas/presupuestos" />}
+    </div>
+  );
 
-      {/* RESUMEN */}
-      <div className="grid grid-cols-3 gap-3 md:gap-4">
-        <StatTile label="Presupuestado" value={formatCLP(summary.totalBudget)} accent="text-white" />
-        <StatTile label="Gastado" value={formatCLP(summary.totalSpent)} accent="text-emerald-400" />
-        <StatTile
-          label="Excedidos"
-          value={String(summary.overCount)}
-          accent={summary.overCount > 0 ? 'text-rose-400' : 'text-slate-500'}
+  if (!plan.schemaReady || !plan.seeded) {
+    return (
+      <div className="space-y-8 pb-20 max-w-2xl">
+        {header}
+        {!plan.schemaReady ? <SchemaMissingCard /> : <SeedPlanCard />}
+      </div>
+    );
+  }
+
+  const v = monthView(plan, month);
+  const remaining = v.expenseBudget - v.spent;
+  const totalStatus = budgetStatus(v.expenseBudget, v.spent);
+  const archived = plan.concepts.filter((c) => c.archived);
+  const groupNames = [...new Set(plan.concepts.map((c) => c.group_name))];
+  const lastMonth = plan.months[plan.months.length - 1];
+
+  return (
+    <div className="space-y-8 pb-28">
+      {header}
+
+      {/* RESUMEN DEL MES */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Tile label="Ingresos" value={formatCLP(v.income)} tone="text-emerald-300" />
+        <Tile label="Presupuestado" value={formatCLP(v.expenseBudget)} tone="text-white" />
+        <Tile label="Gastado" value={formatCLP(v.spent)} tone="text-rose-300" />
+        <Tile
+          label={remaining >= 0 ? 'Queda del presupuesto' : 'Sobre el presupuesto'}
+          value={formatCLP(Math.abs(remaining))}
+          tone={remaining >= 0 ? 'text-white' : 'text-rose-400'}
         />
       </div>
-
-      <BudgetForm categories={categories} />
-
-      {/* LISTA */}
-      {budgets.length === 0 ? (
-        <div className="border-2 border-dashed border-slate-800/50 rounded-[2.5rem] p-12 md:p-16 flex flex-col items-center justify-center text-center gap-4">
-          <PieChart size={40} className="text-slate-800" />
-          <p className="text-slate-600 font-black uppercase text-xs tracking-widest">
-            Fija un límite mensual por categoría para tomar el control.
-          </p>
+      <div className="flex items-center gap-3">
+        <div className="flex-1">
+          <UsageBar used={v.expenseBudget > 0 ? v.spent / v.expenseBudget : 0} status={totalStatus} />
         </div>
-      ) : (
-        <div className="space-y-3">
-          {budgets.map((b) => (
-            <div key={b.category} className="bg-slate-900/40 border border-white/5 rounded-[1.75rem] p-5 backdrop-blur-xl">
-              <div className="flex items-center justify-between gap-3 mb-2.5">
-                <div className="flex items-center gap-2 min-w-0">
-                  <h3 className="text-sm font-black text-white uppercase tracking-wide truncate">{b.category}</h3>
-                  {b.spent > b.amount && (
-                    <span className="inline-flex items-center gap-1 text-[9px] font-black text-rose-400 uppercase tracking-widest">
-                      <AlertTriangle size={11} /> Excedido
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="text-xs font-mono text-slate-400">
-                    {formatCLP(b.spent)} <span className="text-slate-600">/ {formatCLP(b.amount)}</span>
-                  </span>
-                  <form action={deleteBudget}>
-                    <input type="hidden" name="category" value={b.category} />
-                    <button
-                      type="submit"
-                      title="Eliminar"
-                      className="h-7 w-7 flex items-center justify-center rounded-lg text-slate-600 hover:text-rose-500 hover:bg-rose-500/10 transition-all"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </form>
-                </div>
-              </div>
-              <div className="h-2.5 w-full bg-black/40 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all ${barColor(b.percent)}`}
-                  style={{ width: `${Math.min(100, b.percent)}%` }}
-                />
-              </div>
-              <p className={`text-[10px] font-black font-mono mt-1.5 ${textColor(b.percent)}`}>
-                {b.percent}% usado
-                {b.amount > b.spent && ` · quedan ${formatCLP(b.amount - b.spent)}`}
-              </p>
-            </div>
+        <StatusChip status={totalStatus} />
+      </div>
+
+      {/* INGRESOS */}
+      <Section title="Ingresos" subtitle={formatCLP(v.income)}>
+        {v.incomes.map((r) => (
+          <BudgetRow
+            key={r.concept.id}
+            conceptId={r.concept.id}
+            name={r.concept.name}
+            group={r.concept.group_name}
+            month={month}
+            kind="income"
+            budget={r.budget}
+            actual={r.actual}
+            person={r.concept.person}
+          />
+        ))}
+        {v.otherIncome > 0 && (
+          <p className="text-xs text-slate-500 px-1">+ {formatCLP(v.otherIncome)} en ingresos sin concepto.</p>
+        )}
+      </Section>
+
+      {/* GASTOS POR GRUPO */}
+      {v.groups.map((g) => (
+        <Section key={g.group} title={g.group} subtitle={`${formatCLP(g.spent)} de ${formatCLP(g.budget)}`}>
+          {g.rows.map((r) => (
+            <BudgetRow
+              key={r.concept.id}
+              conceptId={r.concept.id}
+              name={r.concept.name}
+              group={r.concept.group_name}
+              month={month}
+              kind="expense"
+              budget={r.budget}
+              actual={r.spent}
+              status={r.status}
+              used={r.used}
+              isDebtPlan={r.concept.is_debt_plan}
+            />
           ))}
-        </div>
+        </Section>
+      ))}
+
+      {v.unassignedSpent > 0 && (
+        <p className="text-sm text-slate-400 bg-slate-900/30 border border-white/5 rounded-2xl p-4">
+          <span className="font-black text-white">{formatCLP(v.unassignedSpent)}</span> en gastos sin concepto (por
+          ejemplo, sincronizados de Mercado Pago). Edítalos desde el Inicio para asignarles uno.
+        </p>
       )}
+
+      <ConceptForm month={month} groups={groupNames} people={plan.settings.people} />
+
+      {/* ARCHIVADOS */}
+      {archived.length > 0 && (
+        <Section title="Archivados" subtitle={`${archived.length}`}>
+          {archived.map((c) => (
+            <form key={c.id} action={setConceptArchived} className="flex items-center justify-between gap-3 bg-black/20 border border-white/5 rounded-2xl pl-4 pr-2 py-1">
+              <input type="hidden" name="id" value={c.id} />
+              <input type="hidden" name="archived" value="false" />
+              <span className="text-sm text-slate-400 truncate">
+                {c.name} <span className="text-slate-600">· {c.group_name}</span>
+              </span>
+              <SubmitButton className="min-h-11 bg-transparent text-slate-400 hover:text-white hover:bg-white/5 px-3">
+                <RotateCcw size={13} /> Restaurar
+              </SubmitButton>
+            </form>
+          ))}
+        </Section>
+      )}
+
+      {/* MESES Y RESPALDO */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <form action={extendPlan} className="flex-1">
+          <SubmitButton pendingText="Agregando…" className="w-full min-h-12 bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10 hover:text-white">
+            <CalendarPlus size={15} /> Agregar {monthShort(addMonths(lastMonth, 1))} al plan
+          </SubmitButton>
+        </form>
+        <a
+          href="/api/export?tipo=gastos"
+          className="flex-1 min-h-12 inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 text-xs font-black text-slate-300 uppercase tracking-wider hover:bg-white/5"
+        >
+          <Download size={15} /> Gastos CSV
+        </a>
+        <a
+          href="/api/export?tipo=presupuesto"
+          className="flex-1 min-h-12 inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 text-xs font-black text-slate-300 uppercase tracking-wider hover:bg-white/5"
+        >
+          <Download size={15} /> Presupuesto CSV
+        </a>
+      </div>
     </div>
   );
 }
 
-function StatTile({ label, value, accent }: { label: string; value: string; accent: string }) {
+function Tile({ label, value, tone }: { label: string; value: string; tone: string }) {
   return (
-    <div className="bg-[#0A0C10] border border-white/10 p-4 md:p-5 rounded-[1.5rem] text-center">
-      <p className="text-[8px] md:text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5">{label}</p>
-      <p className={`text-lg md:text-2xl font-black font-mono tracking-tighter ${accent}`}>{value}</p>
+    <div className="bg-slate-900/40 border border-white/5 rounded-[1.5rem] p-4">
+      <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.15em]">{label}</p>
+      <p className={`mt-1.5 text-lg sm:text-xl font-black font-mono leading-none break-all ${tone}`}>{value}</p>
     </div>
+  );
+}
+
+function Section({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
+  return (
+    <section className="space-y-2.5">
+      <div className="flex items-baseline justify-between gap-3 px-1">
+        <h2 className="text-[11px] font-black text-white uppercase tracking-[0.15em]">{title}</h2>
+        <span className="text-[11px] font-bold text-slate-500 font-mono">{subtitle}</span>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">{children}</div>
+    </section>
   );
 }
