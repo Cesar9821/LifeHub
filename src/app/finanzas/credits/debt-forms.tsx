@@ -6,6 +6,7 @@ import { archiveDebtItem, saveCmrSettings, saveDebtItem } from '@/app/finanzas/p
 import { IDLE_STATE } from '@/lib/action';
 import { formatCLP } from '@/lib/format';
 import { CLPInput } from '@/components/ui/clp-input';
+import { NumberInput } from '@/components/ui/number-input';
 import { InlineMessage } from '@/components/ui/inline-message';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { fieldBase } from '@/components/ui/styles';
@@ -75,15 +76,7 @@ function DebtItemForm({ initial, onDone }: { initial?: DebtItemFields; onDone: (
   const num = (name: keyof DebtItemFields, label: string, value?: number) => (
     <label className="space-y-1.5 flex flex-col">
       <Label>{label}</Label>
-      <input
-        name={name}
-        type="number"
-        inputMode="numeric"
-        min={0}
-        required
-        defaultValue={value ?? ''}
-        className={`${fieldBase} min-h-11 ${err[name] ? 'border-rose-500/50' : ''}`}
-      />
+      <NumberInput name={name} required defaultValue={value ?? ''} invalid={!!err[name]} />
       {err[name] && <span className="text-[11px] font-bold text-rose-400 px-1">{err[name]}</span>}
     </label>
   );
@@ -99,17 +92,11 @@ function DebtItemForm({ initial, onDone }: { initial?: DebtItemFields; onDone: (
       <div className="grid grid-cols-2 gap-3">
         <label className="space-y-1.5 flex flex-col">
           <Label>Precio</Label>
-          <CLPInput name="price" defaultValue={initial?.price ?? ''} />
+          <CLPInput name="price" defaultValue={initial?.price || ''} />
         </label>
         <label className="space-y-1.5 flex flex-col">
           <Label>Cuota</Label>
-          <input
-            name="installment"
-            inputMode="decimal"
-            required
-            defaultValue={initial ? String(initial.installment).replace('.', ',') : ''}
-            className={`${fieldBase} min-h-11`}
-          />
+          <CLPInput name="installment" decimals={2} required defaultValue={initial?.installment || ''} />
         </label>
         {num('total_installments', 'Cuotas totales', initial?.total_installments)}
         {num('remaining_installments', 'Cuotas que quedan', initial?.remaining_installments)}

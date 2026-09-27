@@ -3,6 +3,7 @@ import { ArrowLeft, Wallet, Brain, Users, Target, Clock, Flame } from 'lucide-re
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth';
 import NotificationsManager from './notifications-manager';
+import { CLPInput } from '@/components/ui/clp-input';
 import { updateNotificationPrefs } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -155,16 +156,12 @@ export default async function NotificacionesPage() {
             </label>
             <label className="flex items-center justify-between gap-4">
               <span className="text-sm text-slate-300">Umbral (CLP)</span>
-              <div className="flex items-center gap-1">
-                <span className="text-slate-500 text-sm font-mono">$</span>
-                <input
-                  type="number"
+              <div className="w-36">
+                <CLPInput
                   name="low_balance_threshold"
-                  min="0"
-                  step="any"
                   defaultValue={prefs.low_balance_threshold || ''}
-                  placeholder="50000"
-                  className={`${inputCls} w-32`}
+                  placeholder="50.000"
+                  className={`${inputCls} w-full`}
                 />
               </div>
             </label>

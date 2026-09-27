@@ -14,20 +14,20 @@ import {
   type FormState,
 } from '@/lib/action';
 import { revalidatePath } from 'next/cache';
+import { parseSubmitted } from '@/lib/number-input';
 
 function revalidate() {
   revalidatePath('/metas');
 }
 
-/** Objetivo numérico opcional: '' o ausente → null; si viene, > 0. */
+/**
+ * Objetivo numérico opcional: '' o ausente → null; si viene, > 0.
+ * Llega limpio desde el input con formato ("1.3", "500000"), con decimales.
+ */
 const zTargetValue = z
   .union([z.string(), z.number()])
   .optional()
-  .transform((v) => {
-    if (v === undefined) return null;
-    const s = String(v).replace(/\./g, '').replace(/,/g, '').trim();
-    return s === '' ? null : Number(s);
-  })
+  .transform((v) => parseSubmitted(v))
   .refine((v) => v === null || (Number.isFinite(v) && v > 0), 'El objetivo debe ser mayor a 0.');
 
 const goalSchema = z.object({
@@ -227,7 +227,7 @@ const progressSchema = z.object({
   id: z.string().min(1),
   amount: z
     .union([z.string(), z.number()])
-    .transform((v) => Number(String(v).replace(/\./g, '').replace(/,/g, '')))
+    .transform((v) => parseSubmitted(v) ?? 0)
     .pipe(z.number({ error: 'Monto inválido.' }).refine((n) => n !== 0, 'Ingresa un monto.')),
 });
 

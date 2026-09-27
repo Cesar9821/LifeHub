@@ -6,6 +6,7 @@ import { saveDailyLog, addWater } from './actions';
 import { IDLE_STATE } from '@/lib/action';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { InlineMessage } from '@/components/ui/inline-message';
+import { NumberInput } from '@/components/ui/number-input';
 
 const MOODS = ['😞', '😕', '😐', '🙂', '😄'];
 
@@ -153,14 +154,12 @@ export default function DailyPanel({
                 Sueño (h)
               </span>
             </div>
-            <input
+            <NumberInput
               name="sleep_hours"
-              type="number"
-              step="0.5"
-              min="0"
-              max="24"
+              decimals={1}
+              suffix="h"
               defaultValue={sleepHours ?? ''}
-              placeholder="7.5"
+              placeholder="7,5"
               className={inputStyles}
             />
           </div>
@@ -170,13 +169,12 @@ export default function DailyPanel({
                 Peso (kg)
               </span>
             </div>
-            <input
+            <NumberInput
               name="weight_kg"
-              type="number"
-              step="0.1"
-              min="0"
+              decimals={1}
+              suffix="kg"
               defaultValue={weightKg ?? ''}
-              placeholder="75.0"
+              placeholder="75,0"
               className={inputStyles}
             />
           </div>

@@ -8,6 +8,7 @@ import { CLPInput } from '@/components/ui/clp-input';
 import { InlineMessage } from '@/components/ui/inline-message';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { fieldBase } from '@/components/ui/styles';
+import { NumberInput } from '@/components/ui/number-input';
 
 /** Agregar un concepto nuevo; su monto aplica desde el mes elegido en adelante. */
 export default function ConceptForm({
@@ -112,7 +113,9 @@ export default function ConceptForm({
       {payMode === 'cuenta' && (
         <label className="flex items-center gap-3 text-xs font-bold text-slate-400">
           Vence el día
-          <input name="due_day" type="number" inputMode="numeric" min={1} max={31} placeholder="—" className={`${fieldBase} min-h-11 w-24`} />
+          <div className="w-24">
+            <NumberInput name="due_day" placeholder="—" />
+          </div>
           <span className="text-slate-600">(opcional)</span>
         </label>
       )}

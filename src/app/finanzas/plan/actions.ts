@@ -511,10 +511,8 @@ const debtItemSchema = z.object({
   id: zOptionalText,
   name: zRequiredText('El nombre'),
   price: zAmount,
-  installment: z
-    .union([z.string(), z.number()])
-    .transform((v) => Number(String(v).replace(/\./g, '').replace(',', '.')))
-    .pipe(z.number({ error: 'Cuota inválida.' }).min(0, 'La cuota no puede ser negativa.')),
+  // Viene limpio del input con formato ("47498.33"): puede traer centavos.
+  installment: z.coerce.number({ error: 'Cuota inválida.' }).min(0, 'La cuota no puede ser negativa.'),
   total_installments: z.coerce.number({ error: 'Número inválido.' }).int().min(0),
   remaining_installments: z.coerce.number({ error: 'Número inválido.' }).int().min(0),
   priority: z.coerce.number({ error: 'Número inválido.' }).int().min(0),

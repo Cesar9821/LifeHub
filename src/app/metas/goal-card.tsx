@@ -37,8 +37,9 @@ import { Input, Select } from '@/components/ui/input';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { Button } from '@/components/ui/button';
 import { InlineMessage } from '@/components/ui/inline-message';
-
-const UNITS = ['$', 'km', 'kg', 'libros', 'días', 'veces', 'horas'];
+import { NumberInput } from '@/components/ui/number-input';
+import { fieldBase, fieldInvalid } from '@/components/ui/styles';
+import { UNITS, unitFormat } from './units';
 
 function fmt(v: number, unit: string | null): string {
   if (unit === '$') return formatCLP(v);
@@ -67,6 +68,7 @@ export default function GoalCard({
 
   const [editing, setEditing] = useState(false);
   const [mode, setMode] = useState<'hitos' | 'cantidad'>(g.measurable ? 'cantidad' : 'hitos');
+  const [unit, setUnit] = useState(g.unit ?? '$');
   const [editState, editAction] = useActionState(updateGoal, IDLE_STATE);
   const [progressState, progressAction] = useActionState(addGoalProgress, IDLE_STATE);
 
@@ -117,10 +119,16 @@ export default function GoalCard({
           {mode === 'cantidad' && (
             <>
               <Field label="Objetivo (cantidad)" error={editState.fieldErrors?.target_value}>
-                <Input name="target_value" type="number" min="1" step="any" defaultValue={g.target_value ?? ''} invalid={!!editState.fieldErrors?.target_value} />
+                <NumberInput
+                  key={unit}
+                  name="target_value"
+                  {...unitFormat(unit)}
+                  defaultValue={g.target_value ?? ''}
+                  className={`${fieldBase} ${editState.fieldErrors?.target_value ? fieldInvalid : ''}`}
+                />
               </Field>
               <Field label="Unidad">
-                <Select name="unit" defaultValue={g.unit ?? '$'}>
+                <Select name="unit" value={unit} onChange={(e) => setUnit(e.target.value)}>
                   {UNITS.map((u) => (
                     <option key={u} value={u} className="bg-[#0A0C10]">{u}</option>
                   ))}
@@ -281,14 +289,16 @@ export default function GoalCard({
           <input type="hidden" name="id" value={g.id} />
           <div className="flex-1 flex items-center gap-2 bg-black/30 border border-white/10 rounded-xl px-3 focus-within:border-amber-500/50 transition-colors">
             <Plus size={14} className="text-slate-600 shrink-0" />
-            <input
-              name="amount"
-              type="number"
-              step="any"
-              required
-              placeholder={g.unit === '$' ? 'Registrar avance (ej: 50000)' : `Registrar avance (${g.unit ?? ''})`}
-              className="bg-transparent py-2.5 text-sm text-white placeholder:text-slate-600 outline-none w-full"
-            />
+            <div className="flex-1">
+              <NumberInput
+                name="amount"
+                required
+                allowNegative
+                {...unitFormat(g.unit)}
+                placeholder={g.unit === '$' ? 'Registrar avance (ej: 50.000)' : 'Registrar avance'}
+                className="bg-transparent py-2.5 text-sm text-white placeholder:text-slate-600 outline-none w-full"
+              />
+            </div>
           </div>
           <SubmitButton pendingText="…" className="bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 border border-amber-500/30">
             Sumar

@@ -9,12 +9,14 @@ import { Field } from '@/components/ui/field';
 import { Input, Select } from '@/components/ui/input';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { InlineMessage } from '@/components/ui/inline-message';
-
-const UNITS = ['$', 'km', 'kg', 'libros', 'días', 'veces', 'horas'];
+import { NumberInput } from '@/components/ui/number-input';
+import { fieldBase, fieldInvalid } from '@/components/ui/styles';
+import { UNITS, unitFormat } from './units';
 
 export default function GoalForm({ savings }: { savings: { id: string; name: string }[] }) {
   const [state, formAction] = useActionState(addGoal, IDLE_STATE);
   const [mode, setMode] = useState<'hitos' | 'cantidad'>('hitos');
+  const [unit, setUnit] = useState('$');
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -22,6 +24,7 @@ export default function GoalForm({ savings }: { savings: { id: string; name: str
       formRef.current?.reset();
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setMode('hitos');
+      setUnit('$');
     }
   }, [state]);
 
@@ -75,17 +78,16 @@ export default function GoalForm({ savings }: { savings: { id: string; name: str
       {mode === 'cantidad' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end bg-black/20 border border-amber-500/10 rounded-2xl p-4">
           <Field label="Objetivo (cantidad)" error={state.fieldErrors?.target_value}>
-            <Input
+            <NumberInput
+              key={unit}
               name="target_value"
-              type="number"
-              min="1"
-              step="any"
-              placeholder="500000"
-              invalid={!!state.fieldErrors?.target_value}
+              {...unitFormat(unit)}
+              placeholder={unit === '$' ? '500.000' : '0'}
+              className={`${fieldBase} ${state.fieldErrors?.target_value ? fieldInvalid : ''}`}
             />
           </Field>
           <Field label="Unidad">
-            <Select name="unit" defaultValue="$">
+            <Select name="unit" value={unit} onChange={(e) => setUnit(e.target.value)}>
               {UNITS.map((u) => (
                 <option key={u} value={u} className="bg-[#0A0C10]">{u}</option>
               ))}
