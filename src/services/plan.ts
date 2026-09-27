@@ -177,7 +177,8 @@ export const loadPlan = cache(async (): Promise<PlanData> => {
       )
       .eq('household_id', householdId)
       .eq('status', 'confirmed')
-      .gte('period_month', settings.planStartMonth)
+      // También el mes en curso aunque sea anterior al plan, para que nada quede invisible.
+      .gte('period_month', nowMonth < settings.planStartMonth ? nowMonth : settings.planStartMonth)
       .order('due_date', { ascending: false })
       .order('created_at', { ascending: false });
     if (error) console.error('Error cargando movimientos del plan:', error.message);
@@ -586,6 +587,8 @@ export function quickData(plan: PlanData, me: string | null): QuickData {
     people: plan.settings.people,
     me,
     today: todayStr(),
+    // Antes de que parta el plan, lo registrado va al primer mes del plan.
+    defaultDate: todayStr() < plan.settings.planStartMonth ? plan.settings.planStartMonth : todayStr(),
   };
 }
 

@@ -8,6 +8,7 @@ import { CLPInput } from '@/components/ui/clp-input';
 import { InlineMessage } from '@/components/ui/inline-message';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { fieldBase } from '@/components/ui/styles';
+import { toast } from '@/components/ui/toast';
 import type { ExpenseInitial, ExpensePreset, QuickData } from './types';
 
 const METHODS = [
@@ -72,7 +73,10 @@ export function ExpenseForm({
   const [method, setMethod] = useState(initial?.payment_method ?? 'debito');
 
   useEffect(() => {
-    if (state.ok) onDone();
+    if (state.ok) {
+      if (state.message) toast(state.message);
+      onDone();
+    }
   }, [state, onDone]);
 
   const concepts = useMemo(
@@ -124,8 +128,6 @@ export function ExpenseForm({
           ))}
         </div>
       )}
-
-      <InlineMessage state={state} />
 
       <div className="space-y-1.5">
         <Label>Monto</Label>
@@ -213,7 +215,7 @@ export function ExpenseForm({
             type="date"
             name="date"
             required
-            defaultValue={initial?.date ?? preset?.date ?? data.today}
+            defaultValue={initial?.date ?? preset?.date ?? data.defaultDate}
             className={`${fieldBase} min-h-11`}
           />
         </div>
@@ -227,6 +229,9 @@ export function ExpenseForm({
           />
         </div>
       </div>
+
+      {/* El error queda junto al botón, a la vista en el celular. */}
+      <InlineMessage state={state} />
 
       <SubmitButton
         pendingText="Guardando…"

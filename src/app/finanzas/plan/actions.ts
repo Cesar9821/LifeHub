@@ -18,6 +18,7 @@ import { addMonths, monthOf, monthRange } from '@/lib/plan/months';
 import { SEED_CONCEPTS, SEED_DEBT, SEED_MONTHS, SEED_SETTINGS, SEED_START } from '@/lib/plan/seed';
 import { loadPlan, monthChecklist } from '@/services/plan';
 import { parseSubmitted } from '@/lib/number-input';
+import { periodLabel } from '@/services/movements';
 
 function revalidatePlan() {
   // El layout de Finanzas incluye el registro rápido: se revalida todo el módulo.
@@ -248,7 +249,8 @@ export async function saveExpense(_prev: FormState, formData: FormData): Promise
   }
 
   revalidatePlan();
-  return successState(isExpense ? 'Gasto registrado.' : 'Ingreso registrado.');
+  const when = periodLabel(monthOf(date));
+  return successState(isExpense ? `Gasto registrado en ${when}` : `Ingreso registrado en ${when}`);
 }
 
 export async function deleteExpense(formData: FormData) {
@@ -482,7 +484,7 @@ export async function payCmrMonth(_prev: FormState, formData: FormData): Promise
     return errorState('No se pudieron registrar las cuotas.');
   }
   revalidatePlan();
-  return successState(`${pending.length} cuotas pagadas.`);
+  return successState(`Deuda CMR pagada: ${pending.length} cuota${pending.length === 1 ? '' : 's'}`);
 }
 
 /** Deshace el pago CMR del mes: borra los pagos de cuotas registrados en ese mes. */

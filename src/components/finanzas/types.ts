@@ -20,6 +20,8 @@ export interface QuickData {
   me: string | null;
   /** Hoy en Chile (YYYY-MM-DD). */
   today: string;
+  /** Fecha por defecto al registrar: hoy, o el inicio del plan si aún no parte. */
+  defaultDate: string;
 }
 
 /** Una cuenta del mes lista para mostrar (serializable al cliente). */

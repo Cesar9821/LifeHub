@@ -5,6 +5,7 @@ import { requireUser } from '@/lib/auth';
 import { loadPlanPage } from '@/services/plan';
 import { QuickExpenseFab } from '@/components/finanzas/expense-sheet';
 import { RealtimeRefresh } from '@/components/finanzas/realtime-refresh';
+import { Toaster } from '@/components/ui/toast';
 import DashboardShell from './dashboard-shell';
 
 // Ícono y nombre propios al agregar Finanzas a la pantalla de inicio del iPhone.
@@ -55,6 +56,7 @@ export default async function DashboardLayout({
       </DashboardShell>
       {plan.seeded && <QuickExpenseFab data={quick} />}
       <RealtimeRefresh householdId={householdId} />
+      <Toaster />
     </>
   );
 }

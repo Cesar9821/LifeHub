@@ -8,6 +8,7 @@ import { IDLE_STATE } from '@/lib/action';
 import { formatCLP, shortDate } from '@/lib/format';
 import { InlineMessage } from '@/components/ui/inline-message';
 import { SubmitButton } from '@/components/ui/submit-button';
+import { toast } from '@/components/ui/toast';
 import { ConfirmAction } from './confirm-action';
 import { ExpenseSheet } from './expense-sheet';
 import type { AccountItem, ExpensePreset, QuickData } from './types';
@@ -116,7 +117,10 @@ function CmrPaySheet({
   const total = item.pendingAmount ?? item.amount;
 
   useEffect(() => {
-    if (state.ok) onClose();
+    if (state.ok) {
+      if (state.message) toast(state.message);
+      onClose();
+    }
   }, [state, onClose]);
 
   const chip = (active: boolean) =>
