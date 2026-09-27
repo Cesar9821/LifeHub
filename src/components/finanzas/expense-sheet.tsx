@@ -8,7 +8,7 @@ import { CLPInput } from '@/components/ui/clp-input';
 import { InlineMessage } from '@/components/ui/inline-message';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { fieldBase } from '@/components/ui/styles';
-import type { ExpenseInitial, QuickData } from './types';
+import type { ExpenseInitial, ExpensePreset, QuickData } from './types';
 
 const METHODS = [
   { value: 'debito', label: 'Débito' },
@@ -55,16 +55,20 @@ function Label({ children }: { children: React.ReactNode }) {
 export function ExpenseForm({
   data,
   initial,
+  preset,
   onDone,
 }: {
   data: QuickData;
   initial?: ExpenseInitial;
+  /** Registro nuevo precargado (ej. "Pagar" una cuenta del mes). */
+  preset?: ExpensePreset;
   onDone: () => void;
 }) {
   const [state, formAction] = useActionState(saveExpense, IDLE_STATE);
-  const [kind, setKind] = useState<'income' | 'expense'>(initial?.kind ?? 'expense');
-  const [conceptId, setConceptId] = useState(initial?.concept_id ?? '');
-  const [paidBy, setPaidBy] = useState(initial?.paid_by ?? data.me ?? '');
+  const [kind, setKind] = useState<'income' | 'expense'>(initial?.kind ?? preset?.kind ?? 'expense');
+  const [conceptId, setConceptId] = useState(initial?.concept_id ?? preset?.concept_id ?? '');
+  const locked = Boolean(preset?.lock && preset.concept_id);
+  const [paidBy, setPaidBy] = useState(initial?.paid_by ?? preset?.paid_by ?? data.me ?? '');
   const [method, setMethod] = useState(initial?.payment_method ?? 'debito');
 
   useEffect(() => {
@@ -88,11 +92,7 @@ export function ExpenseForm({
   const isExpense = kind === 'expense';
   const err = state.fieldErrors ?? {};
 
-  const pickConcept = (id: string) => {
-    setConceptId(id);
-    // Las cuotas del plan casa se pagan con la CMR.
-    if (data.concepts.find((c) => c.id === id)?.is_debt_plan) setMethod('credito_cmr');
-  };
+  const pickConcept = (id: string) => setConceptId(id);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -101,7 +101,7 @@ export function ExpenseForm({
       <input type="hidden" name="paid_by" value={paidBy} />
       {isExpense && <input type="hidden" name="payment_method" value={method} />}
 
-      {!initial && (
+      {!initial && !locked && (
         <div className="grid grid-cols-2 gap-2 p-1 bg-black/30 rounded-2xl border border-white/5">
           {(['expense', 'income'] as const).map((k) => (
             <button
@@ -132,8 +132,8 @@ export function ExpenseForm({
         <CLPInput
           name="amount"
           required
-          autoFocus={!initial}
-          defaultValue={initial?.amount ?? state.values?.amount ?? ''}
+          autoFocus={!initial && !locked}
+          defaultValue={initial?.amount ?? preset?.amount ?? state.values?.amount ?? ''}
           placeholder="0"
           accent={isExpense ? 'indigo' : 'emerald'}
           className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-4 text-3xl font-black text-white placeholder:text-slate-700 outline-none focus:ring-2 focus:ring-white/15"
@@ -141,6 +141,12 @@ export function ExpenseForm({
         {err.amount && <p className="text-[11px] font-bold text-rose-400 px-1">{err.amount}</p>}
       </div>
 
+      {locked ? (
+        <div className="flex items-center justify-between gap-3 bg-black/30 border border-white/10 rounded-xl px-3 min-h-11">
+          <span className="text-sm font-black text-white">{preset?.label ?? selected?.name}</span>
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">{selected?.group_name}</span>
+        </div>
+      ) : (
       <div className="space-y-1.5">
         <Label>Concepto</Label>
         <select
@@ -161,8 +167,11 @@ export function ExpenseForm({
         </select>
         {err.concept_id && <p className="text-[11px] font-bold text-rose-400 px-1">{err.concept_id}</p>}
       </div>
+      )}
 
-      {selected?.is_debt_plan && (
+      {locked && preset?.debt_item_id ? (
+        <input type="hidden" name="debt_item_id" value={preset.debt_item_id} />
+      ) : selected?.is_debt_plan && (
         <div className="space-y-1.5">
           <Label>Ítem de la deuda</Label>
           <select
@@ -204,7 +213,7 @@ export function ExpenseForm({
             type="date"
             name="date"
             required
-            defaultValue={initial?.date ?? data.today}
+            defaultValue={initial?.date ?? preset?.date ?? data.today}
             className={`${fieldBase} min-h-11`}
           />
         </div>
@@ -225,7 +234,15 @@ export function ExpenseForm({
           isExpense ? 'bg-rose-600 hover:bg-rose-500' : 'bg-emerald-600 hover:bg-emerald-500'
         }`}
       >
-        {initial ? 'Guardar cambios' : isExpense ? 'Registrar gasto' : 'Registrar ingreso'}
+        {initial
+          ? 'Guardar cambios'
+          : locked
+          ? isExpense
+            ? 'Confirmar pago'
+            : 'Confirmar recibido'
+          : isExpense
+          ? 'Registrar gasto'
+          : 'Registrar ingreso'}
       </SubmitButton>
     </form>
   );
@@ -237,11 +254,15 @@ export function ExpenseSheet({
   onClose,
   data,
   initial,
+  preset,
+  title,
 }: {
   open: boolean;
   onClose: () => void;
   data: QuickData;
   initial?: ExpenseInitial;
+  preset?: ExpensePreset;
+  title?: string;
 }) {
   if (!open) return null;
   return (
@@ -254,13 +275,13 @@ export function ExpenseSheet({
       >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-black text-white uppercase tracking-wider">
-            {initial ? 'Editar movimiento' : 'Registro rápido'}
+            {title ?? (initial ? 'Editar movimiento' : 'Registro rápido')}
           </h2>
           <button type="button" onClick={onClose} className="p-2.5 text-slate-500 hover:text-white" aria-label="Cerrar">
             <X size={20} />
           </button>
         </div>
-        <ExpenseForm data={data} initial={initial} onDone={onClose} />
+        <ExpenseForm data={data} initial={initial} preset={preset} onDone={onClose} />
       </div>
     </div>
   );
@@ -275,7 +296,7 @@ export function QuickExpenseFab({ data }: { data: QuickData }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed z-[55] right-5 bottom-[max(1.5rem,env(safe-area-inset-bottom))] flex items-center gap-2 min-h-14 pl-5 pr-6 rounded-full bg-rose-600 text-white font-black text-sm uppercase tracking-wider shadow-[0_12px_30px_-8px_rgba(225,29,72,0.7)] hover:bg-rose-500 active:scale-95 transition-all"
+        className="fixed z-[55] right-4 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] md:bottom-8 md:right-8 flex items-center gap-2 min-h-14 pl-5 pr-6 rounded-full bg-rose-600 text-white font-black text-sm uppercase tracking-wider shadow-[0_12px_30px_-8px_rgba(225,29,72,0.7)] hover:bg-rose-500 active:scale-95 transition-all"
       >
         <Plus size={20} strokeWidth={3} /> Gasto
       </button>

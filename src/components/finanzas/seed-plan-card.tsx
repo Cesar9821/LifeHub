@@ -87,14 +87,14 @@ export function SeedPlanCard() {
 }
 
 /** Aviso cuando falta correr la migración SQL en Supabase. */
-export function SchemaMissingCard() {
+export function SchemaMissingCard({ file = 'schema-plan-hogar.sql' }: { file?: string }) {
   return (
     <div className="bg-amber-500/10 border border-amber-500/25 rounded-[2rem] p-6 space-y-2">
       <p className="flex items-center gap-2 text-sm font-black text-amber-300">
         <AlertTriangle size={16} /> Falta preparar la base de datos
       </p>
       <p className="text-sm text-slate-300">
-        Abre Supabase → SQL Editor, pega el contenido de <code className="text-amber-200">supabase/schema-plan-hogar.sql</code> y
+        Abre Supabase → SQL Editor, pega el contenido de <code className="text-amber-200">supabase/{file}</code> y
         ejecútalo. Después recarga esta pantalla.
       </p>
     </div>

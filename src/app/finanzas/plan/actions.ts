@@ -16,18 +16,11 @@ import {
 } from '@/lib/action';
 import { addMonths, monthOf, monthRange } from '@/lib/plan/months';
 import { SEED_CONCEPTS, SEED_DEBT, SEED_MONTHS, SEED_SETTINGS, SEED_START } from '@/lib/plan/seed';
+import { loadPlan, monthChecklist } from '@/services/plan';
 
 function revalidatePlan() {
-  for (const p of [
-    '/inicio',
-    '/finanzas/presupuestos',
-    '/finanzas/credits',
-    '/finanzas/resumen',
-    '/finanzas/movimientos',
-    '/finanzas/dashboard',
-  ]) {
-    revalidatePath(p);
-  }
+  // El layout de Finanzas incluye el registro rápido: se revalida todo el módulo.
+  revalidatePath('/finanzas', 'layout');
 }
 
 const zPositiveAmount = z
@@ -97,6 +90,7 @@ export async function seedPlan(_prev: FormState, formData: FormData): Promise<Fo
         name: c.name,
         person: c.person ?? null,
         is_debt_plan: c.isDebtPlan ?? false,
+        pay_mode: c.payMode,
         sort: i,
       }))
     )
@@ -311,11 +305,19 @@ export async function setBudgetAmount(_prev: FormState, formData: FormData): Pro
   return successState(scope === 'forward' ? 'Monto actualizado desde este mes.' : 'Monto actualizado para este mes.');
 }
 
+const zDueDay = z
+  .string()
+  .optional()
+  .transform((v) => (v && v.trim() !== '' ? Number(v) : null))
+  .refine((v) => v === null || (Number.isInteger(v) && v >= 1 && v <= 31), 'Día entre 1 y 31.');
+
 const conceptSchema = z.object({
   kind: z.enum(['income', 'expense']).default('expense'),
   group_name: zRequiredText('El grupo'),
   name: zRequiredText('El nombre'),
   person: zOptionalText,
+  pay_mode: z.enum(['cuenta', 'bolsa']).default('bolsa'),
+  due_day: zDueDay,
   amount: zAmount,
   month: zMonth,
 });
@@ -323,7 +325,7 @@ const conceptSchema = z.object({
 export async function addConcept(_prev: FormState, formData: FormData): Promise<FormState> {
   const parsed = parseForm(conceptSchema, formData);
   if (!parsed.success) return parsed.state;
-  const { kind, group_name, name, person, amount, month } = parsed.data;
+  const { kind, group_name, name, person, pay_mode, due_day, amount, month } = parsed.data;
 
   const supabase = await createClient();
   const householdId = await getActiveHouseholdId();
@@ -343,6 +345,8 @@ export async function addConcept(_prev: FormState, formData: FormData): Promise<
       group_name,
       name,
       person: kind === 'income' ? person : null,
+      pay_mode,
+      due_day: pay_mode === 'cuenta' ? due_day : null,
       sort: Number(last?.[0]?.sort ?? 0) + 1,
     })
     .select('id')
@@ -363,19 +367,26 @@ export async function addConcept(_prev: FormState, formData: FormData): Promise<
   return successState('Concepto agregado.');
 }
 
-export async function renameConcept(_prev: FormState, formData: FormData): Promise<FormState> {
+/** Edita nombre, grupo, tipo (cuenta/bolsa) y día de vencimiento de un concepto. */
+export async function updateConcept(_prev: FormState, formData: FormData): Promise<FormState> {
   const parsed = parseForm(
-    z.object({ id: zRequiredText('El concepto'), name: zRequiredText('El nombre'), group_name: zRequiredText('El grupo') }),
+    z.object({
+      id: zRequiredText('El concepto'),
+      name: zRequiredText('El nombre'),
+      group_name: zRequiredText('El grupo'),
+      pay_mode: z.enum(['cuenta', 'bolsa']).default('bolsa'),
+      due_day: zDueDay,
+    }),
     formData
   );
   if (!parsed.success) return parsed.state;
-  const { id, name, group_name } = parsed.data;
+  const { id, name, group_name, pay_mode, due_day } = parsed.data;
 
   const supabase = await createClient();
   const householdId = await getActiveHouseholdId();
   const { error } = await supabase
     .from('budget_concepts')
-    .update({ name, group_name })
+    .update({ name, group_name, pay_mode, due_day: pay_mode === 'cuenta' ? due_day : null })
     .eq('household_id', householdId)
     .eq('id', id);
   if (error) {
@@ -428,6 +439,50 @@ export async function extendPlan() {
 /* ------------------------------------------------------------------ */
 /*  Deuda CMR                                                          */
 /* ------------------------------------------------------------------ */
+
+/** Paga de una vez todas las cuotas CMR pendientes del mes (cuota + adelanto del plan). */
+export async function payCmrMonth(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = parseForm(
+    z.object({ month: zMonth, paid_by: zOptionalText, payment_method: zOptionalText, date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }),
+    formData
+  );
+  if (!parsed.success) return parsed.state;
+  const { month, paid_by, payment_method, date } = parsed.data;
+
+  const plan = await loadPlan();
+  const concept = plan.concepts.find((c) => c.is_debt_plan);
+  if (!concept) return errorState('No existe el concepto CMR plan casa.');
+  const pending = monthChecklist(plan, month).filter((i) => i.debtItemId && i.state !== 'pagado' && i.amount > 0);
+  if (pending.length === 0) return successState('Las cuotas del mes ya están pagadas.');
+
+  const supabase = await createClient();
+  const householdId = await getActiveHouseholdId();
+  const { error } = await supabase.from('movements').insert(
+    pending.map((i) => ({
+      household_id: householdId,
+      recurring_id: null,
+      kind: 'expense',
+      category: concept.name,
+      concept_id: concept.id,
+      debt_item_id: i.debtItemId,
+      description: `${concept.name} · ${i.label}`,
+      paid_by,
+      payment_method,
+      estimated_amount: i.amount,
+      actual_amount: i.amount,
+      status: 'confirmed',
+      confirmed_at: new Date().toISOString(),
+      due_date: date,
+      period_month: month,
+    }))
+  );
+  if (error) {
+    console.error('Error pagando cuotas CMR:', error.message);
+    return errorState('No se pudieron registrar las cuotas.');
+  }
+  revalidatePlan();
+  return successState(`${pending.length} cuotas pagadas.`);
+}
 
 export async function saveCmrSettings(_prev: FormState, formData: FormData): Promise<FormState> {
   const parsed = parseForm(

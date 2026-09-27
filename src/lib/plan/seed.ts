@@ -15,6 +15,8 @@ export interface SeedConcept {
   name: string;
   person?: string;
   isDebtPlan?: boolean;
+  /** 'cuenta' = se paga una vez al mes; 'bolsa' = varios gastos. */
+  payMode: 'cuenta' | 'bolsa';
   amount: (month: string) => number;
 }
 
@@ -23,37 +25,37 @@ const onlyIn = (month: string, n: number) => (m: string) => (m === month ? n : 0
 
 export const SEED_CONCEPTS: SeedConcept[] = [
   // Ingresos
-  { kind: 'income', group: 'Ingresos', name: 'Sueldo Camila', person: 'Camila', amount: (m) => (m === OCT ? 1300000 : 1200000) },
-  { kind: 'income', group: 'Ingresos', name: 'Sueldo César', person: 'César', amount: fixed(850000) },
-  { kind: 'income', group: 'Ingresos', name: 'Otros ingresos', amount: fixed(0) },
+  { kind: 'income', group: 'Ingresos', name: 'Sueldo Camila', person: 'Camila', payMode: 'cuenta', amount: (m) => (m === OCT ? 1300000 : 1200000) },
+  { kind: 'income', group: 'Ingresos', name: 'Sueldo César', person: 'César', payMode: 'cuenta', amount: fixed(850000) },
+  { kind: 'income', group: 'Ingresos', name: 'Otros ingresos', payMode: 'bolsa', amount: fixed(0) },
 
   // Vivienda
-  { kind: 'expense', group: 'Vivienda', name: 'Arriendo', amount: fixed(380000) },
-  { kind: 'expense', group: 'Vivienda', name: 'Gastos comunes', amount: fixed(120000) },
-  { kind: 'expense', group: 'Vivienda', name: 'Garantía (segunda mitad)', amount: onlyIn(NOV, 190000) },
+  { kind: 'expense', group: 'Vivienda', name: 'Arriendo', payMode: 'cuenta', amount: fixed(380000) },
+  { kind: 'expense', group: 'Vivienda', name: 'Gastos comunes', payMode: 'cuenta', amount: fixed(120000) },
+  { kind: 'expense', group: 'Vivienda', name: 'Garantía (segunda mitad)', payMode: 'cuenta', amount: onlyIn(NOV, 190000) },
 
   // Servicios
-  { kind: 'expense', group: 'Servicios', name: 'Luz', amount: fixed(40000) },
-  { kind: 'expense', group: 'Servicios', name: 'Agua', amount: fixed(40000) },
-  { kind: 'expense', group: 'Servicios', name: 'Gas', amount: fixed(40000) },
-  { kind: 'expense', group: 'Servicios', name: 'Internet / TV', amount: fixed(18990) },
-  { kind: 'expense', group: 'Servicios', name: 'Celulares', amount: fixed(16000 + 12000) },
+  { kind: 'expense', group: 'Servicios', name: 'Luz', payMode: 'cuenta', amount: fixed(40000) },
+  { kind: 'expense', group: 'Servicios', name: 'Agua', payMode: 'cuenta', amount: fixed(40000) },
+  { kind: 'expense', group: 'Servicios', name: 'Gas', payMode: 'cuenta', amount: fixed(40000) },
+  { kind: 'expense', group: 'Servicios', name: 'Internet / TV', payMode: 'cuenta', amount: fixed(18990) },
+  { kind: 'expense', group: 'Servicios', name: 'Celulares', payMode: 'cuenta', amount: fixed(16000 + 12000) },
 
   // Alimentación, transporte, salud
-  { kind: 'expense', group: 'Alimentación', name: 'Supermercado', amount: fixed(200000) },
-  { kind: 'expense', group: 'Transporte', name: 'Transporte / bencina', amount: fixed(0) },
-  { kind: 'expense', group: 'Salud', name: 'Farmacia y salud', amount: fixed(0) },
+  { kind: 'expense', group: 'Alimentación', name: 'Supermercado', payMode: 'bolsa', amount: fixed(200000) },
+  { kind: 'expense', group: 'Transporte', name: 'Transporte / bencina', payMode: 'bolsa', amount: fixed(0) },
+  { kind: 'expense', group: 'Salud', name: 'Farmacia y salud', payMode: 'bolsa', amount: fixed(0) },
 
   // Deudas
-  { kind: 'expense', group: 'Deudas', name: 'CMR Camila', amount: onlyIn(OCT, 251926) },
-  { kind: 'expense', group: 'Deudas', name: 'CMR César', amount: (m) => (m === OCT ? 100000 : 29900 + 24000) },
-  { kind: 'expense', group: 'Deudas', name: 'CMR plan casa', isDebtPlan: true, amount: fixed(0) },
+  { kind: 'expense', group: 'Deudas', name: 'CMR Camila', payMode: 'cuenta', amount: onlyIn(OCT, 251926) },
+  { kind: 'expense', group: 'Deudas', name: 'CMR César', payMode: 'cuenta', amount: (m) => (m === OCT ? 100000 : 29900 + 24000) },
+  { kind: 'expense', group: 'Deudas', name: 'CMR plan casa', isDebtPlan: true, payMode: 'cuenta', amount: fixed(0) },
 
   // Hogar y personal
-  { kind: 'expense', group: 'Hogar y personal', name: 'Ocio y salidas', amount: fixed(0) },
-  { kind: 'expense', group: 'Hogar y personal', name: 'Imprevistos', amount: fixed(50000) },
-  { kind: 'expense', group: 'Hogar y personal', name: 'Cuidado Valentín y Sarah', amount: fixed(100000) },
-  { kind: 'expense', group: 'Hogar y personal', name: 'Otros gastos', amount: onlyIn(OCT, 150000) },
+  { kind: 'expense', group: 'Hogar y personal', name: 'Ocio y salidas', payMode: 'bolsa', amount: fixed(0) },
+  { kind: 'expense', group: 'Hogar y personal', name: 'Imprevistos', payMode: 'bolsa', amount: fixed(50000) },
+  { kind: 'expense', group: 'Hogar y personal', name: 'Cuidado Valentín y Sarah', payMode: 'cuenta', amount: fixed(100000) },
+  { kind: 'expense', group: 'Hogar y personal', name: 'Otros gastos', payMode: 'bolsa', amount: onlyIn(OCT, 150000) },
 ];
 
 export interface SeedDebtItem {

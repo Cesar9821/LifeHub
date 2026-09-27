@@ -22,6 +22,41 @@ export interface QuickData {
   today: string;
 }
 
+/** Una cuenta del mes lista para mostrar (serializable al cliente). */
+export interface AccountItem {
+  key: string;
+  kind: 'income' | 'expense';
+  conceptId: string;
+  debtItemId: string | null;
+  label: string;
+  group: string;
+  amount: number;
+  dueDate: string | null;
+  state: 'pagado' | 'vencido' | 'vence_hoy' | 'por_pagar';
+  paid: number;
+  payDate: string;
+  /** Persona del sueldo (para preseleccionar "De quién"). */
+  person: string | null;
+  /** "César · Débito · 03 oct" */
+  paidInfo: string | null;
+  /** Último pago registrado (para Deshacer). */
+  lastPaymentId: string | null;
+}
+
+/** Valores iniciales de un registro nuevo (ej. al pagar una cuenta del mes). */
+export interface ExpensePreset {
+  kind: 'income' | 'expense';
+  concept_id: string;
+  amount?: number;
+  debt_item_id?: string | null;
+  date?: string;
+  paid_by?: string | null;
+  /** Texto a mostrar en lugar del selector de concepto. */
+  label?: string;
+  /** true: el concepto (y el ítem) no se pueden cambiar. */
+  lock?: boolean;
+}
+
 export interface ExpenseListItem {
   initial: ExpenseInitial;
   title: string;

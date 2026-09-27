@@ -2,12 +2,13 @@ import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { getActiveHouseholdId } from '@/lib/auth';
 import { getHouseholdMembers } from '@/services/household';
-import { todayStr } from '@/lib/format';
+import { shortDate, todayStr } from '@/lib/format';
 import { computeCmrPlan, initialBalanceOf, type CmrPlanResult } from '@/lib/plan/cmr';
 import { budgetStatus, contributionSplit, type BudgetStatus, type Contribution } from '@/lib/plan/budget';
 import { addMonths, monthOf, monthRange } from '@/lib/plan/months';
+import { buildChecklist, type ChecklistItem, type ChecklistState } from '@/lib/plan/checklist';
 import { methodLabel } from '@/components/finanzas/labels';
-import type { ExpenseListItem, QuickData } from '@/components/finanzas/types';
+import type { AccountItem, ExpenseListItem, QuickData } from '@/components/finanzas/types';
 
 /* ------------------------------------------------------------------ */
 /*  Tipos                                                             */
@@ -36,6 +37,9 @@ export interface Concept {
   is_debt_plan: boolean;
   sort: number;
   archived: boolean;
+  /** 'cuenta' = se paga una vez al mes; 'bolsa' = varios gastos. */
+  pay_mode: 'cuenta' | 'bolsa';
+  due_day: number | null;
 }
 
 export interface DebtItem {
@@ -79,6 +83,8 @@ export interface PlanData {
   schemaReady: boolean;
   /** false si el hogar aún no tiene conceptos (primer arranque). */
   seeded: boolean;
+  /** false si falta correr schema-plan-hogar-v2.sql (cuentas del mes). */
+  checklistReady: boolean;
   settings: PlanSettings;
   concepts: Concept[];
   debtItems: DebtItem[];
@@ -132,7 +138,14 @@ export const loadPlan = cache(async (): Promise<PlanData> => {
       }
     : DEFAULT_SETTINGS;
 
-  const concepts = ((conceptsRes.data as Concept[]) ?? []).map((c) => ({ ...c, sort: Number(c.sort) }));
+  const rawConcepts = (conceptsRes.data as Concept[]) ?? [];
+  const checklistReady = rawConcepts.length === 0 || rawConcepts[0].pay_mode !== undefined;
+  const concepts = rawConcepts.map((c) => ({
+    ...c,
+    sort: Number(c.sort),
+    pay_mode: c.pay_mode ?? 'bolsa',
+    due_day: c.due_day == null ? null : Number(c.due_day),
+  }));
   const debtItems = ((debtRes.data as DebtItem[]) ?? []).map((d) => ({
     ...d,
     price: Number(d.price),
@@ -206,6 +219,7 @@ export const loadPlan = cache(async (): Promise<PlanData> => {
   return {
     schemaReady,
     seeded: concepts.length > 0,
+    checklistReady,
     settings,
     concepts,
     debtItems,
@@ -244,6 +258,8 @@ export interface ConceptRow {
   /** 0..n (1 = 100%) */
   used: number;
   status: BudgetStatus;
+  /** Solo cuentas: pagada, por pagar o vencida este mes. */
+  payState: ChecklistState | null;
 }
 
 export interface GroupRows {
@@ -280,6 +296,7 @@ export interface MonthView {
   debtPayment: number;
   contributions: Contribution[];
   movements: PlanMovement[];
+  checklist: ChecklistItem[];
 }
 
 export function monthView(plan: PlanData, month: string): MonthView {
@@ -294,6 +311,16 @@ export function monthView(plan: PlanData, month: string): MonthView {
   }
 
   const active = plan.concepts.filter((c) => !c.archived || byConcept.has(c.id));
+
+  // Estado de pago de las cuentas (el plan CMR queda pagado si todas sus cuotas lo están).
+  const checklist = monthChecklist(plan, month);
+  const payStateOf = (c: Concept): ChecklistState | null => {
+    if (c.pay_mode !== 'cuenta') return null;
+    const lines = checklist.filter((i) => i.conceptId === c.id);
+    if (lines.length === 0) return null;
+    if (lines.every((l) => l.state === 'pagado')) return 'pagado';
+    return lines.find((l) => l.state !== 'pagado')!.state;
+  };
 
   const incomes: IncomeRow[] = active
     .filter((c) => c.kind === 'income')
@@ -315,6 +342,7 @@ export function monthView(plan: PlanData, month: string): MonthView {
       remaining: budget - spent,
       used: budget > 0 ? spent / budget : 0,
       status: budgetStatus(budget, spent),
+      payState: payStateOf(c),
     };
     if (!groupsMap.has(c.group_name)) groupsMap.set(c.group_name, { group: c.group_name, rows: [], budget: 0, spent: 0 });
     const g = groupsMap.get(c.group_name)!;
@@ -351,7 +379,14 @@ export function monthView(plan: PlanData, month: string): MonthView {
     expenseBudget,
     spent,
     available: income - spent,
-    alerts: allRows.filter((r) => r.status === 'cerca' || r.status === 'pasado' || r.status === 'sin_presupuesto'),
+    // Una cuenta pagada completa llega al 100% ("cerca"): eso no es alerta.
+    alerts: allRows.filter(
+      (r) =>
+        r.status === 'pasado' ||
+        r.status === 'sin_presupuesto' ||
+        (r.status === 'cerca' && r.concept.pay_mode !== 'cuenta')
+    ),
+    checklist,
     debtPayment,
     contributions,
     movements: monthMovs,
@@ -403,6 +438,70 @@ export function savedBefore(plan: PlanData, month: string): number {
       const v = monthView(plan, m);
       return acc + (v.income - v.spent);
     }, 0);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Cuentas del mes                                                    */
+/* ------------------------------------------------------------------ */
+
+export function monthChecklist(plan: PlanData, month: string): ChecklistItem[] {
+  const cmrRow = plan.cmr.months.find((m) => m.month === month);
+  return buildChecklist({
+    month,
+    today: todayStr(),
+    concepts: plan.concepts.map((c) => ({
+      id: c.id,
+      name: c.name,
+      kind: c.kind,
+      group: c.group_name,
+      payMode: c.pay_mode,
+      dueDay: c.due_day,
+      isDebtPlan: c.is_debt_plan,
+      archived: c.archived,
+    })),
+    budgetOf: (id) => plan.amounts.get(id)?.get(month) ?? 0,
+    debtLines: plan.debtItems
+      .filter((d) => !d.archived)
+      .map((d) => ({ itemId: d.id, name: d.name, amount: cmrRow?.items[d.id]?.total ?? 0 })),
+    payments: plan.movements
+      .filter((m) => m.month === month)
+      .map((m) => ({
+        id: m.id,
+        conceptId: m.concept_id,
+        debtItemId: m.debt_item_id,
+        amount: m.amount,
+        date: m.date,
+        paidBy: m.paid_by,
+        method: m.payment_method,
+      })),
+  });
+}
+
+/** Cuentas del mes listas para la UI (con quién pagó y el último pago). */
+export function accountItems(plan: PlanData, items: ChecklistItem[]): AccountItem[] {
+  const conceptById = new Map(plan.concepts.map((c) => [c.id, c]));
+  return items.map((i) => {
+    const last = i.payments[0] ?? null; // los movimientos vienen del más nuevo al más viejo
+    const paidInfo = last
+      ? [last.paidBy, methodLabel(last.method), shortDate(last.date)].filter(Boolean).join(' · ')
+      : null;
+    return {
+      key: i.key,
+      kind: i.kind,
+      conceptId: i.conceptId,
+      debtItemId: i.debtItemId,
+      label: i.label,
+      group: i.group,
+      amount: i.amount,
+      dueDate: i.dueDate,
+      state: i.state,
+      paid: i.paid,
+      payDate: i.payDate,
+      person: conceptById.get(i.conceptId)?.person ?? null,
+      paidInfo,
+      lastPaymentId: last?.id ?? null,
+    };
+  });
 }
 
 /* ------------------------------------------------------------------ */
