@@ -15,20 +15,19 @@ const BLOCKS = [
   { key: 'night', label: 'Noche', target: 9, icon: Moon },
 ] as const;
 
-function currentBlock(): 'morning' | 'afternoon' | 'night' {
-  const h = new Date().getHours();
-  if (h < 12) return 'morning';
-  if (h < 18) return 'afternoon';
-  return 'night';
-}
+import type { Block369 } from '@/services/manifest369';
 
-export default function Manifest369({ state }: { state: Manifest369State }) {
+/**
+ * El bloque actual llega desde el servidor (hora de Chile): calcularlo en el
+ * navegador con la hora local hacía que el HTML no coincidiera al hidratar.
+ */
+export default function Manifest369({ state, block }: { state: Manifest369State; block: Block369 }) {
   const { today, lastAffirmation, complete } = state;
   const [saveState, saveAction] = useActionState(save369Affirmation, IDLE_STATE);
 
   const affirmation = today.affirmation || lastAffirmation;
   const hasAffirmation = Boolean(affirmation.trim());
-  const now = currentBlock();
+  const now = block;
 
   return (
     <div className="space-y-5">

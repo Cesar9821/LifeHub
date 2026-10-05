@@ -4,6 +4,15 @@ import { todayStr } from '@/services/mindset';
 
 export const M369_TARGETS = { morning: 3, afternoon: 6, night: 9 } as const;
 export type M369Block = keyof typeof M369_TARGETS;
+export type Block369 = M369Block;
+
+/** Bloque del día (mañana/tarde/noche) según la hora de Chile "HH:MM". */
+export function blockFor(time: string): Block369 {
+  const h = Number(time.slice(0, 2));
+  if (h < 12) return 'morning';
+  if (h < 18) return 'afternoon';
+  return 'night';
+}
 
 export interface Manifest369 {
   affirmation: string | null;
