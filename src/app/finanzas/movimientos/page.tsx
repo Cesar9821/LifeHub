@@ -17,11 +17,11 @@ export default async function MovimientosPage({
 
   const header = (
     <div className="space-y-3">
-      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-slate-800 bg-slate-900/50 w-fit">
+      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-line-strong bg-surface w-fit">
         <Activity size={14} className="text-indigo-400" />
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Todo lo registrado</span>
+        <span className="text-xs font-bold text-ink-2 tracking-wide">Todo lo registrado</span>
       </div>
-      <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tighter italic leading-none">
+      <h1 className="text-4xl sm:text-5xl font-semibold text-ink tracking-tight leading-none">
         Movimientos<span className="text-indigo-500">.</span>
       </h1>
     </div>
@@ -48,14 +48,14 @@ export default async function MovimientosPage({
       <div className="grid grid-cols-3 gap-2">
         <Stat label="Ingresos" value={formatCLP(v.income)} tone="text-emerald-300" />
         <Stat label="Gastado" value={formatCLP(v.spent)} tone="text-rose-300" />
-        <Stat label="Disponible" value={formatCLP(v.available)} tone={v.available >= 0 ? 'text-white' : 'text-rose-400'} />
+        <Stat label="Disponible" value={formatCLP(v.available)} tone={v.available >= 0 ? 'text-ink' : 'text-rose-400'} />
       </div>
 
       <MovementsBrowser items={items} data={quick} />
 
       <a
         href="/api/export?tipo=gastos"
-        className="w-full min-h-12 inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 text-xs font-black text-slate-300 uppercase tracking-wider hover:bg-white/5"
+        className="w-full min-h-12 inline-flex items-center justify-center gap-2 rounded-xl border border-line-strong text-xs font-semibold text-ink-2 tracking-wide hover:bg-white/5"
       >
         <Download size={15} /> Exportar a CSV
       </a>
@@ -65,9 +65,9 @@ export default async function MovimientosPage({
 
 function Stat({ label, value, tone }: { label: string; value: string; tone: string }) {
   return (
-    <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-3">
-      <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.12em]">{label}</p>
-      <p className={`mt-1 text-sm sm:text-base font-black font-mono leading-none break-all ${tone}`}>{value}</p>
+    <div className="bg-surface border border-line rounded-2xl p-3">
+      <p className="text-xs font-semibold text-ink-3 tracking-wide">{label}</p>
+      <p className={`mt-1 text-sm sm:text-base font-semibold tabular-nums leading-none break-all ${tone}`}>{value}</p>
     </div>
   );
 }

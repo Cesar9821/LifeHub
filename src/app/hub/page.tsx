@@ -16,13 +16,13 @@ export default async function HubPage() {
     <div className="max-w-6xl mx-auto pt-6 md:pt-10">
       {/* Encabezado */}
       <div className="mb-12 md:mb-16">
-        <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.3em] mb-3">
+        <p className="text-xs font-semibold text-indigo-500 tracking-wide mb-3">
           Tu sistema personal
         </p>
-        <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-white leading-none">
+        <h1 className="text-4xl md:text-6xl font-semibold tracking-tight text-ink leading-none">
           {greeting}.
         </h1>
-        <p className="text-slate-500 font-medium mt-4 max-w-md">
+        <p className="text-ink-3 font-medium mt-4 max-w-md">
           Elige un módulo para empezar. Tu vida, en un solo lugar.
         </p>
       </div>
@@ -36,27 +36,27 @@ export default async function HubPage() {
           const card = (
             <div
               className={`
-                group relative h-full bg-slate-900/40 border border-white/5 rounded-[2rem] p-7 backdrop-blur-xl
+                group relative h-full bg-surface border border-line rounded-3xl p-7 backdrop-blur-xl
                 transition-all duration-300
                 ${isActive ? `cursor-pointer hover:-translate-y-1 ${mod.accent.glow} ${mod.accent.border}` : 'opacity-60'}
               `}
             >
               {/* Estado */}
               <div className="flex items-start justify-between mb-8">
-                <div className="h-14 w-14 rounded-2xl bg-black/40 border border-white/10 flex items-center justify-center">
+                <div className="h-14 w-14 rounded-2xl bg-black/40 border border-line-strong flex items-center justify-center">
                   <Icon className={mod.accent.text} size={26} />
                 </div>
                 {isActive ? (
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-500/20 bg-emerald-500/10">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">
+                    <span className="text-xs font-semibold text-emerald-400 tracking-wide">
                       Activo
                     </span>
                   </div>
                 ) : (
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/10 bg-white/5">
-                    <Lock size={10} className="text-slate-500" />
-                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-line-strong bg-white/5">
+                    <Lock size={10} className="text-ink-3" />
+                    <span className="text-xs font-semibold text-ink-3 tracking-wide">
                       Pronto
                     </span>
                   </div>
@@ -64,23 +64,23 @@ export default async function HubPage() {
               </div>
 
               {/* Texto */}
-              <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-2 ${mod.accent.text}`}>
+              <p className={`text-xs font-semibold tracking-wide mb-2 ${mod.accent.text}`}>
                 {mod.tagline}
               </p>
-              <h2 className="text-2xl font-black text-white tracking-tight mb-2">
+              <h2 className="text-2xl font-semibold text-ink tracking-tight mb-2">
                 {mod.name}
               </h2>
-              <p className="text-sm text-slate-500 font-medium leading-relaxed">
+              <p className="text-sm text-ink-3 font-medium leading-relaxed">
                 {mod.description}
               </p>
 
               {isActive && summary[mod.id] && (
-                <p className={`mt-4 text-xs font-black ${mod.accent.text}`}>{summary[mod.id]}</p>
+                <p className={`mt-4 text-xs font-semibold ${mod.accent.text}`}>{summary[mod.id]}</p>
               )}
 
               {/* Flecha de entrada */}
               {isActive && (
-                <div className="mt-6 flex items-center gap-2 text-white font-black text-xs uppercase tracking-widest">
+                <div className="mt-6 flex items-center gap-2 text-ink font-semibold text-xs tracking-wide">
                   Entrar
                   <ArrowRight
                     size={16}

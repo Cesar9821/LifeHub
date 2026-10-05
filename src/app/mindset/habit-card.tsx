@@ -30,10 +30,10 @@ export default function HabitCard({
       <input type="hidden" name="done" value={String(doneToday)} />
       <button
         type="submit"
-        className={`w-full text-left rounded-[1.75rem] p-5 border transition-all active:scale-[0.99] group ${
+        className={`w-full text-left rounded-3xl p-5 border transition-all active:scale-[0.99] group ${
           doneToday
             ? 'bg-violet-500/10 border-violet-500/30'
-            : 'bg-slate-900/40 border-white/5 hover:border-white/15'
+            : 'bg-surface border-line hover:border-white/15'
         }`}
       >
         <div className="flex items-center gap-4">
@@ -41,8 +41,8 @@ export default function HabitCard({
           <div
             className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 border transition-all ${
               doneToday
-                ? 'bg-violet-500 border-violet-400 text-white'
-                : 'bg-black/30 border-white/10 text-slate-600 group-hover:border-violet-500/40 group-hover:text-violet-400'
+                ? 'bg-violet-500 border-violet-400 text-ink'
+                : 'bg-black/30 border-line-strong text-ink-3 group-hover:border-violet-500/40 group-hover:text-violet-400'
             }`}
           >
             {doneToday ? <Check size={22} strokeWidth={3} /> : isBreak ? <Ban size={20} /> : <Check size={20} />}
@@ -51,14 +51,14 @@ export default function HabitCard({
           {/* Texto */}
           <div className="flex-1 min-w-0">
             <p
-              className={`font-black text-base truncate ${
-                doneToday ? 'text-white' : 'text-slate-200'
+              className={`font-semibold text-base truncate ${
+                doneToday ? 'text-ink' : 'text-ink'
               }`}
             >
               {name}
             </p>
             {description && (
-              <p className="text-xs text-slate-500 font-medium truncate mt-0.5">
+              <p className="text-xs text-ink-3 font-medium truncate mt-0.5">
                 {description}
               </p>
             )}
@@ -68,14 +68,14 @@ export default function HabitCard({
           <div className="flex flex-col items-end shrink-0">
             <div
               className={`flex items-center gap-1 ${
-                streak > 0 ? 'text-orange-400' : 'text-slate-600'
+                streak > 0 ? 'text-orange-400' : 'text-ink-3'
               }`}
             >
               <Flame size={15} className={streak > 0 ? 'fill-orange-400/20' : ''} />
-              <span className="font-black font-mono text-lg leading-none">{streak}</span>
+              <span className="font-semibold tabular-nums text-lg leading-none">{streak}</span>
             </div>
             {bestStreak > 0 && (
-              <span className="text-[9px] font-bold text-slate-600 uppercase tracking-wider mt-1">
+              <span className="text-xs font-bold text-ink-3 tracking-wide mt-1">
                 Récord {bestStreak}
               </span>
             )}

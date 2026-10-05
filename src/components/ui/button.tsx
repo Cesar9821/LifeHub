@@ -1,13 +1,13 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { buttonBase } from './styles';
+import { buttonBase, buttonPrimary } from './styles';
 
 export type ButtonVariant = 'primary' | 'ghost' | 'danger';
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  primary: 'bg-white text-black hover:bg-slate-200',
-  ghost: 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10',
-  danger: 'bg-rose-600 text-white hover:bg-rose-500',
+  primary: buttonPrimary,
+  ghost: 'bg-surface-2 border border-line-strong text-ink hover:bg-surface-3',
+  danger: 'bg-danger/15 border border-danger/30 text-danger hover:bg-danger/25',
 };
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {

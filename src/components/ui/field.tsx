@@ -21,16 +21,16 @@ export function Field({
       {label && (
         <label
           htmlFor={htmlFor}
-          className="text-[9px] font-black text-slate-500 uppercase tracking-widest px-1"
+          className="text-xs font-medium text-ink-2 px-1"
         >
           {label}
         </label>
       )}
       {children}
       {error ? (
-        <p className="text-[11px] font-bold text-rose-400 px-1">{error}</p>
+        <p className="text-xs font-medium text-danger px-1">{error}</p>
       ) : hint ? (
-        <p className="text-[11px] text-slate-600 px-1">{hint}</p>
+        <p className="text-xs text-ink-3 px-1">{hint}</p>
       ) : null}
     </div>
   );

@@ -14,7 +14,7 @@ function AddButton() {
     <button
       type="submit"
       disabled={pending}
-      className="h-10 w-10 shrink-0 flex items-center justify-center rounded-xl bg-white/10 border border-white/10 text-white hover:bg-white/20 transition-all active:scale-95 disabled:opacity-50"
+      className="h-10 w-10 shrink-0 flex items-center justify-center rounded-xl bg-white/10 border border-line-strong text-ink hover:bg-white/20 transition-all active:scale-95 disabled:opacity-50"
     >
       {pending ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
     </button>

@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "LifeHub",
-  description: "Tu sistema personal: dinero, hábitos, familia y bienestar en un solo lugar.",
+  description: "Tu sistema personal: qué toca hoy, tu semana, tu trabajo y tu plata.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -28,12 +28,13 @@ export const metadata: Metadata = {
   },
 };
 
+// Sin bloquear el zoom (accesibilidad). Los campos van a 16px en el celular
+// (globals.css), así iOS no hace zoom al enfocarlos.
 export const viewport: Viewport = {
-  themeColor: "#050608",
+  themeColor: "#0b0d12",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -42,16 +43,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className="dark" suppressHydrationWarning>
+    <html lang="es-CL" className="dark" suppressHydrationWarning>
       <body 
-        className={`
-          ${geistSans.variable} 
-          ${geistMono.variable} 
-          antialiased 
-          bg-[#0A0C10] 
-          text-slate-200
-          min-h-screen
-        `}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-bg text-ink min-h-screen`}
       >
         <ServiceWorkerRegister />
         {children}

@@ -22,7 +22,7 @@ export default function HabitForm() {
     <form
       ref={formRef}
       action={formAction}
-      className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-8 backdrop-blur-xl space-y-5"
+      className="bg-surface border border-line rounded-3xl p-6 md:p-8 space-y-5"
     >
       <InlineMessage state={state} />
 
@@ -44,8 +44,8 @@ export default function HabitForm() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
         <Field label="Tipo">
           <Select name="kind" defaultValue="build">
-            <option value="build" className="bg-[#0A0C10]">Quiero hacerlo</option>
-            <option value="break" className="bg-[#0A0C10]">Quiero evitarlo</option>
+            <option value="build" className="bg-surface">Quiero hacerlo</option>
+            <option value="break" className="bg-surface">Quiero evitarlo</option>
           </Select>
         </Field>
 
@@ -55,8 +55,8 @@ export default function HabitForm() {
             value={frequency}
             onChange={(e) => setFrequency(e.target.value as 'daily' | 'weekly')}
           >
-            <option value="daily" className="bg-[#0A0C10]">Todos los días</option>
-            <option value="weekly" className="bg-[#0A0C10]">Veces por semana</option>
+            <option value="daily" className="bg-surface">Todos los días</option>
+            <option value="weekly" className="bg-surface">Veces por semana</option>
           </Select>
         </Field>
 
@@ -68,7 +68,7 @@ export default function HabitForm() {
           <input type="hidden" name="target_per_week" value={7} />
         )}
 
-        <label className="flex items-center gap-2 text-xs font-bold text-slate-400 cursor-pointer pb-3">
+        <label className="flex items-center gap-2 text-xs font-bold text-ink-2 cursor-pointer pb-3">
           <input name="non_negotiable" type="checkbox" className="w-4 h-4 accent-rose-500" />
           🔒 Innegociable
         </label>

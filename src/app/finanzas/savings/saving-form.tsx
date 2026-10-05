@@ -31,7 +31,7 @@ export default function SavingForm({ inputStyles }: { inputStyles: string }) {
       <InlineMessage state={state} />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="flex flex-col gap-2">
-          <label className="text-[10px] font-black text-slate-500 uppercase px-1 tracking-widest">Nombre de la Meta</label>
+          <label className="text-xs font-semibold text-ink-3 px-1 tracking-wide">Nombre de la Meta</label>
           <input
             name="name"
             defaultValue={state.values?.name ?? ''}
@@ -42,16 +42,16 @@ export default function SavingForm({ inputStyles }: { inputStyles: string }) {
         </div>
 
         <div className="flex flex-col gap-2">
-          <label className="text-[10px] font-black text-slate-500 uppercase px-1 tracking-widest">Monto Objetivo (CLP)</label>
+          <label className="text-xs font-semibold text-ink-3 px-1 tracking-wide">Monto Objetivo (CLP)</label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-500 font-mono font-bold">$</span>
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-500 tabular-nums font-bold">$</span>
             <input
               type="text"
               inputMode="numeric"
               value={displayAmount}
               onChange={(e) => setDisplayAmount(formatCLP(e.target.value))}
               placeholder="0"
-              className={`${inputStyles} pl-7 font-mono font-black text-amber-400 text-lg`}
+              className={`${inputStyles} pl-7 tabular-nums font-semibold text-amber-400 text-lg`}
               required
             />
             <input
@@ -65,7 +65,7 @@ export default function SavingForm({ inputStyles }: { inputStyles: string }) {
         <div className="flex items-end">
           <SubmitButton
             pendingText="Activando…"
-            className="w-full py-4 rounded-2xl shadow-[0_10px_20px_-10px_rgba(255,255,255,0.3)] tracking-widest text-[11px]"
+            className="w-full py-4 rounded-2xl shadow-[0_10px_20px_-10px_rgba(255,255,255,0.3)] tracking-wide text-xs"
           >
             <Plus size={18} strokeWidth={3} /> Activar Meta
           </SubmitButton>

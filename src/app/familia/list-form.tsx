@@ -21,7 +21,7 @@ export default function ListForm() {
     <form
       ref={formRef}
       action={formAction}
-      className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-5 md:p-6 backdrop-blur-xl space-y-3"
+      className="bg-surface border border-line rounded-3xl p-5 md:p-6 space-y-3"
     >
       <InlineMessage state={state} />
       <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
@@ -30,9 +30,9 @@ export default function ListForm() {
         </Field>
         <Field label="Se reinicia" className="sm:w-44">
           <Select name="reset_period" defaultValue="none">
-            <option value="none" className="bg-[#0A0C10]">No se reinicia</option>
-            <option value="weekly" className="bg-[#0A0C10]">Cada semana</option>
-            <option value="monthly" className="bg-[#0A0C10]">Cada mes</option>
+            <option value="none" className="bg-surface">No se reinicia</option>
+            <option value="weekly" className="bg-surface">Cada semana</option>
+            <option value="monthly" className="bg-surface">Cada mes</option>
           </Select>
         </Field>
         <SubmitButton pendingText="Creando…">

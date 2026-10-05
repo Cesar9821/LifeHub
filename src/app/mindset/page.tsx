@@ -32,17 +32,17 @@ export default async function MindsetTodayPage() {
     <div className="space-y-8 pb-20 max-w-6xl">
       {/* HEADER */}
       <div className="flex flex-col gap-3">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-slate-800 bg-slate-900/50 backdrop-blur-md w-fit">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-line-strong bg-surface w-fit">
           <Flame size={13} className="text-orange-400" />
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
+          <span className="text-xs font-bold text-ink-2 tracking-wide">
             {dateLabel}
           </span>
         </div>
-        <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter italic leading-none">
+        <h1 className="text-4xl md:text-6xl font-semibold text-ink tracking-tight leading-none">
           {greeting}<span className="text-violet-400">.</span>
         </h1>
         {summary.totalHabits > 0 && (
-          <p className="text-slate-500 font-bold text-xs uppercase tracking-[0.2em]">
+          <p className="text-ink-3 font-bold text-xs tracking-wide">
             {allDone
               ? 'Día completo. Así se construye.'
               : `${summary.pendingToday} pendiente${summary.pendingToday !== 1 ? 's' : ''} para cerrar el día`}
@@ -53,20 +53,20 @@ export default async function MindsetTodayPage() {
       {/* FRASE DEL DÍA + LA FORJA */}
       <Link
         href="/mindset/forja"
-        className="group flex items-center gap-4 bg-gradient-to-br from-violet-600/10 to-transparent border border-violet-500/15 rounded-[1.75rem] p-5 hover:border-violet-500/30 transition-all"
+        className="group flex items-center gap-4 bg-gradient-to-br from-violet-600/10 to-transparent border border-violet-500/15 rounded-3xl p-5 hover:border-violet-500/30 transition-all"
       >
         <div className="h-11 w-11 shrink-0 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
           <Swords size={18} className="text-violet-400" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-slate-200 italic leading-snug line-clamp-2">
+          <p className="text-sm font-bold text-ink leading-snug line-clamp-2">
             &ldquo;{phrase.text}&rdquo;
           </p>
-          <p className="text-[9px] font-black text-violet-400 uppercase tracking-widest mt-0.5">
+          <p className="text-xs font-semibold text-violet-400 tracking-wide mt-0.5">
             La Forja · {phrase.source}
           </p>
         </div>
-        <ArrowRight size={16} className="text-slate-600 group-hover:text-violet-400 group-hover:translate-x-1 transition-all shrink-0" />
+        <ArrowRight size={16} className="text-ink-3 group-hover:text-violet-400 group-hover:translate-x-1 transition-all shrink-0" />
       </Link>
 
       {/* LA RANA DEL DÍA */}
@@ -79,7 +79,7 @@ export default async function MindsetTodayPage() {
             icon={<Target size={15} className="text-violet-400" />}
             label="Hoy"
             value={`${summary.doneToday}/${summary.totalHabits}`}
-            accent={allDone ? 'text-violet-400' : 'text-white'}
+            accent={allDone ? 'text-violet-400' : 'text-ink'}
           />
           <StatBox
             icon={<Flame size={15} className="text-orange-400" />}
@@ -100,27 +100,27 @@ export default async function MindsetTodayPage() {
         {/* HÁBITOS DE HOY */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-black text-white uppercase tracking-[0.2em]">
+            <h2 className="text-sm font-semibold text-ink tracking-wide">
               Hábitos de hoy
             </h2>
             <Link
               href="/mindset/habitos"
-              className="text-[10px] font-black text-violet-400 hover:text-violet-300 uppercase tracking-wider transition-colors"
+              className="text-xs font-semibold text-violet-400 hover:text-violet-300 tracking-wide transition-colors"
             >
               Gestionar
             </Link>
           </div>
 
           {habits.length === 0 ? (
-            <div className="bg-slate-900/20 border border-dashed border-white/10 rounded-[2rem] p-10 text-center">
+            <div className="bg-surface border border-dashed border-line-strong rounded-3xl p-10 text-center">
               <ListChecks size={30} className="text-slate-700 mx-auto mb-4" />
-              <p className="text-slate-400 font-bold mb-2">Aún no tienes hábitos</p>
-              <p className="text-xs text-slate-600 font-medium mb-6 max-w-xs mx-auto">
+              <p className="text-ink-2 font-bold mb-2">Aún no tienes hábitos</p>
+              <p className="text-xs text-ink-3 font-medium mb-6 max-w-xs mx-auto">
                 Define los que quieres sostener. La constancia se construye un día a la vez.
               </p>
               <Link
                 href="/mindset/habitos"
-                className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 rounded-xl font-black text-xs uppercase tracking-wider hover:bg-slate-200 transition-all active:scale-95"
+                className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 rounded-xl font-semibold text-xs tracking-wide hover:bg-slate-200 transition-all active:scale-95"
               >
                 Crear el primero <ArrowRight size={14} />
               </Link>
@@ -168,14 +168,14 @@ function StatBox({
   accent: string;
 }) {
   return (
-    <div className="bg-slate-900/40 border border-white/5 rounded-2xl p-3 sm:p-4 backdrop-blur-xl">
+    <div className="bg-surface border border-line rounded-2xl p-3 sm:p-4">
       <div className="flex items-center gap-1.5 mb-2">
         {icon}
-        <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.15em]">
+        <span className="text-xs font-semibold text-ink-3 tracking-wide">
           {label}
         </span>
       </div>
-      <p className={`text-xl sm:text-2xl font-black font-mono leading-none ${accent}`}>{value}</p>
+      <p className={`text-xl sm:text-2xl font-semibold tabular-nums leading-none ${accent}`}>{value}</p>
     </div>
   );
 }

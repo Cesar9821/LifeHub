@@ -18,12 +18,12 @@ export default function InviteMember() {
           type="email"
           required
           placeholder="correo@ejemplo.com"
-          className="flex-1 bg-black/30 border border-white/10 rounded-xl p-3 text-sm text-white placeholder:text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+          className="flex-1 bg-black/30 border border-line-strong rounded-xl p-3 text-sm text-ink placeholder:text-ink-3 outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
         />
         <button
           type="submit"
           disabled={pending}
-          className="flex items-center justify-center gap-2 bg-white text-black px-6 py-3 rounded-xl font-black text-xs uppercase tracking-wider hover:bg-slate-200 transition-all active:scale-95 disabled:opacity-50 shrink-0"
+          className="flex items-center justify-center gap-2 bg-white text-black px-6 py-3 rounded-xl font-semibold text-xs tracking-wide hover:bg-slate-200 transition-all active:scale-95 disabled:opacity-50 shrink-0"
         >
           <UserPlus size={15} />
           {pending ? 'Agregando…' : 'Agregar'}

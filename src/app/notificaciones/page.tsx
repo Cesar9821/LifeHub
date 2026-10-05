@@ -48,7 +48,7 @@ const MODULES = [
 const hhmm = (v: string | undefined, def: string) => (v ? v.slice(0, 5) : def);
 
 const inputCls =
-  'bg-black/30 border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50';
+  'bg-black/30 border border-line-strong rounded-lg px-2.5 py-1.5 text-sm text-ink outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50';
 
 export default async function NotificacionesPage() {
   const user = await requireUser();
@@ -73,13 +73,13 @@ export default async function NotificacionesPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#050608] text-white relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-bg text-ink relative overflow-hidden font-sans">
       <div className="absolute top-[-10%] left-[-5%] w-[45%] h-[45%] bg-indigo-600/10 rounded-full blur-[130px] pointer-events-none z-0" />
 
       <header className="relative z-10 px-6 md:px-10 lg:px-16 py-6">
         <Link
           href="/hub"
-          className="inline-flex items-center gap-2 text-slate-400 hover:text-white text-[10px] font-black uppercase tracking-[0.15em] transition-colors"
+          className="inline-flex items-center gap-2 text-ink-2 hover:text-ink text-xs font-semibold tracking-wide transition-colors"
         >
           <ArrowLeft size={16} /> Volver al inicio
         </Link>
@@ -87,25 +87,25 @@ export default async function NotificacionesPage() {
 
       <main className="relative z-10 px-6 md:px-10 lg:px-16 pb-20 max-w-2xl mx-auto space-y-8">
         <div>
-          <h1 className="text-3xl md:text-5xl font-black tracking-tighter italic">
+          <h1 className="text-3xl md:text-5xl font-semibold tracking-tight">
             Notificaciones<span className="text-indigo-500">.</span>
           </h1>
-          <p className="text-slate-500 font-medium mt-2 text-sm">
+          <p className="text-ink-3 font-medium mt-2 text-sm">
             Activa los avisos, elige qué recibir y a qué hora.
           </p>
         </div>
 
         <NotificationsManager />
 
-        <form action={updateNotificationPrefs} className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-8 backdrop-blur-xl space-y-6">
+        <form action={updateNotificationPrefs} className="bg-surface border border-line rounded-3xl p-6 md:p-8 space-y-6">
           {/* Módulos */}
           <div className="space-y-4">
-            <h2 className="text-sm font-black text-white uppercase tracking-widest">¿Qué quieres recibir?</h2>
+            <h2 className="text-sm font-semibold text-ink tracking-wide">¿Qué quieres recibir?</h2>
 
-            <label className="flex items-center justify-between gap-4 py-2 border-b border-white/5">
+            <label className="flex items-center justify-between gap-4 py-2 border-b border-line">
               <div>
-                <p className="text-sm font-black text-white">Activar avisos</p>
-                <p className="text-xs text-slate-500">Interruptor general de todas las notificaciones</p>
+                <p className="text-sm font-semibold text-ink">Activar avisos</p>
+                <p className="text-xs text-ink-3">Interruptor general de todas las notificaciones</p>
               </div>
               <input type="checkbox" name="enabled" defaultChecked={prefs.enabled} className="w-5 h-5 accent-indigo-500 shrink-0" />
             </label>
@@ -117,8 +117,8 @@ export default async function NotificacionesPage() {
                   <div className="flex items-center gap-3">
                     <Icon size={18} className={m.color} />
                     <div>
-                      <p className="text-sm font-bold text-slate-200">{m.label}</p>
-                      <p className="text-xs text-slate-500">{m.desc}</p>
+                      <p className="text-sm font-bold text-ink">{m.label}</p>
+                      <p className="text-xs text-ink-3">{m.desc}</p>
                     </div>
                   </div>
                   <input type="checkbox" name={m.key} defaultChecked={prefs[m.key]} className="w-5 h-5 accent-indigo-500 shrink-0" />
@@ -128,14 +128,14 @@ export default async function NotificacionesPage() {
           </div>
 
           {/* Horarios */}
-          <div className="space-y-3 pt-5 border-t border-white/5">
-            <h2 className="text-sm font-black text-white uppercase tracking-widest">Horarios</h2>
-            <p className="text-[11px] text-slate-500">Aproximados (±30 min). Cada aviso llega una vez al día.</p>
+          <div className="space-y-3 pt-5 border-t border-line">
+            <h2 className="text-sm font-semibold text-ink tracking-wide">Horarios</h2>
+            <p className="text-xs text-ink-3">Aproximados (±30 min). Cada aviso llega una vez al día.</p>
             {times.map((t) => {
               const Icon = t.icon;
               return (
                 <label key={t.name} className="flex items-center justify-between gap-4">
-                  <span className="flex items-center gap-2 text-sm text-slate-300">
+                  <span className="flex items-center gap-2 text-sm text-ink-2">
                     <Icon size={14} className="text-indigo-400" /> {t.label}
                   </span>
                   <input type="time" name={t.name} defaultValue={t.value} className={inputCls} />
@@ -145,17 +145,17 @@ export default async function NotificacionesPage() {
           </div>
 
           {/* Saldo bajo */}
-          <div className="space-y-3 pt-5 border-t border-white/5">
-            <h2 className="text-sm font-black text-white uppercase tracking-widest">Alerta de saldo bajo</h2>
+          <div className="space-y-3 pt-5 border-t border-line">
+            <h2 className="text-sm font-semibold text-ink tracking-wide">Alerta de saldo bajo</h2>
             <label className="flex items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-bold text-slate-200">Avísame si me queda poco</p>
-                <p className="text-xs text-slate-500">Cuando el saldo del mes baje del umbral</p>
+                <p className="text-sm font-bold text-ink">Avísame si me queda poco</p>
+                <p className="text-xs text-ink-3">Cuando el saldo del mes baje del umbral</p>
               </div>
               <input type="checkbox" name="low_balance_enabled" defaultChecked={prefs.low_balance_enabled} className="w-5 h-5 accent-indigo-500 shrink-0" />
             </label>
             <label className="flex items-center justify-between gap-4">
-              <span className="text-sm text-slate-300">Umbral (CLP)</span>
+              <span className="text-sm text-ink-2">Umbral (CLP)</span>
               <div className="w-36">
                 <CLPInput
                   name="low_balance_threshold"
@@ -169,13 +169,13 @@ export default async function NotificacionesPage() {
 
           <button
             type="submit"
-            className="w-full bg-white text-black py-3 rounded-xl font-black text-xs uppercase tracking-wider hover:bg-slate-200 transition-all active:scale-95"
+            className="w-full bg-white text-black py-3 rounded-xl font-semibold text-xs tracking-wide hover:bg-slate-200 transition-all active:scale-95"
           >
             Guardar preferencias
           </button>
         </form>
 
-        <p className="text-[11px] text-slate-600 text-center leading-relaxed">
+        <p className="text-xs text-ink-3 text-center leading-relaxed">
           La asignación de tareas llega al instante. El resto se envía a la hora que elijas.
           En iPhone requiere tener LifeHub instalado en la pantalla de inicio.
         </p>

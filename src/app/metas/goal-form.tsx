@@ -32,11 +32,11 @@ export default function GoalForm({ savings }: { savings: { id: string; name: str
     <form
       ref={formRef}
       action={formAction}
-      className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-8 backdrop-blur-xl space-y-5"
+      className="bg-surface border border-line rounded-3xl p-6 md:p-8 space-y-5"
     >
       <div className="flex items-center gap-2">
         <Plus size={18} className="text-amber-400" />
-        <h2 className="text-lg font-black text-white uppercase tracking-wider">Nueva meta</h2>
+        <h2 className="text-lg font-semibold text-ink tracking-wide">Nueva meta</h2>
       </div>
 
       <InlineMessage state={state} />
@@ -60,7 +60,7 @@ export default function GoalForm({ savings }: { savings: { id: string; name: str
         <Field label="Categoría">
           <Select name="category" defaultValue="Personal">
             {GOAL_CATEGORIES.map((c) => (
-              <option key={c} value={c} className="bg-[#0A0C10]">{c}</option>
+              <option key={c} value={c} className="bg-surface">{c}</option>
             ))}
           </Select>
         </Field>
@@ -69,8 +69,8 @@ export default function GoalForm({ savings }: { savings: { id: string; name: str
         </Field>
         <Field label="Medir por">
           <Select value={mode} onChange={(e) => setMode(e.target.value as 'hitos' | 'cantidad')}>
-            <option value="hitos" className="bg-[#0A0C10]">Hitos (pasos)</option>
-            <option value="cantidad" className="bg-[#0A0C10]">Cantidad ($, km…)</option>
+            <option value="hitos" className="bg-surface">Hitos (pasos)</option>
+            <option value="cantidad" className="bg-surface">Cantidad ($, km…)</option>
           </Select>
         </Field>
       </div>
@@ -89,15 +89,15 @@ export default function GoalForm({ savings }: { savings: { id: string; name: str
           <Field label="Unidad">
             <Select name="unit" value={unit} onChange={(e) => setUnit(e.target.value)}>
               {UNITS.map((u) => (
-                <option key={u} value={u} className="bg-[#0A0C10]">{u}</option>
+                <option key={u} value={u} className="bg-surface">{u}</option>
               ))}
             </Select>
           </Field>
           <Field label="Vincular a ahorro (opcional)">
             <Select name="saving_id" defaultValue="">
-              <option value="" className="bg-[#0A0C10]">Sin vincular</option>
+              <option value="" className="bg-surface">Sin vincular</option>
               {savings.map((s) => (
-                <option key={s.id} value={s.id} className="bg-[#0A0C10]">{s.name}</option>
+                <option key={s.id} value={s.id} className="bg-surface">{s.name}</option>
               ))}
             </Select>
           </Field>

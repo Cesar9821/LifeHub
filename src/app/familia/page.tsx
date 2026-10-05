@@ -68,18 +68,18 @@ export default async function FamiliaPage() {
       <div className="flex flex-col gap-3">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-orange-500/20 bg-orange-500/5 w-fit">
           <Users size={12} className="text-orange-400" />
-          <span className="text-[9px] md:text-[10px] font-bold text-orange-400/80 uppercase tracking-[0.2em]">
+          <span className="text-xs md:text-xs font-bold text-orange-400/80 tracking-wide">
             Organización en casa
           </span>
         </div>
-        <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter italic">
+        <h1 className="text-4xl md:text-6xl font-semibold text-ink tracking-tight">
           Familia<span className="text-orange-500">.</span>
         </h1>
       </div>
 
       {/* RESUMEN */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        <StatTile label="Tareas pendientes" value={String(summary.pendingTasks)} accent="text-white" />
+        <StatTile label="Tareas pendientes" value={String(summary.pendingTasks)} accent="text-ink" />
         <StatTile label="Eventos próximos" value={String(events.length)} accent="text-sky-400" />
         <StatTile label="Por comprar" value={String(summary.shoppingPending)} accent="text-orange-400" />
         <StatTile label="Completadas" value={String(summary.doneTasks)} accent="text-emerald-400" />
@@ -87,18 +87,18 @@ export default async function FamiliaPage() {
 
       {/* RANKING DEL HOGAR */}
       {hasPoints && members.length > 1 && (
-        <div className="bg-slate-900/40 border border-white/5 rounded-[1.75rem] p-5 backdrop-blur-xl">
+        <div className="bg-surface border border-line rounded-3xl p-5">
           <div className="flex items-center gap-2 mb-3">
             <Trophy size={16} className="text-amber-400" />
-            <h2 className="text-sm font-black text-white uppercase tracking-widest">Ranking del hogar</h2>
+            <h2 className="text-sm font-semibold text-ink tracking-wide">Ranking del hogar</h2>
           </div>
           <div className="space-y-2">
             {ranking.map((r, i) => (
               <div key={r.name} className="flex items-center justify-between">
-                <span className="text-sm font-bold text-slate-200">
+                <span className="text-sm font-bold text-ink">
                   {['🥇', '🥈', '🥉'][i] ?? '·'} {r.name}
                 </span>
-                <span className="text-sm font-black font-mono text-amber-400">{r.pts} pts</span>
+                <span className="text-sm font-semibold tabular-nums text-amber-400">{r.pts} pts</span>
               </div>
             ))}
           </div>
@@ -109,10 +109,10 @@ export default async function FamiliaPage() {
       <section className="space-y-5">
         <div className="flex items-center gap-2 px-1">
           <ListTodo size={18} className="text-orange-400" />
-          <h2 className="text-lg font-black text-white uppercase tracking-wider">Tareas del hogar</h2>
+          <h2 className="text-lg font-semibold text-ink tracking-wide">Tareas del hogar</h2>
         </div>
 
-        <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-7 backdrop-blur-xl">
+        <div className="bg-surface border border-line rounded-3xl p-6 md:p-7">
           <TaskForm members={members} />
         </div>
 
@@ -136,10 +136,10 @@ export default async function FamiliaPage() {
       <section className="space-y-5">
         <div className="flex items-center gap-2 px-1">
           <CalendarDays size={18} className="text-orange-400" />
-          <h2 className="text-lg font-black text-white uppercase tracking-wider">Calendario</h2>
+          <h2 className="text-lg font-semibold text-ink tracking-wide">Calendario</h2>
         </div>
 
-        <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-7 backdrop-blur-xl">
+        <div className="bg-surface border border-line rounded-3xl p-6 md:p-7">
           <EventForm />
         </div>
 
@@ -158,7 +158,7 @@ export default async function FamiliaPage() {
       <section className="space-y-5">
         <div className="flex items-center gap-2 px-1">
           <UtensilsCrossed size={18} className="text-orange-400" />
-          <h2 className="text-lg font-black text-white uppercase tracking-wider">Menú de la semana</h2>
+          <h2 className="text-lg font-semibold text-ink tracking-wide">Menú de la semana</h2>
         </div>
         <MealPlanner plan={mealPlan} />
       </section>
@@ -167,7 +167,7 @@ export default async function FamiliaPage() {
       <section className="space-y-5">
         <div className="flex items-center gap-2 px-1">
           <ShoppingCart size={18} className="text-orange-400" />
-          <h2 className="text-lg font-black text-white uppercase tracking-wider">Listas de compras</h2>
+          <h2 className="text-lg font-semibold text-ink tracking-wide">Listas de compras</h2>
         </div>
 
         <ListForm />
@@ -179,8 +179,8 @@ export default async function FamiliaPage() {
         </div>
 
         {orphans.length > 0 && (
-          <div className="bg-slate-900/30 border border-white/5 rounded-[2rem] p-5 md:p-6 space-y-3">
-            <h3 className="text-base font-black text-white uppercase tracking-wide">Otros</h3>
+          <div className="bg-surface border border-line rounded-3xl p-5 md:p-6 space-y-3">
+            <h3 className="text-base font-semibold text-ink tracking-wide">Otros</h3>
             <div className="space-y-1.5">
               {orphans.map((item) => (
                 <ShoppingRow key={item.id} item={item} />
@@ -196,7 +196,7 @@ export default async function FamiliaPage() {
 function resetBadge(period: ResetPeriod) {
   if (period === 'none') return null;
   return (
-    <span className="inline-flex items-center gap-1 text-[9px] font-black text-orange-400 border border-orange-500/20 bg-orange-500/5 px-2 py-0.5 rounded-md uppercase tracking-widest">
+    <span className="inline-flex items-center gap-1 text-xs font-semibold text-orange-400 border border-orange-500/20 bg-orange-500/5 px-2 py-0.5 rounded-md tracking-wide">
       <Repeat size={10} /> {period === 'weekly' ? 'Semanal' : 'Mensual'}
     </span>
   );
@@ -204,12 +204,12 @@ function resetBadge(period: ResetPeriod) {
 
 function ShoppingListCard({ list }: { list: ShoppingListWithItems }) {
   return (
-    <div className="bg-slate-900/30 border border-white/5 rounded-[2rem] p-5 md:p-6 space-y-4">
+    <div className="bg-surface border border-line rounded-3xl p-5 md:p-6 space-y-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2 flex-wrap min-w-0">
-          <h3 className="text-base font-black text-white uppercase tracking-wide truncate">{list.name}</h3>
+          <h3 className="text-base font-semibold text-ink tracking-wide truncate">{list.name}</h3>
           {resetBadge(list.reset_period)}
-          <span className="text-[10px] font-mono text-slate-500">{list.pending} por comprar</span>
+          <span className="text-xs tabular-nums text-ink-3">{list.pending} por comprar</span>
         </div>
         <div className="flex items-center gap-1 shrink-0">
           {list.items.length > 0 && (
@@ -218,7 +218,7 @@ function ShoppingListCard({ list }: { list: ShoppingListWithItems }) {
               <button
                 type="submit"
                 title="Reiniciar (desmarcar todo)"
-                className="h-8 w-8 flex items-center justify-center rounded-lg text-slate-600 hover:text-orange-400 hover:bg-orange-500/10 transition-all"
+                className="h-8 w-8 flex items-center justify-center rounded-lg text-ink-3 hover:text-orange-400 hover:bg-orange-500/10 transition-all"
               >
                 <RotateCcw size={14} />
               </button>
@@ -260,15 +260,15 @@ function ShoppingRow({ item }: { item: ShoppingItem }) {
           {item.checked ? (
             <CheckCircle2 size={19} className="text-emerald-400" />
           ) : (
-            <Circle size={19} className="text-slate-600 hover:text-orange-400 transition-colors" />
+            <Circle size={19} className="text-ink-3 hover:text-orange-400 transition-colors" />
           )}
         </button>
       </form>
       <div className="flex-1 min-w-0">
-        <span className={`text-sm font-bold ${item.checked ? 'text-slate-500 line-through' : 'text-slate-100'}`}>
+        <span className={`text-sm font-bold ${item.checked ? 'text-ink-3 line-through' : 'text-ink'}`}>
           {item.name}
         </span>
-        {item.quantity && <span className="text-[11px] font-mono text-slate-500 ml-2">{item.quantity}</span>}
+        {item.quantity && <span className="text-xs tabular-nums text-ink-3 ml-2">{item.quantity}</span>}
       </div>
       <form action={deleteShoppingItem} className="shrink-0">
         <input type="hidden" name="id" value={item.id} />
@@ -297,24 +297,24 @@ function eventWhen(e: HouseholdEvent): { day: string; mon: string; label: string
     day,
     mon,
     label: new Intl.DateTimeFormat('es-CL', { weekday: 'long' }).format(dt),
-    tone: 'text-slate-500',
+    tone: 'text-ink-3',
   };
 }
 
 function EventRow({ event: e }: { event: HouseholdEvent }) {
   const w = eventWhen(e);
   return (
-    <div className="group flex items-center gap-3 bg-slate-900/30 border border-white/5 rounded-2xl px-4 py-3 hover:bg-slate-800/40 transition-all">
+    <div className="group flex items-center gap-3 bg-surface border border-line rounded-2xl px-4 py-3 hover:bg-slate-800/40 transition-all">
       <div className="shrink-0 h-12 w-12 rounded-xl bg-sky-500/10 border border-sky-500/20 flex flex-col items-center justify-center leading-none">
-        <span className="text-base font-black text-sky-300 font-mono">{w.day}</span>
-        <span className="text-[8px] font-black text-sky-400/70 uppercase">{w.mon}</span>
+        <span className="text-base font-semibold text-sky-300 tabular-nums">{w.day}</span>
+        <span className="text-xs font-semibold text-sky-400/70">{w.mon}</span>
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold text-slate-100 truncate">{e.title}</p>
+        <p className="text-sm font-bold text-ink truncate">{e.title}</p>
         <div className="flex items-center gap-3 mt-0.5">
-          <span className={`text-[10px] font-black uppercase tracking-wide ${w.tone}`}>{w.label}</span>
+          <span className={`text-xs font-semibold tracking-wide ${w.tone}`}>{w.label}</span>
           {e.event_time && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500">
+            <span className="inline-flex items-center gap-1 text-xs font-bold text-ink-3">
               <Clock size={11} /> {e.event_time.slice(0, 5)}
             </span>
           )}
@@ -336,20 +336,20 @@ function EventRow({ event: e }: { event: HouseholdEvent }) {
 
 function StatTile({ label, value, accent }: { label: string; value: string; accent: string }) {
   return (
-    <div className="bg-[#0A0C10] border border-white/10 p-4 md:p-5 rounded-[1.5rem] text-center">
-      <p className="text-[8px] md:text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5">
+    <div className="bg-surface border border-line-strong p-4 md:p-5 rounded-2xl text-center">
+      <p className="text-xs md:text-xs font-semibold text-ink-3 tracking-wide mb-1.5">
         {label}
       </p>
-      <p className={`text-2xl md:text-3xl font-black font-mono tracking-tighter ${accent}`}>{value}</p>
+      <p className={`text-2xl md:text-3xl font-semibold tabular-nums tracking-tight ${accent}`}>{value}</p>
     </div>
   );
 }
 
 function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
-    <div className="border-2 border-dashed border-slate-800/50 rounded-[2rem] p-10 md:p-14 flex flex-col items-center justify-center text-center gap-3">
+    <div className="border-2 border-dashed border-slate-800/50 rounded-3xl p-10 md:p-14 flex flex-col items-center justify-center text-center gap-3">
       {icon}
-      <p className="text-slate-600 font-black uppercase text-xs tracking-widest">{text}</p>
+      <p className="text-ink-3 font-semibold text-xs tracking-wide">{text}</p>
     </div>
   );
 }

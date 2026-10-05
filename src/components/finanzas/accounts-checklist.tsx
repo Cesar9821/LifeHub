@@ -24,7 +24,7 @@ function StateIcon({ state }: { state: AccountItem['state'] }) {
   if (state === 'pagado') return <CheckCircle2 size={22} className="text-emerald-400 shrink-0" />;
   if (state === 'vencido') return <AlertCircle size={22} className="text-rose-400 shrink-0" />;
   if (state === 'vence_hoy') return <Clock size={22} className="text-amber-400 shrink-0" />;
-  return <Circle size={22} className="text-slate-600 shrink-0" />;
+  return <Circle size={22} className="text-ink-3 shrink-0" />;
 }
 
 function dueText(item: AccountItem): string {
@@ -49,12 +49,12 @@ function Row({ item, onPay, month }: { item: AccountItem; onPay: (item: AccountI
   const paid = item.state === 'pagado';
   return (
     <li className={`flex items-center gap-3 rounded-2xl border pl-3 pr-2 py-2 ${
-      item.state === 'vencido' ? 'bg-rose-500/5 border-rose-500/20' : 'bg-black/20 border-white/5'
+      item.state === 'vencido' ? 'bg-rose-500/5 border-rose-500/20' : 'bg-black/20 border-line'
     }`}>
       <StateIcon state={item.state} />
       <div className="min-w-0 flex-1">
-        <p className={`text-sm font-bold truncate ${paid ? 'text-slate-400' : 'text-white'}`}>{item.label}</p>
-        <p className={`text-[11px] font-medium truncate ${item.state === 'vencido' ? 'text-rose-300' : 'text-slate-500'}`}>
+        <p className={`text-sm font-bold truncate ${paid ? 'text-ink-2' : 'text-ink'}`}>{item.label}</p>
+        <p className={`text-xs font-medium truncate ${item.state === 'vencido' ? 'text-rose-300' : 'text-ink-3'}`}>
           {subtitle(item)}
         </p>
       </div>
@@ -66,7 +66,7 @@ function Row({ item, onPay, month }: { item: AccountItem; onPay: (item: AccountI
           message={`Se borran los pagos de cuotas CMR de este mes (${formatCLP(item.paid)}) y vuelve a quedar por pagar.`}
           confirmLabel="Desmarcar"
           triggerTitle="Deshacer"
-          triggerClassName="min-h-11 px-3 text-[11px] font-black text-slate-500 hover:text-white uppercase tracking-wider"
+          triggerClassName="min-h-11 px-3 text-xs font-semibold text-ink-3 hover:text-ink tracking-wide"
         >
           Deshacer
         </ConfirmAction>
@@ -79,7 +79,7 @@ function Row({ item, onPay, month }: { item: AccountItem; onPay: (item: AccountI
             message={`Se borra el registro de ${formatCLP(item.paid)} y vuelve a quedar ${isIncome ? 'por recibir' : 'por pagar'}.`}
             confirmLabel="Desmarcar"
             triggerTitle="Deshacer"
-            triggerClassName="min-h-11 px-3 text-[11px] font-black text-slate-500 hover:text-white uppercase tracking-wider"
+            triggerClassName="min-h-11 px-3 text-xs font-semibold text-ink-3 hover:text-ink tracking-wide"
           >
             Deshacer
           </ConfirmAction>
@@ -88,7 +88,7 @@ function Row({ item, onPay, month }: { item: AccountItem; onPay: (item: AccountI
         <button
           type="button"
           onClick={() => onPay(item)}
-          className={`min-h-11 px-4 rounded-xl font-black text-xs uppercase tracking-wider active:scale-95 transition-all ${
+          className={`min-h-11 px-4 rounded-xl font-semibold text-xs tracking-wide active:scale-95 transition-all ${
             isIncome ? 'bg-emerald-500 text-black hover:bg-emerald-400' : 'bg-white text-black hover:bg-slate-200'
           }`}
         >
@@ -124,7 +124,7 @@ function CmrPaySheet({
   }, [state, onClose]);
 
   const chip = (active: boolean) =>
-    `min-h-11 px-4 rounded-xl text-xs font-black border ${active ? 'bg-white text-black border-white' : 'bg-black/30 text-slate-400 border-white/10'}`;
+    `min-h-11 px-4 rounded-xl text-xs font-semibold border ${active ? 'bg-white text-black border-white' : 'bg-black/30 text-ink-2 border-line-strong'}`;
 
   return (
     <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
@@ -133,17 +133,17 @@ function CmrPaySheet({
         role="dialog"
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
-        className="w-full sm:max-w-md space-y-4 bg-[#0F1117] border border-white/10 rounded-t-[2rem] sm:rounded-[2rem] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+        className="w-full sm:max-w-md space-y-4 bg-surface-2 border border-line-strong rounded-t-3xl sm:rounded-3xl p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-black text-white uppercase tracking-wider">Pagar Deuda CMR</h2>
-          <button type="button" onClick={onClose} className="p-2.5 text-slate-500 hover:text-white" aria-label="Cerrar">
+          <h2 className="text-base font-semibold text-ink tracking-wide">Pagar Deuda CMR</h2>
+          <button type="button" onClick={onClose} className="p-2.5 text-ink-3 hover:text-ink" aria-label="Cerrar">
             <X size={20} />
           </button>
         </div>
-        <div className="bg-black/30 border border-white/10 rounded-2xl p-4">
-          <p className="text-3xl font-black font-mono text-white">{formatCLP(total)}</p>
-          <p className="mt-1 text-xs font-bold text-slate-400">
+        <div className="bg-black/30 border border-line-strong rounded-2xl p-4">
+          <p className="text-3xl font-semibold tabular-nums text-ink">{formatCLP(total)}</p>
+          <p className="mt-1 text-xs font-bold text-ink-2">
             {item.cmrLines} cuota{item.cmrLines === 1 ? '' : 's'} del plan (cuota + adelanto).{' '}
             <Link href="/finanzas/credits" className="text-indigo-400">Ver detalle</Link>
           </p>
@@ -154,7 +154,7 @@ function CmrPaySheet({
         <input type="hidden" name="payment_method" value={method} />
         <input type="hidden" name="date" value={item.payDate} />
         <div className="space-y-1.5">
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Quién pagó</p>
+          <p className="text-xs font-semibold text-ink-3 tracking-wide px-1">Quién pagó</p>
           <div className="flex flex-wrap gap-2">
             {[...data.people, 'Ambos'].map((p) => (
               <button key={p} type="button" onClick={() => setPaidBy(p)} className={chip(paidBy === p)}>
@@ -164,7 +164,7 @@ function CmrPaySheet({
           </div>
         </div>
         <div className="space-y-1.5">
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Medio de pago</p>
+          <p className="text-xs font-semibold text-ink-3 tracking-wide px-1">Medio de pago</p>
           <div className="flex flex-wrap gap-2">
             {METHODS.map((m) => (
               <button key={m.value} type="button" onClick={() => setMethod(m.value)} className={chip(method === m.value)}>
@@ -173,7 +173,7 @@ function CmrPaySheet({
             ))}
           </div>
         </div>
-        <SubmitButton pendingText="Pagando…" className="w-full min-h-12 bg-rose-600 text-white hover:bg-rose-500">
+        <SubmitButton pendingText="Pagando…" className="w-full min-h-12 bg-rose-600 text-ink hover:bg-rose-500">
           Confirmar pago
         </SubmitButton>
       </form>
@@ -230,8 +230,8 @@ export function AccountsChecklist({
   return (
     <section className="space-y-3">
       <div className="flex items-baseline justify-between gap-3 px-1">
-        <h2 className="text-[11px] font-black text-white uppercase tracking-[0.15em]">Cuentas del mes</h2>
-        <span className="text-[11px] font-bold text-slate-400">
+        <h2 className="text-xs font-semibold text-ink tracking-wide">Cuentas del mes</h2>
+        <span className="text-xs font-bold text-ink-2">
           {paidExpenses} de {expenses.length} pagadas{toPay > 0 && ` · faltan ${formatCLP(toPay)}`}
         </span>
       </div>
@@ -267,7 +267,7 @@ export function AccountsChecklist({
           <button
             type="button"
             onClick={() => setShowPaid((v) => !v)}
-            className="w-full min-h-11 inline-flex items-center justify-center gap-1.5 text-[11px] font-black text-slate-500 uppercase tracking-wider hover:text-white"
+            className="w-full min-h-11 inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-ink-3 tracking-wide hover:text-ink"
           >
             {showPaid ? 'Ocultar' : 'Ver'} pagadas y recibidas ({paid.length})
             <ChevronDown size={14} className={`transition-transform ${showPaid ? 'rotate-180' : ''}`} />

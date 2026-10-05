@@ -25,11 +25,11 @@ export default async function PresupuestoPage({
   const header = (
     <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
       <div className="space-y-3">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-slate-800 bg-slate-900/50 w-fit">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-line-strong bg-surface w-fit">
           <PieChart size={14} className="text-indigo-400" />
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Plan del hogar</span>
+          <span className="text-xs font-bold text-ink-2 tracking-wide">Plan del hogar</span>
         </div>
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tighter italic leading-none">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold text-ink tracking-tight leading-none">
           Presupuesto<span className="text-indigo-500">.</span>
         </h1>
       </div>
@@ -66,12 +66,12 @@ export default async function PresupuestoPage({
       {/* RESUMEN DEL MES */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Tile label="Ingresos" value={formatCLP(v.income)} tone="text-emerald-300" />
-        <Tile label="Presupuestado" value={formatCLP(v.expenseBudget)} tone="text-white" />
+        <Tile label="Presupuestado" value={formatCLP(v.expenseBudget)} tone="text-ink" />
         <Tile label="Gastado" value={formatCLP(v.spent)} tone="text-rose-300" />
         <Tile
           label={remaining >= 0 ? 'Queda del presupuesto' : 'Sobre el presupuesto'}
           value={formatCLP(Math.abs(remaining))}
-          tone={remaining >= 0 ? 'text-white' : 'text-rose-400'}
+          tone={remaining >= 0 ? 'text-ink' : 'text-rose-400'}
         />
       </div>
       <div className="flex items-center gap-3">
@@ -100,7 +100,7 @@ export default async function PresupuestoPage({
           />
         ))}
         {v.otherIncome > 0 && (
-          <p className="text-xs text-slate-500 px-1">+ {formatCLP(v.otherIncome)} en ingresos sin concepto.</p>
+          <p className="text-xs text-ink-3 px-1">+ {formatCLP(v.otherIncome)} en ingresos sin concepto.</p>
         )}
       </Section>
 
@@ -129,8 +129,8 @@ export default async function PresupuestoPage({
       ))}
 
       {v.unassignedSpent > 0 && (
-        <p className="text-sm text-slate-400 bg-slate-900/30 border border-white/5 rounded-2xl p-4">
-          <span className="font-black text-white">{formatCLP(v.unassignedSpent)}</span> en gastos sin concepto (por
+        <p className="text-sm text-ink-2 bg-surface border border-line rounded-2xl p-4">
+          <span className="font-semibold text-ink">{formatCLP(v.unassignedSpent)}</span> en gastos sin concepto (por
           ejemplo, sincronizados de Mercado Pago). Edítalos desde Movimientos para asignarles uno.
         </p>
       )}
@@ -141,13 +141,13 @@ export default async function PresupuestoPage({
       {archived.length > 0 && (
         <Section title="Archivados" subtitle={`${archived.length}`}>
           {archived.map((c) => (
-            <form key={c.id} action={setConceptArchived} className="flex items-center justify-between gap-3 bg-black/20 border border-white/5 rounded-2xl pl-4 pr-2 py-1">
+            <form key={c.id} action={setConceptArchived} className="flex items-center justify-between gap-3 bg-black/20 border border-line rounded-2xl pl-4 pr-2 py-1">
               <input type="hidden" name="id" value={c.id} />
               <input type="hidden" name="archived" value="false" />
-              <span className="text-sm text-slate-400 truncate">
-                {c.name} <span className="text-slate-600">· {c.group_name}</span>
+              <span className="text-sm text-ink-2 truncate">
+                {c.name} <span className="text-ink-3">· {c.group_name}</span>
               </span>
-              <SubmitButton className="min-h-11 bg-transparent text-slate-400 hover:text-white hover:bg-white/5 px-3">
+              <SubmitButton className="min-h-11 bg-transparent text-ink-2 hover:text-ink hover:bg-white/5 px-3">
                 <RotateCcw size={13} /> Restaurar
               </SubmitButton>
             </form>
@@ -158,19 +158,19 @@ export default async function PresupuestoPage({
       {/* MESES Y RESPALDO */}
       <div className="flex flex-col sm:flex-row gap-3">
         <form action={extendPlan} className="flex-1">
-          <SubmitButton pendingText="Agregando…" className="w-full min-h-12 bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10 hover:text-white">
+          <SubmitButton pendingText="Agregando…" className="w-full min-h-12 bg-white/5 text-ink-2 border border-line-strong hover:bg-white/10 hover:text-ink">
             <CalendarPlus size={15} /> Agregar {monthShort(addMonths(lastMonth, 1))} al plan
           </SubmitButton>
         </form>
         <a
           href="/api/export?tipo=gastos"
-          className="flex-1 min-h-12 inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 text-xs font-black text-slate-300 uppercase tracking-wider hover:bg-white/5"
+          className="flex-1 min-h-12 inline-flex items-center justify-center gap-2 rounded-xl border border-line-strong text-xs font-semibold text-ink-2 tracking-wide hover:bg-white/5"
         >
           <Download size={15} /> Gastos CSV
         </a>
         <a
           href="/api/export?tipo=presupuesto"
-          className="flex-1 min-h-12 inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 text-xs font-black text-slate-300 uppercase tracking-wider hover:bg-white/5"
+          className="flex-1 min-h-12 inline-flex items-center justify-center gap-2 rounded-xl border border-line-strong text-xs font-semibold text-ink-2 tracking-wide hover:bg-white/5"
         >
           <Download size={15} /> Presupuesto CSV
         </a>
@@ -181,9 +181,9 @@ export default async function PresupuestoPage({
 
 function Tile({ label, value, tone }: { label: string; value: string; tone: string }) {
   return (
-    <div className="bg-slate-900/40 border border-white/5 rounded-[1.5rem] p-4">
-      <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.15em]">{label}</p>
-      <p className={`mt-1.5 text-lg sm:text-xl font-black font-mono leading-none break-all ${tone}`}>{value}</p>
+    <div className="bg-surface border border-line rounded-2xl p-4">
+      <p className="text-xs font-semibold text-ink-3 tracking-wide">{label}</p>
+      <p className={`mt-1.5 text-lg sm:text-xl font-semibold tabular-nums leading-none break-all ${tone}`}>{value}</p>
     </div>
   );
 }
@@ -192,8 +192,8 @@ function Section({ title, subtitle, children }: { title: string; subtitle: strin
   return (
     <section className="space-y-2.5">
       <div className="flex items-baseline justify-between gap-3 px-1">
-        <h2 className="text-[11px] font-black text-white uppercase tracking-[0.15em]">{title}</h2>
-        <span className="text-[11px] font-bold text-slate-500 font-mono">{subtitle}</span>
+        <h2 className="text-xs font-semibold text-ink tracking-wide">{title}</h2>
+        <span className="text-xs font-bold text-ink-3 tabular-nums">{subtitle}</span>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-2.5">{children}</div>
     </section>

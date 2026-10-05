@@ -13,7 +13,7 @@ import { fieldBase } from '@/components/ui/styles';
 import { ConfirmAction } from '@/components/finanzas/confirm-action';
 
 function Label({ children }: { children: React.ReactNode }) {
-  return <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">{children}</span>;
+  return <span className="text-xs font-semibold text-ink-3 tracking-wide px-1">{children}</span>;
 }
 
 /** Pago fijo mensual y mes de inicio del plan. */
@@ -28,8 +28,8 @@ export function CmrSettingsForm({
 }) {
   const [state, action] = useActionState(saveCmrSettings, IDLE_STATE);
   return (
-    <form action={action} className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-5 space-y-4">
-      <h2 className="text-sm font-black text-white uppercase tracking-wider">Parámetros del plan</h2>
+    <form action={action} className="bg-surface border border-line rounded-3xl p-5 space-y-4">
+      <h2 className="text-sm font-semibold text-ink tracking-wide">Parámetros del plan</h2>
       <InlineMessage state={state} />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label className="space-y-1.5">
@@ -40,14 +40,14 @@ export function CmrSettingsForm({
           <Label>Mes de inicio</Label>
           <select name="cmr_start_month" defaultValue={startMonth} className={`${fieldBase} min-h-11 appearance-none`}>
             {months.map((m) => (
-              <option key={m.value} value={m.value} className="bg-[#0A0C10]">
+              <option key={m.value} value={m.value} className="bg-surface">
                 {m.label}
               </option>
             ))}
           </select>
         </label>
       </div>
-      <p className="text-[11px] text-slate-500">
+      <p className="text-xs text-ink-3">
         Paga siempre el total facturado de la CMR, nunca el mínimo. Lo que sobra después de las cuotas adelanta ítems por prioridad.
       </p>
       <SubmitButton pendingText="Recalculando…" className="w-full min-h-11">
@@ -77,7 +77,7 @@ function DebtItemForm({ initial, onDone }: { initial?: DebtItemFields; onDone: (
     <label className="space-y-1.5 flex flex-col">
       <Label>{label}</Label>
       <NumberInput name={name} required={required} defaultValue={value || ''} placeholder={placeholder} invalid={!!err[name]} />
-      {err[name] && <span className="text-[11px] font-bold text-rose-400 px-1">{err[name]}</span>}
+      {err[name] && <span className="text-xs font-bold text-rose-400 px-1">{err[name]}</span>}
     </label>
   );
 
@@ -98,7 +98,7 @@ function DebtItemForm({ initial, onDone }: { initial?: DebtItemFields; onDone: (
         <label className="space-y-1.5 flex flex-col">
           <Label>Valor cuota</Label>
           <CLPInput name="installment" decimals={2} defaultValue={initial?.installment || ''} placeholder="Se calcula" />
-          {err.installment && <span className="text-[11px] font-bold text-rose-400 px-1">{err.installment}</span>}
+          {err.installment && <span className="text-xs font-bold text-rose-400 px-1">{err.installment}</span>}
         </label>
         {num('remaining_installments', 'Cuotas que quedan', initial?.remaining_installments, 'Todas', false)}
         {num('priority', 'Prioridad (1 = primero)', initial?.priority)}
@@ -107,7 +107,7 @@ function DebtItemForm({ initial, onDone }: { initial?: DebtItemFields; onDone: (
         <SubmitButton pendingText="Guardando…" className="flex-1 min-h-11">
           Guardar
         </SubmitButton>
-        <button type="button" onClick={onDone} className="min-h-11 px-4 text-xs font-bold text-slate-500 hover:text-white">
+        <button type="button" onClick={onDone} className="min-h-11 px-4 text-xs font-bold text-ink-3 hover:text-ink">
           Cancelar
         </button>
       </div>
@@ -122,16 +122,16 @@ export function AddDebtItem({ nextPriority }: { nextPriority: number }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-full min-h-12 inline-flex items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 text-xs font-black text-slate-400 uppercase tracking-wider hover:text-white hover:border-white/30"
+        className="w-full min-h-12 inline-flex items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 text-xs font-semibold text-ink-2 tracking-wide hover:text-ink hover:border-white/30"
       >
         <Plus size={16} /> Agregar compra en cuotas
       </button>
     );
   }
   return (
-    <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-5">
-      <h3 className="text-sm font-black text-white uppercase tracking-wider">Nueva compra en cuotas</h3>
-      <p className="mt-1 text-xs text-slate-500">
+    <div className="bg-surface border border-line rounded-3xl p-5">
+      <h3 className="text-sm font-semibold text-ink tracking-wide">Nueva compra en cuotas</h3>
+      <p className="mt-1 text-xs text-ink-3">
         Pon qué compraste, el precio y en cuántas cuotas: el valor de la cuota se calcula solo. Sus cuotas se pagan
         dentro del pago fijo mensual; si no alcanzan, el pago del mes sube a la suma de las cuotas.
       </p>
@@ -171,43 +171,43 @@ export function DebtItemCard({
       : 'bg-amber-500/10 text-amber-300 border-amber-500/25';
 
   return (
-    <div className="bg-black/20 border border-white/5 rounded-2xl p-4">
+    <div className="bg-black/20 border border-line rounded-2xl p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
           <span className="h-3 w-3 rounded-full shrink-0" style={{ background: color }} />
-          <p className="text-sm font-bold text-white truncate">{item.name}</p>
+          <p className="text-sm font-bold text-ink truncate">{item.name}</p>
         </div>
-        <span className={`px-2.5 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider ${statusCls}`}>{status}</span>
+        <span className={`px-2.5 py-1 rounded-full border text-xs font-semibold tracking-wide ${statusCls}`}>{status}</span>
       </div>
 
-      <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-[11px]">
+      <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
         <div>
-          <dt className="text-slate-500 font-bold">Saldo</dt>
-          <dd className="text-white font-black font-mono text-sm">{formatCLP(balance)}</dd>
+          <dt className="text-ink-3 font-bold">Saldo</dt>
+          <dd className="text-ink font-semibold tabular-nums text-sm">{formatCLP(balance)}</dd>
         </div>
         <div>
-          <dt className="text-slate-500 font-bold">Cuotas que quedan</dt>
-          <dd className="text-white font-black text-sm">
-            {remainingInstallments} <span className="text-slate-500 font-bold">de {formatCLP(item.installment)}</span>
+          <dt className="text-ink-3 font-bold">Cuotas que quedan</dt>
+          <dd className="text-ink font-semibold text-sm">
+            {remainingInstallments} <span className="text-ink-3 font-bold">de {formatCLP(item.installment)}</span>
           </dd>
         </div>
         <div>
-          <dt className="text-slate-500 font-bold">Prioridad</dt>
-          <dd className="text-white font-black text-sm">{item.priority}</dd>
+          <dt className="text-ink-3 font-bold">Prioridad</dt>
+          <dd className="text-ink font-semibold text-sm">{item.priority}</dd>
         </div>
         <div>
-          <dt className="text-slate-500 font-bold">Interés</dt>
-          <dd className={`font-black text-sm ${interest > 0 ? 'text-rose-300' : 'text-emerald-300'}`}>
+          <dt className="text-ink-3 font-bold">Interés</dt>
+          <dd className={`font-semibold text-sm ${interest > 0 ? 'text-rose-300' : 'text-emerald-300'}`}>
             {interest > 0 ? `Sí · ${formatCLP(interest)}` : 'No'}
           </dd>
         </div>
       </dl>
 
       {(thisMonth.total > 0 || paid > 0) && (
-        <p className="mt-3 text-[11px] font-bold text-slate-400">
+        <p className="mt-3 text-xs font-bold text-ink-2">
           Este mes: {formatCLP(thisMonth.installment)} cuota
           {thisMonth.advance > 0 && <span className="text-amber-300"> + {formatCLP(thisMonth.advance)} adelanto</span>}
-          {paid > 0 && <span className="text-slate-500"> · pagado en total {formatCLP(paid)}</span>}
+          {paid > 0 && <span className="text-ink-3"> · pagado en total {formatCLP(paid)}</span>}
         </p>
       )}
 
@@ -216,7 +216,7 @@ export function DebtItemCard({
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="min-h-11 inline-flex items-center gap-1.5 px-2 text-[11px] font-black text-slate-400 hover:text-white uppercase tracking-wider"
+            className="min-h-11 inline-flex items-center gap-1.5 px-2 text-xs font-semibold text-ink-2 hover:text-ink tracking-wide"
           >
             <Pencil size={13} /> Editar
           </button>
@@ -226,7 +226,7 @@ export function DebtItemCard({
             title={`¿Archivar "${item.name}"?`}
             message="Sale del plan CMR. Los pagos registrados se conservan."
             confirmLabel="Archivar"
-            triggerClassName="min-h-11 inline-flex items-center gap-1.5 px-2 text-[11px] font-black text-slate-500 hover:text-rose-400 uppercase tracking-wider"
+            triggerClassName="min-h-11 inline-flex items-center gap-1.5 px-2 text-xs font-semibold text-ink-3 hover:text-rose-400 tracking-wide"
           >
             <Archive size={13} /> Archivar
           </ConfirmAction>

@@ -4,7 +4,7 @@ import React from 'react';
 import { useFormStatus } from 'react-dom';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { buttonBase } from './styles';
+import { buttonBase, buttonPrimary } from './styles';
 
 type SubmitButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   pendingText?: string;
@@ -26,7 +26,7 @@ export function SubmitButton({
     <button
       type="submit"
       disabled={pending || disabled}
-      className={cn(buttonBase, 'bg-white text-black hover:bg-slate-200', className)}
+      className={cn(buttonBase, buttonPrimary, className)}
       {...props}
     >
       {pending && <Loader2 size={15} className="animate-spin" />}

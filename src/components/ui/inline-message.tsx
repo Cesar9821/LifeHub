@@ -10,10 +10,8 @@ export function InlineMessage({ state }: { state: FormState | undefined }) {
     <div
       role={ok ? 'status' : 'alert'}
       className={cn(
-        'flex items-center gap-2 rounded-xl px-3 py-2.5 text-xs font-bold border',
-        ok
-          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-          : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+        'flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium border',
+        ok ? 'bg-success/10 text-success border-success/20' : 'bg-danger/10 text-danger border-danger/25'
       )}
     >
       {ok ? <CheckCircle2 size={14} className="shrink-0" /> : <AlertCircle size={14} className="shrink-0" />}

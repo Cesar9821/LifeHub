@@ -65,7 +65,7 @@ export default function DashboardShell({
   const onMoreTab = !TABS.some((t) => isActive(pathname, t.href));
 
   return (
-    <div className="min-h-screen bg-[#050608] text-white relative overflow-hidden flex font-sans">
+    <div className="min-h-screen bg-bg text-ink relative overflow-hidden flex font-sans">
       <div className="absolute top-[-5%] left-[-5%] w-[40%] h-[40%] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none z-0" />
 
       {/* OVERLAY MÓVIL */}
@@ -78,20 +78,20 @@ export default function DashboardShell({
 
       {/* MENÚ LATERAL (escritorio) / "Más" (celular) */}
       <aside
-        className={`fixed inset-y-0 left-0 z-[70] w-72 bg-[#0A0C10]/95 backdrop-blur-2xl border-r border-white/5 flex flex-col transition-transform duration-300
+        className={`fixed inset-y-0 left-0 z-[70] w-72 bg-surface/95 backdrop-blur-2xl border-r border-line flex flex-col transition-transform duration-300
           md:static md:translate-x-0 md:w-64 lg:w-72
           ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
         <div className="p-6 pb-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 p-2.5 rounded-2xl">
-              <Wallet size={20} className="text-white" />
+              <Wallet size={20} className="text-ink" />
             </div>
-            <span className="font-black text-2xl tracking-tighter uppercase italic">
+            <span className="font-semibold text-2xl tracking-tight">
               Finanzas<span className="text-emerald-400">.</span>
             </span>
           </div>
-          <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-2.5 text-slate-500 hover:text-white" aria-label="Cerrar menú">
+          <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-2.5 text-ink-3 hover:text-ink" aria-label="Cerrar menú">
             <X size={20} />
           </button>
         </div>
@@ -103,8 +103,8 @@ export default function DashboardShell({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center gap-3 px-4 min-h-12 rounded-2xl transition-all font-black text-[11px] uppercase tracking-[0.12em] ${
-                  active ? 'bg-white text-black' : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                className={`flex items-center gap-3 px-4 min-h-12 rounded-2xl transition-all font-semibold text-xs tracking-wide ${
+                  active ? 'bg-white text-black' : 'text-ink-2 hover:bg-white/5 hover:text-ink'
                 }`}
               >
                 <span className={active ? 'text-emerald-600' : ''}>{item.icon}</span>
@@ -114,17 +114,17 @@ export default function DashboardShell({
           })}
         </nav>
 
-        <div className="p-4 space-y-2 border-t border-white/5">
+        <div className="p-4 space-y-2 border-t border-line">
           <Link
             href="/hub"
-            className="flex items-center gap-3 px-4 min-h-12 rounded-2xl font-black text-[11px] uppercase tracking-[0.12em] text-slate-500 hover:bg-white/5 hover:text-white"
+            className="flex items-center gap-3 px-4 min-h-12 rounded-2xl font-semibold text-xs tracking-wide text-ink-3 hover:bg-white/5 hover:text-ink"
           >
             <ArrowLeft size={18} /> Volver a LifeHub
           </Link>
           <form action={signout}>
             <button
               type="submit"
-              className="w-full flex items-center gap-3 px-4 min-h-12 rounded-2xl font-black text-[11px] uppercase tracking-[0.12em] text-slate-500 hover:bg-rose-500/10 hover:text-rose-400"
+              className="w-full flex items-center gap-3 px-4 min-h-12 rounded-2xl font-semibold text-xs tracking-wide text-ink-3 hover:bg-rose-500/10 hover:text-rose-400"
             >
               <LogOut size={18} /> Cerrar sesión
             </button>
@@ -134,14 +134,14 @@ export default function DashboardShell({
 
       {/* CONTENIDO */}
       <main className="flex-1 flex flex-col relative z-10 w-full min-w-0">
-        <header className="h-16 px-4 md:px-10 flex items-center justify-between border-b border-white/5 bg-[#050608]/70 backdrop-blur-xl sticky top-0 z-50">
-          <Link href="/finanzas" className="md:hidden font-black text-lg tracking-tighter uppercase italic">
+        <header className="h-16 px-4 md:px-10 flex items-center justify-between border-b border-line bg-bg/70 backdrop-blur-xl sticky top-0 z-50">
+          <Link href="/finanzas" className="md:hidden font-semibold text-lg tracking-tight">
             Finanzas<span className="text-emerald-400">.</span>
           </Link>
           <span className="hidden md:block" />
           <div className="flex items-center gap-3">
-            <span className="hidden sm:block text-[11px] font-black text-slate-300 uppercase tracking-wider">{userName}</span>
-            <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-950 border border-white/10 flex items-center justify-center font-black text-emerald-400 text-sm">
+            <span className="hidden sm:block text-xs font-semibold text-ink-2 tracking-wide">{userName}</span>
+            <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-950 border border-line-strong flex items-center justify-center font-semibold text-emerald-400 text-sm">
               {userInitials}
             </div>
           </div>
@@ -154,7 +154,7 @@ export default function DashboardShell({
 
       {/* PESTAÑAS INFERIORES (celular) */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-[50] bg-[#0A0C10]/95 backdrop-blur-xl border-t border-white/10 pb-[env(safe-area-inset-bottom)]"
+        className="md:hidden fixed bottom-0 inset-x-0 z-[50] bg-surface/95 backdrop-blur-xl border-t border-line-strong pb-[env(safe-area-inset-bottom)]"
         aria-label="Navegación de Finanzas"
       >
         <div className="grid grid-cols-5">
@@ -164,8 +164,8 @@ export default function DashboardShell({
               <Link
                 key={t.href}
                 href={t.href}
-                className={`flex flex-col items-center justify-center gap-1 min-h-16 text-[10px] font-black ${
-                  active ? 'text-emerald-400' : 'text-slate-500'
+                className={`flex flex-col items-center justify-center gap-1 min-h-16 text-xs font-semibold ${
+                  active ? 'text-emerald-400' : 'text-ink-3'
                 }`}
               >
                 {t.icon}
@@ -176,8 +176,8 @@ export default function DashboardShell({
           <button
             type="button"
             onClick={() => setIsSidebarOpen(true)}
-            className={`flex flex-col items-center justify-center gap-1 min-h-16 text-[10px] font-black ${
-              onMoreTab ? 'text-emerald-400' : 'text-slate-500'
+            className={`flex flex-col items-center justify-center gap-1 min-h-16 text-xs font-semibold ${
+              onMoreTab ? 'text-emerald-400' : 'text-ink-3'
             }`}
           >
             <Menu size={20} />

@@ -122,32 +122,32 @@ export default function NotificationsManager() {
   }
 
   return (
-    <div className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-6 md:p-8 backdrop-blur-xl space-y-5">
+    <div className="bg-surface border border-line rounded-3xl p-6 md:p-8 space-y-5">
       <div className="flex items-center gap-3">
         <div className="h-11 w-11 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
           <Bell size={20} className="text-indigo-400" />
         </div>
         <div>
-          <h2 className="text-lg font-black text-white uppercase tracking-tight">Notificaciones</h2>
-          <p className="text-xs text-slate-500 font-medium">Avisos de tus 4 módulos en este dispositivo</p>
+          <h2 className="text-lg font-semibold text-ink tracking-tight">Notificaciones</h2>
+          <p className="text-xs text-ink-3 font-medium">Avisos de tus 4 módulos en este dispositivo</p>
         </div>
       </div>
 
       {state === 'loading' && (
-        <p className="text-sm text-slate-500 flex items-center gap-2">
+        <p className="text-sm text-ink-3 flex items-center gap-2">
           <Loader2 size={15} className="animate-spin" /> Comprobando…
         </p>
       )}
 
       {state === 'unsupported' && (
-        <div className="flex items-start gap-3 text-sm text-slate-400 bg-black/30 border border-white/5 rounded-2xl p-4">
+        <div className="flex items-start gap-3 text-sm text-ink-2 bg-black/30 border border-line rounded-2xl p-4">
           <ShieldAlert size={18} className="text-amber-400 shrink-0 mt-0.5" />
           <p>Este navegador no soporta notificaciones push.</p>
         </div>
       )}
 
       {state === 'needs-install' && (
-        <div className="flex items-start gap-3 text-sm text-slate-300 bg-black/30 border border-white/5 rounded-2xl p-4">
+        <div className="flex items-start gap-3 text-sm text-ink-2 bg-black/30 border border-line rounded-2xl p-4">
           <Share size={18} className="text-indigo-400 shrink-0 mt-0.5" />
           <p>
             En iPhone primero <b>instala la app</b>: toca el botón <b>Compartir</b> y luego{' '}
@@ -163,7 +163,7 @@ export default function NotificationsManager() {
             <button
               onClick={disable}
               disabled={busy}
-              className="inline-flex items-center gap-2 bg-white/5 border border-white/10 text-slate-300 px-5 py-3 rounded-xl font-black text-xs uppercase tracking-wider hover:bg-white/10 transition-all active:scale-95 disabled:opacity-50"
+              className="inline-flex items-center gap-2 bg-white/5 border border-line-strong text-ink-2 px-5 py-3 rounded-xl font-semibold text-xs tracking-wide hover:bg-white/10 transition-all active:scale-95 disabled:opacity-50"
             >
               {busy ? <Loader2 size={15} className="animate-spin" /> : <BellOff size={15} />}
               Desactivar en este dispositivo
@@ -172,7 +172,7 @@ export default function NotificationsManager() {
             <button
               onClick={enable}
               disabled={busy}
-              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all active:scale-95 disabled:opacity-50"
+              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-ink px-5 py-3 rounded-xl font-semibold text-xs tracking-wide transition-all active:scale-95 disabled:opacity-50"
             >
               {busy ? <Loader2 size={15} className="animate-spin" /> : <Bell size={15} />}
               Activar notificaciones
@@ -183,7 +183,7 @@ export default function NotificationsManager() {
             <button
               onClick={test}
               disabled={busy}
-              className="inline-flex items-center gap-2 ml-0 sm:ml-3 text-slate-400 hover:text-white px-3 py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all disabled:opacity-50"
+              className="inline-flex items-center gap-2 ml-0 sm:ml-3 text-ink-2 hover:text-ink px-3 py-3 rounded-xl font-semibold text-xs tracking-wide transition-all disabled:opacity-50"
             >
               <Send size={14} /> Enviar prueba
             </button>

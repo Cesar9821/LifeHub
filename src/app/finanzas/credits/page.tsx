@@ -13,11 +13,11 @@ export default async function DeudaCmrPage() {
 
   const header = (
     <div className="space-y-3">
-      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-slate-800 bg-slate-900/50 w-fit">
+      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-line-strong bg-surface w-fit">
         <CreditCard size={14} className="text-rose-400" />
-        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Plan casa</span>
+        <span className="text-xs font-bold text-ink-2 tracking-wide">Plan casa</span>
       </div>
-      <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tighter italic leading-none">
+      <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold text-ink tracking-tight leading-none">
         Deuda CMR<span className="text-rose-500">.</span>
       </h1>
     </div>
@@ -60,17 +60,17 @@ export default async function DeudaCmrPage() {
       {header}
 
       {/* PROGRESO */}
-      <section className="bg-gradient-to-br from-rose-500/10 to-transparent border border-rose-500/20 rounded-[2rem] p-6 space-y-4">
+      <section className="bg-gradient-to-br from-rose-500/10 to-transparent border border-rose-500/20 rounded-3xl p-6 space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-[10px] font-black text-rose-300/90 uppercase tracking-[0.2em]">Pagado del plan</p>
-            <p className="mt-1.5 text-3xl sm:text-4xl font-black font-mono text-white leading-none">
-              {formatCLP(paid)} <span className="text-base text-slate-500">/ {formatCLP(total)}</span>
+            <p className="text-xs font-semibold text-rose-300/90 tracking-wide">Pagado del plan</p>
+            <p className="mt-1.5 text-3xl sm:text-4xl font-semibold tabular-nums text-ink leading-none">
+              {formatCLP(paid)} <span className="text-base text-ink-3">/ {formatCLP(total)}</span>
             </p>
           </div>
           <div className="text-right">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Termina</p>
-            <p className="mt-1.5 flex items-center justify-end gap-1.5 text-lg font-black text-emerald-300">
+            <p className="text-xs font-semibold text-ink-2 tracking-wide">Termina</p>
+            <p className="mt-1.5 flex items-center justify-end gap-1.5 text-lg font-semibold text-emerald-300">
               <CalendarCheck size={16} /> {plan.cmr.payoffMonth ? monthShort(plan.cmr.payoffMonth) : '—'}
             </p>
           </div>
@@ -78,19 +78,19 @@ export default async function DeudaCmrPage() {
         <div className="h-2.5 w-full bg-white/5 rounded-full overflow-hidden">
           <div className="h-full bg-gradient-to-r from-rose-500 to-amber-400 rounded-full" style={{ width: `${Math.round(pct * 100)}%` }} />
         </div>
-        <p className="text-xs font-bold text-slate-400">
+        <p className="text-xs font-bold text-ink-2">
           {Math.round(pct * 100)}% pagado · saldo {formatCLP(balance)}
         </p>
       </section>
 
       {/* ESTE MES */}
-      <section className="flex items-start gap-3 bg-slate-900/40 border border-white/5 rounded-[2rem] p-5">
+      <section className="flex items-start gap-3 bg-surface border border-line rounded-3xl p-5">
         <Zap size={18} className="text-amber-400 mt-0.5 shrink-0" />
         <div className="space-y-1">
-          <p className="text-sm font-black text-white">
+          <p className="text-sm font-semibold text-ink">
             {monthShort(month)}: paga {formatCLP(Math.round(thisMonth?.total ?? 0))}
           </p>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-ink-2">
             {month < plan.settings.cmrStartMonth
               ? `El plan parte en ${monthShort(plan.settings.cmrStartMonth)}. Este mes solo se paga la boleta actual.`
               : advances.length > 0
@@ -102,31 +102,31 @@ export default async function DeudaCmrPage() {
 
       {/* GRÁFICO + TABLA */}
       {planMonths.length > 0 && (
-        <section className="bg-slate-900/40 border border-white/5 rounded-[2rem] p-5 space-y-5">
-          <h2 className="text-sm font-black text-white uppercase tracking-wider">Plan mes a mes</h2>
+        <section className="bg-surface border border-line rounded-3xl p-5 space-y-5">
+          <h2 className="text-sm font-semibold text-ink tracking-wide">Plan mes a mes</h2>
           <DebtChart rows={chartRows} items={activeItems.map((d) => ({ id: d.id, name: d.name }))} />
           <div className="overflow-x-auto -mx-5 px-5">
             <table className="w-full text-xs min-w-[520px]">
               <thead>
-                <tr className="text-slate-500 text-[10px] uppercase tracking-wider">
-                  <th className="text-left font-black py-2 pr-3">Mes</th>
-                  <th className="text-right font-black py-2 px-2">Cuotas</th>
-                  <th className="text-right font-black py-2 px-2">Adelanto</th>
-                  <th className="text-right font-black py-2 px-2">Total</th>
-                  <th className="text-right font-black py-2 pl-2">Deuda al cierre</th>
+                <tr className="text-ink-3 text-xs tracking-wide">
+                  <th className="text-left font-semibold py-2 pr-3">Mes</th>
+                  <th className="text-right font-semibold py-2 px-2">Cuotas</th>
+                  <th className="text-right font-semibold py-2 px-2">Adelanto</th>
+                  <th className="text-right font-semibold py-2 px-2">Total</th>
+                  <th className="text-right font-semibold py-2 pl-2">Deuda al cierre</th>
                 </tr>
               </thead>
-              <tbody className="font-mono">
+              <tbody className="tabular-nums">
                 {planMonths.map((m) => (
-                  <tr key={m.month} className={`border-t border-white/5 ${m.month === month ? 'text-white' : 'text-slate-300'}`}>
+                  <tr key={m.month} className={`border-t border-line ${m.month === month ? 'text-ink' : 'text-ink-2'}`}>
                     <td className="py-2 pr-3 font-sans font-bold">
                       {monthShort(m.month)}
-                      {m.source === 'real' && <span className="ml-1.5 text-[9px] text-emerald-400 uppercase">real</span>}
+                      {m.source === 'real' && <span className="ml-1.5 text-xs text-emerald-400">real</span>}
                     </td>
                     <td className="text-right py-2 px-2">{formatCLP(m.total - m.advance)}</td>
                     <td className="text-right py-2 px-2 text-amber-300">{m.advance > 0.5 ? formatCLP(m.advance) : '–'}</td>
-                    <td className="text-right py-2 px-2 font-black">{formatCLP(m.total)}</td>
-                    <td className="text-right py-2 pl-2 text-slate-500">{formatCLP(m.remainingAfter)}</td>
+                    <td className="text-right py-2 px-2 font-semibold">{formatCLP(m.total)}</td>
+                    <td className="text-right py-2 pl-2 text-ink-3">{formatCLP(m.remainingAfter)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -137,7 +137,7 @@ export default async function DeudaCmrPage() {
 
       {/* ÍTEMS */}
       <section className="space-y-3">
-        <h2 className="text-[11px] font-black text-white uppercase tracking-[0.15em] px-1">Compras en cuotas</h2>
+        <h2 className="text-xs font-semibold text-ink tracking-wide px-1">Compras en cuotas</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
           {items.map((v) => (
             <DebtItemCard
@@ -170,8 +170,8 @@ export default async function DeudaCmrPage() {
         months={plan.months.map((m) => ({ value: m, label: monthShort(m) }))}
       />
 
-      <p className="text-xs text-slate-500 px-1">
-        El pago del mes se marca en <span className="text-slate-300 font-bold">Mes → Cuentas del mes → Deuda CMR</span>. Si compras algo
+      <p className="text-xs text-ink-3 px-1">
+        El pago del mes se marca en <span className="text-ink-2 font-bold">Mes → Cuentas del mes → Deuda CMR</span>. Si compras algo
         nuevo en cuotas, agrégalo aquí: sus cuotas se suman al plan y se recalcula solo.
       </p>
     </div>

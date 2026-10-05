@@ -36,9 +36,9 @@ export default function TaskForm({
         </Field>
         <Field label="Responsable" className="md:w-44">
           <Select name="assigned_to" defaultValue="">
-            <option value="" className="bg-[#0A0C10]">Sin asignar</option>
+            <option value="" className="bg-surface">Sin asignar</option>
             {members.map((m) => (
-              <option key={m.user_id} value={m.user_id} className="bg-[#0A0C10]">
+              <option key={m.user_id} value={m.user_id} className="bg-surface">
                 {m.full_name}
               </option>
             ))}
@@ -49,9 +49,9 @@ export default function TaskForm({
         </Field>
         <Field label="Repetir" className="md:w-36">
           <Select name="repeat" defaultValue="none">
-            <option value="none" className="bg-[#0A0C10]">No</option>
-            <option value="weekly" className="bg-[#0A0C10]">Cada semana</option>
-            <option value="monthly" className="bg-[#0A0C10]">Cada mes</option>
+            <option value="none" className="bg-surface">No</option>
+            <option value="weekly" className="bg-surface">Cada semana</option>
+            <option value="monthly" className="bg-surface">Cada mes</option>
           </Select>
         </Field>
         <SubmitButton pendingText="Agregando…">

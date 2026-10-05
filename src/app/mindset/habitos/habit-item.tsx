@@ -39,7 +39,7 @@ export default function HabitItem({ habit: h }: { habit: HabitItemData }) {
 
   if (editing) {
     return (
-      <form action={formAction} className="bg-slate-900/50 border border-violet-500/20 rounded-xl p-4 space-y-3">
+      <form action={formAction} className="bg-surface border border-violet-500/20 rounded-xl p-4 space-y-3">
         <input type="hidden" name="id" value={h.id} />
         <InlineMessage state={state} />
         <Field label="Hábito" error={state.fieldErrors?.name}>
@@ -51,8 +51,8 @@ export default function HabitItem({ habit: h }: { habit: HabitItemData }) {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Field label="Tipo">
             <Select name="kind" defaultValue={h.kind}>
-              <option value="build" className="bg-[#0A0C10]">Construir</option>
-              <option value="break" className="bg-[#0A0C10]">Evitar</option>
+              <option value="build" className="bg-surface">Construir</option>
+              <option value="break" className="bg-surface">Evitar</option>
             </Select>
           </Field>
           <Field label="Frecuencia">
@@ -61,8 +61,8 @@ export default function HabitItem({ habit: h }: { habit: HabitItemData }) {
               value={frequency}
               onChange={(e) => setFrequency(e.target.value as 'daily' | 'weekly')}
             >
-              <option value="daily" className="bg-[#0A0C10]">Todos los días</option>
-              <option value="weekly" className="bg-[#0A0C10]">Veces por semana</option>
+              <option value="daily" className="bg-surface">Todos los días</option>
+              <option value="weekly" className="bg-surface">Veces por semana</option>
             </Select>
           </Field>
           {frequency === 'weekly' ? (
@@ -73,7 +73,7 @@ export default function HabitItem({ habit: h }: { habit: HabitItemData }) {
             <input type="hidden" name="target_per_week" value={7} />
           )}
         </div>
-        <label className="flex items-center gap-2 text-xs font-bold text-slate-400 cursor-pointer">
+        <label className="flex items-center gap-2 text-xs font-bold text-ink-2 cursor-pointer">
           <input name="non_negotiable" type="checkbox" defaultChecked={h.non_negotiable} className="w-4 h-4 accent-rose-500" />
           🔒 Innegociable
         </label>
@@ -90,31 +90,31 @@ export default function HabitItem({ habit: h }: { habit: HabitItemData }) {
   }
 
   return (
-    <div className="flex items-center justify-between gap-3 bg-black/20 border border-white/5 rounded-xl px-4 py-3 group">
+    <div className="flex items-center justify-between gap-3 bg-black/20 border border-line rounded-xl px-4 py-3 group">
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold text-slate-200 truncate">
+        <p className="text-sm font-bold text-ink truncate">
           {h.name}
           {h.non_negotiable && (
-            <span className="ml-2 text-[9px] font-black text-rose-400 uppercase tracking-widest">🔒</span>
+            <span className="ml-2 text-xs font-semibold text-rose-400 tracking-wide">🔒</span>
           )}
         </p>
-        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+        <p className="text-xs font-bold text-ink-3 tracking-wide">
           {h.frequency === 'daily' ? 'Diario' : `${h.target_per_week}× por semana`}
           {h.bestStreak > 0 && ` · récord ${h.bestStreak}`}
         </p>
       </div>
 
       <div className="flex items-center gap-3 shrink-0">
-        <div className={`flex items-center gap-1 ${h.streak > 0 ? 'text-orange-400' : 'text-slate-600'}`}>
+        <div className={`flex items-center gap-1 ${h.streak > 0 ? 'text-orange-400' : 'text-ink-3'}`}>
           <Flame size={13} />
-          <span className="font-black font-mono text-sm">{h.streak}</span>
+          <span className="font-semibold tabular-nums text-sm">{h.streak}</span>
         </div>
 
         <button
           type="button"
           onClick={() => setEditing(true)}
           title="Editar"
-          className="text-slate-600 hover:text-violet-400 transition-colors opacity-60 md:opacity-0 md:group-hover:opacity-100"
+          className="text-ink-3 hover:text-violet-400 transition-colors opacity-60 md:opacity-0 md:group-hover:opacity-100"
         >
           <Pencil size={14} />
         </button>
@@ -132,7 +132,7 @@ export default function HabitItem({ habit: h }: { habit: HabitItemData }) {
           <button
             type="submit"
             title="Eliminar"
-            className="text-slate-600 hover:text-rose-400 transition-colors opacity-60 md:opacity-0 md:group-hover:opacity-100"
+            className="text-ink-3 hover:text-rose-400 transition-colors opacity-60 md:opacity-0 md:group-hover:opacity-100"
           >
             <Trash2 size={14} />
           </button>

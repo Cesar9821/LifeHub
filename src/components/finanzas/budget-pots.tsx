@@ -24,7 +24,7 @@ export function BudgetPots({ rows, data, today }: { rows: PotRow[]; data: QuickD
 
   return (
     <section className="space-y-3">
-      <h2 className="text-[11px] font-black text-white uppercase tracking-[0.15em] px-1">Gastos variables</h2>
+      <h2 className="text-xs font-semibold text-ink tracking-wide px-1">Gastos variables</h2>
       <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {rows.map((r) => {
           const left = r.budget - r.spent;
@@ -33,16 +33,16 @@ export function BudgetPots({ rows, data, today }: { rows: PotRow[]; data: QuickD
               <button
                 type="button"
                 onClick={() => setPreset({ kind: 'expense', concept_id: r.conceptId, date: today })}
-                className="w-full text-left bg-black/20 border border-white/5 rounded-2xl p-3.5 space-y-2 hover:border-white/15 active:scale-[0.99] transition-all"
+                className="w-full text-left bg-black/20 border border-line rounded-2xl p-3.5 space-y-2 hover:border-white/15 active:scale-[0.99] transition-all"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm font-bold text-white truncate">{r.name}</span>
-                  <span className="inline-flex items-center gap-1 text-[10px] font-black text-slate-500 uppercase tracking-wider shrink-0">
+                  <span className="text-sm font-bold text-ink truncate">{r.name}</span>
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-ink-3 tracking-wide shrink-0">
                     <Plus size={12} /> Gasto
                   </span>
                 </div>
                 <UsageBar used={r.used} status={r.status} />
-                <p className="text-[11px] font-medium text-slate-500">
+                <p className="text-xs font-medium text-ink-3">
                   {formatCLP(r.spent)} de {formatCLP(r.budget)}
                   {r.budget > 0 && (
                     <span className={left < 0 ? 'text-rose-400 font-bold' : ''}>
