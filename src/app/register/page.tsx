@@ -3,7 +3,8 @@
 import { useActionState } from 'react';
 import Link from 'next/link';
 import { register, type AuthState } from '@/app/auth/actions';
-import { LayoutGrid, Activity, ArrowRight, AlertCircle } from 'lucide-react';
+import { Activity, ArrowRight, AlertCircle } from 'lucide-react';
+import { LogoMark } from '@/components/brand/logo-mark';
 
 export default function RegisterPage() {
   const [state, formAction, pending] = useActionState<AuthState, FormData>(register, undefined);
@@ -13,9 +14,7 @@ export default function RegisterPage() {
 
       <div className="relative z-10 w-full max-w-md">
         <div className="flex flex-col items-center mb-10">
-          <div className="bg-surface-3 border border-line-strong p-4 rounded-3xl mb-6">
-            <LayoutGrid className="h-9 w-9 text-ink" />
-          </div>
+          <LogoMark className="h-20 w-20 mb-6" />
           <h1 className="text-5xl font-semibold text-ink tracking-tight">
             LifeHub
           </h1>

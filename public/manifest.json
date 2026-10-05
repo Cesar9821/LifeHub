@@ -14,19 +14,19 @@
   "categories": ["productivity", "lifestyle", "finance"],
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/icon-192.png?v=2",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/icon-512.png?v=2",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/icon-512.png?v=2",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -37,19 +37,19 @@
       "name": "Hoy",
       "short_name": "Hoy",
       "url": "/hoy",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icon-192.png?v=2", "sizes": "192x192" }]
     },
     {
       "name": "Mi semana",
       "short_name": "Semana",
       "url": "/semana",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icon-192.png?v=2", "sizes": "192x192" }]
     },
     {
       "name": "Trabajo",
       "short_name": "Trabajo",
       "url": "/trabajo",
-      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icon-192.png?v=2", "sizes": "192x192" }]
     },
     {
       "name": "Finanzas",
