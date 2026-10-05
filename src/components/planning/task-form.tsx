@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from 'react';
 import { saveTask } from '@/app/(app)/tareas/actions';
 import { IDLE_STATE } from '@/lib/action';
+import { todayStr } from '@/lib/format';
 import { STATUS_LABEL, WORK_CATEGORIES, WORK_STATUSES, type TaskStatus } from '@/lib/planning/tasks';
 import { Field } from '@/components/ui/field';
 import { Input, Select, Textarea } from '@/components/ui/input';
@@ -11,6 +12,7 @@ import { SubmitButton } from '@/components/ui/submit-button';
 import { withSuccessToast } from '@/components/ui/toast';
 import { AREA_CHOICES } from './block-form';
 import { ChoiceChips } from './chips';
+import { DayPicker } from './day-picker';
 import type { TaskView } from './task-row';
 
 export interface ProjectOption {
@@ -26,10 +28,12 @@ export function TaskForm({
   onDone,
 }: {
   task?: TaskView;
-  defaults?: Partial<Pick<TaskView, 'area' | 'status' | 'project_id' | 'category'>>;
+  defaults?: Partial<Pick<TaskView, 'area' | 'status' | 'project_id' | 'category' | 'due_date'>>;
   projects?: ProjectOption[];
   onDone?: () => void;
 }) {
+  const [today] = useState(todayStr);
+  const [dueDate, setDueDate] = useState<string>(task ? task.due_date ?? '' : defaults?.due_date ?? '');
   const [state, formAction] = useActionState(withSuccessToast(saveTask), IDLE_STATE);
   const [area, setArea] = useState<string>(task?.area ?? defaults?.area ?? '');
   const [category, setCategory] = useState<string>(task?.category ?? defaults?.category ?? '');
@@ -62,6 +66,17 @@ export function TaskForm({
           invalid={!!err.title}
         />
       </Field>
+
+      <div className="space-y-2">
+        <p className="text-xs font-medium text-ink-2 px-1">¿Qué día?</p>
+        <DayPicker today={today} value={dueDate} onChange={setDueDate} allowNone />
+      </div>
+
+      {dueDate && (
+        <Field label="Hora (opcional)" htmlFor="task-time" hint="Con hora aparece en tu agenda">
+          <Input id="task-time" type="time" name="due_time" defaultValue={task?.due_time?.slice(0, 5) ?? ''} className="max-w-40" />
+        </Field>
+      )}
 
       <div className="space-y-2">
         <p className="text-xs font-medium text-ink-2 px-1">Área</p>
@@ -101,15 +116,6 @@ export function TaskForm({
           />
         </Field>
       )}
-
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Fecha (opcional)" htmlFor="task-date">
-          <Input id="task-date" type="date" name="due_date" defaultValue={task?.due_date ?? ''} />
-        </Field>
-        <Field label="Hora (opcional)" htmlFor="task-time" hint="Con hora aparece en tu agenda">
-          <Input id="task-time" type="time" name="due_time" defaultValue={task?.due_time ?? ''} />
-        </Field>
-      </div>
 
       {projects.length > 0 && (
         <Field label="Proyecto (opcional)" htmlFor="task-project">

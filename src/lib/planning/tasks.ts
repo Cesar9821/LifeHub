@@ -113,35 +113,62 @@ export function statusPatch(
   return { status, completed_at };
 }
 
-export interface WorkGroups<T> {
-  hoy: T[];
-  esperando: T[];
-  pendientes: T[];
-  completadas: T[];
-}
-
 const byDue = (a: TaskLike, b: TaskLike) =>
   (a.due_date ?? '9999').localeCompare(b.due_date ?? '9999') ||
   (a.due_time ?? '99').localeCompare(b.due_time ?? '99') ||
   a.created_at.localeCompare(b.created_at);
 
-/** Agrupa las tareas de trabajo: Hoy · Esperando · Pendientes · Completadas recientes. */
-export function groupWorkTasks<T extends TaskLike>(tasks: T[], today: string, recentDays = 7): WorkGroups<T> {
+export interface AgendaDay<T> {
+  date: string;
+  tasks: T[];
+}
+
+export interface WorkAgenda<T> {
+  /** Abiertas con fecha anterior a hoy. */
+  atrasadas: T[];
+  /** Hoy y los días siguientes (los primeros `days` siempre, aunque estén libres). */
+  dias: AgendaDay<T>[];
+  /** Abiertas sin fecha. */
+  sinFecha: T[];
+  esperando: T[];
+  completadas: T[];
+}
+
+/**
+ * Trabajo como agenda: cada tarea en su día. Hoy y los `days − 1` días
+ * siguientes aparecen siempre (para ver los huecos); más adelante, solo los
+ * días que tienen algo. "Hoy" y "En curso" sin fecha cuentan como de hoy.
+ */
+export function groupWorkAgenda<T extends TaskLike>(tasks: T[], today: string, days = 7, recentDays = 7): WorkAgenda<T> {
   const since = addDays(today, -recentDays);
-  const g: WorkGroups<T> = { hoy: [], esperando: [], pendientes: [], completadas: [] };
+  const a: WorkAgenda<T> = { atrasadas: [], dias: [], sinFecha: [], esperando: [], completadas: [] };
+  const byDate = new Map<string, T[]>();
+  for (let i = 0; i < days; i++) byDate.set(addDays(today, i), []);
+
   for (const t of tasks) {
     if (t.status === 'completado') {
-      if ((t.completed_at ?? '').slice(0, 10) >= since) g.completadas.push(t);
-    } else if (t.status === 'esperando') g.esperando.push(t);
-    else if (isForToday(t, today)) g.hoy.push(t);
-    else g.pendientes.push(t);
+      if ((t.completed_at ?? '').slice(0, 10) >= since) a.completadas.push(t);
+      continue;
+    }
+    if (t.status === 'inbox') continue;
+    if (t.status === 'esperando') {
+      a.esperando.push(t);
+      continue;
+    }
+    const date = t.due_date ?? (t.status === 'hoy' || t.status === 'en_curso' ? today : null);
+    if (!date) a.sinFecha.push(t);
+    else if (date < today) a.atrasadas.push(t);
+    else byDate.set(date, [...(byDate.get(date) ?? []), t]);
   }
-  g.hoy.sort((a, b) => {
-    const rank = (t: TaskLike) => (t.status === 'en_curso' ? 0 : isOverdue(t, today) ? 1 : 2);
-    return rank(a) - rank(b) || byDue(a, b);
-  });
-  g.esperando.sort(byDue);
-  g.pendientes.sort(byDue);
-  g.completadas.sort((a, b) => (b.completed_at ?? '').localeCompare(a.completed_at ?? ''));
-  return g;
+
+  const inProgressFirst = (x: TaskLike, y: TaskLike) =>
+    (x.status === 'en_curso' ? 0 : 1) - (y.status === 'en_curso' ? 0 : 1) || byDue(x, y);
+  a.dias = [...byDate.entries()]
+    .sort(([d1], [d2]) => d1.localeCompare(d2))
+    .map(([date, list]) => ({ date, tasks: list.sort(inProgressFirst) }));
+  a.atrasadas.sort(byDue);
+  a.sinFecha.sort(byDue);
+  a.esperando.sort(byDue);
+  a.completadas.sort((x, y) => (y.completed_at ?? '').localeCompare(x.completed_at ?? ''));
+  return a;
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupWorkTasks, isForToday, isInWeek, isOverdue, organizePatch, statusPatch, type TaskLike } from './tasks';
+import { groupWorkAgenda, isForToday, isInWeek, isOverdue, organizePatch, statusPatch, type TaskLike } from './tasks';
 import { canAddPriority, MAX_PRIORITIES, nextPosition, suggestPriorities } from './priorities';
 
 const today = '2026-10-07'; // miércoles
@@ -57,23 +57,39 @@ describe('tareas', () => {
     expect(statusPatch('pendiente', { due_date: null }, today).completed_at).toBeNull();
   });
 
-  it('agrupa el trabajo: Hoy, Esperando, Pendientes, Completadas recientes', () => {
-    const g = groupWorkTasks(
+  it('agrupa el trabajo como agenda: cada tarea en su día', () => {
+    const a = groupWorkAgenda(
       [
         t({ id: 'a', status: 'hoy' }),
         t({ id: 'b', status: 'en_curso' }),
-        t({ id: 'c', status: 'esperando', waiting_on: 'Proveedor' }),
+        t({ id: 'c', status: 'esperando', waiting_on: 'Proveedor', due_date: today }),
         t({ id: 'd', due_date: '2026-10-20' }),
         t({ id: 'e', status: 'completado', completed_at: '2026-10-06T12:00:00Z' }),
         t({ id: 'f', status: 'completado', completed_at: '2026-09-01T12:00:00Z' }),
         t({ id: 'g', due_date: '2026-10-02' }),
+        t({ id: 'h', due_date: '2026-10-09', due_time: '15:00' }),
+        t({ id: 'i', due_date: '2026-10-09', due_time: '09:30' }),
+        t({ id: 'j' }),
+        t({ id: 'k', status: 'inbox', due_date: today }),
       ],
       today
     );
-    expect(g.hoy.map((x) => x.id)).toEqual(['b', 'g', 'a']); // en curso, atrasada, hoy
-    expect(g.esperando.map((x) => x.id)).toEqual(['c']);
-    expect(g.pendientes.map((x) => x.id)).toEqual(['d']);
-    expect(g.completadas.map((x) => x.id)).toEqual(['e']);
+    expect(a.atrasadas.map((x) => x.id)).toEqual(['g']);
+    // Hoy y los 6 días siguientes siempre; después, solo los días con algo
+    expect(a.dias.map((d) => d.date)).toEqual([
+      '2026-10-07', '2026-10-08', '2026-10-09', '2026-10-10', '2026-10-11', '2026-10-12', '2026-10-13', '2026-10-20',
+    ]);
+    expect(a.dias[0].tasks.map((x) => x.id)).toEqual(['b', 'a']); // en curso primero
+    expect(a.dias[1].tasks).toEqual([]);
+    expect(a.dias[2].tasks.map((x) => x.id)).toEqual(['i', 'h']); // por hora
+    expect(a.dias[7].tasks.map((x) => x.id)).toEqual(['d']);
+    expect(a.sinFecha.map((x) => x.id)).toEqual(['j']);
+    expect(a.esperando.map((x) => x.id)).toEqual(['c']);
+    expect(a.completadas.map((x) => x.id)).toEqual(['e']);
+  });
+
+  it('la agenda puede mostrar menos días fijos', () => {
+    expect(groupWorkAgenda([], today, 3).dias.map((d) => d.date)).toEqual(['2026-10-07', '2026-10-08', '2026-10-09']);
   });
 });
 

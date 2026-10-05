@@ -5,6 +5,8 @@ import {
   greetingFor,
   isoDow,
   longDateLabel,
+  dayMonthLabel,
+  dayShort,
   minToTime,
   timeToMin,
   weekDates,
@@ -42,6 +44,8 @@ describe('fechas de la planificación', () => {
 
   it('etiquetas en español de Chile', () => {
     expect(longDateLabel('2026-10-05')).toBe('Lunes 5 de octubre');
+    expect(dayMonthLabel('2026-11-03')).toBe('3 de noviembre');
+    expect(dayShort('2026-10-07')).toBe('mié');
     expect(weekRangeLabel('2026-10-05')).toBe('5 – 11 oct');
     expect(weekRangeLabel('2026-09-28')).toBe('28 sep – 4 oct');
     expect(daysBetween('2026-10-05', '2026-10-12')).toBe(7);

@@ -97,16 +97,23 @@ export function TaskRow({
   today,
   variant = 'default',
   projects,
+  showDate = true,
 }: {
   task: TaskView;
   today: string;
   variant?: 'default' | 'work' | 'inbox';
   projects?: ProjectOption[];
+  /** false en una agenda que ya agrupa por día: solo se muestra la hora. */
+  showDate?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
   const done = task.status === 'completado';
-  const due = dueText(task, today);
+  const due = showDate
+    ? dueText(task, today)
+    : task.due_time
+      ? { text: task.due_time.slice(0, 5), tone: 'neutral' as const }
+      : null;
   const cat = categoryLabel(task.category);
 
   return (
