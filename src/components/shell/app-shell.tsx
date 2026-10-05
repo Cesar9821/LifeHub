@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { LogOut } from 'lucide-react';
 import { signout } from '@/app/auth/actions';
 import { cn } from '@/lib/utils';
+import { LogoMark } from '@/components/brand/logo-mark';
 import { MAIN_NAV, MORE_NAV, isActive, type NavItem } from './nav-items';
 
 function SideLink({ item, pathname }: { item: NavItem; pathname: string }) {
@@ -37,7 +38,8 @@ export function AppShell({ children, fab }: { children: React.ReactNode; fab?: R
     <div className="min-h-dvh bg-bg text-ink lg:flex">
       {/* MENÚ LATERAL (escritorio) */}
       <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:shrink-0 lg:sticky lg:top-0 lg:h-dvh border-r border-line px-3 py-6">
-        <Link href="/hoy" className="px-3 mb-8 text-xl font-semibold tracking-tight text-ink">
+        <Link href="/hoy" className="flex items-center gap-2.5 px-3 mb-8 text-xl font-semibold tracking-tight text-ink">
+          <LogoMark className="h-8 w-8" />
           LifeHub
         </Link>
         <nav aria-label="Principal" className="space-y-1">
