@@ -9,10 +9,21 @@ Al abrirlo responde dos preguntas: *¿qué tengo que hacer hoy?* y *¿cómo est�
 | **Semana** | Lunes a domingo con rutinas, bloques, eventos del hogar y tareas; choques de horario y regla 70/30; planificar semana y revisión del domingo |
 | **Trabajo** | Inmade: Hoy · 📌 Esperando · Pendientes, por categoría (Instalaciones, Logística…) |
 | **Finanzas** | Plan del hogar: ¿cómo estamos?, ¿puedo gastar esto?, cuentas del mes, presupuesto, deuda CMR, movimientos, ahorros |
-| **Más** | Capturas (bandeja), Hábitos, Proyectos (InnVolt), Hogar (compras, menú, eventos), Objetivos, Notificaciones, Perfil y hogar |
+| **Más** | Capturas (bandeja), Hábitos, Enfoque, Cierre del día, Consejos, Proyectos (InnVolt), Hogar (compras, menú, eventos, cumpleaños), Objetivos, Tablero de visión, Notificaciones, Perfil y hogar |
 
 El botón **+** está en todas las pantallas: tarea, gasto, evento, idea o recordatorio en pocos toques.
 Lo que no se clasifica cae en **Capturas** para ordenarlo después (Hoy · Esta semana · Más adelante · Delegar · Eliminar).
+
+## Motivación y bienestar
+
+- **Consejo del día** en Hoy: unos 120 consejos por tema (foco, hábitos, familia, plata, descanso…), elegidos según cómo viene tu día. Se guardan favoritos y llega en el aviso de la mañana.
+- **Cierre del día**: qué salió bien, qué agradeces y lo primero de mañana (queda como prioridad del día siguiente). Con racha, diario y aviso en la noche.
+- **Rachas y celebración** al cumplir todo "Lo importante".
+- **Agua y sueño** en Hoy (usa el registro diario de siempre).
+- **Cumpleaños y fechas especiales** del hogar, con aviso el día antes y el mismo día.
+- **Enfoque**: temporizador para una tarea (15/25/45/60 min); al terminar se guarda y puede marcar la tarea.
+- **Tablero de visión**: fotos de tus metas; cada día una aparece en Hoy.
+- **Rueda de la vida** en la revisión semanal: tu nota por área y la actividad registrada.
 
 ## Conceptos
 
@@ -45,8 +56,9 @@ Los archivos de `supabase/` se ejecutan **en este orden** en Supabase → SQL Ed
 9. `schema-plan-hogar.sql`, `schema-plan-hogar-v2.sql` — plan financiero del hogar (ver [`PLAN-HOGAR.md`](PLAN-HOGAR.md))
 10. **`20261005_lifehub_planning.sql`** — LifeHub 2.0: tareas, prioridades, rutinas, bloques, plan semanal y proyectos
 11. **`20261005_habitos_hora_chile.sql`** — los hábitos usan la fecha de Chile (antes se cortaba a las 21:00)
+12. **`20261006_bienestar.sql`** — consejos favoritos, cierre del día, fechas especiales, tablero de visión, enfoque y rueda de la vida
 
-Si falta el paso 10, Hoy/Semana/Trabajo muestran un aviso y el resto de la app sigue funcionando.
+Si falta el paso 10, Hoy/Semana/Trabajo muestran un aviso y el resto de la app sigue funcionando. Si falta el 12, las funciones de bienestar muestran cómo activarlas.
 
 ## PWA y notificaciones
 
@@ -95,7 +107,10 @@ src/
     planning/       Hoy/Semana/Trabajo: agenda, tareas, rutinas, prioridades
     finanzas/       Componentes de Finanzas
     shell/          Navegación (barra inferior y menú lateral)
+    wellbeing/      Consejo del día, cierre, agua y sueño, fechas, enfoque, visión, rueda
   lib/
+    tips.ts         Consejos y cómo se elige el del día (con tests)
+    wellbeing.ts    Rachas, fechas especiales y rueda de la vida (con tests)
     planning/       Lógica pura con tests: fechas, recurrencia, conflictos, 70/30, tareas, hábitos
     plan/           Lógica financiera con tests: presupuesto, CMR, cuentas, ¿puedo gastar?
   services/         Lecturas de datos (Server Components, con cache())
