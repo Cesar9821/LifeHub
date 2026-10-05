@@ -12,9 +12,13 @@ export const dynamic = 'force-dynamic';
 const DESCRIPTIONS: Record<string, string> = {
   '/capturas': 'Lo que anotaste al pasar, para ordenarlo',
   '/habitos': 'Tus hábitos de hoy y de la semana',
+  '/enfoque': 'Temporizador para una tarea, sin distracciones',
+  '/cierre': 'Qué salió bien, gratitud y con qué partes mañana',
+  '/consejos': 'Ideas para tu día y tus favoritas',
   '/proyectos': 'InnVolt y otros proyectos, sin presión',
-  '/familia': 'Compras, menú, eventos y tareas de la casa',
+  '/familia': 'Compras, menú, eventos, tareas y cumpleaños',
   '/metas': 'Tus metas guardadas, como objetivos',
+  '/vision': 'Fotos de lo que quieres lograr',
   '/notificaciones': 'Qué avisos recibir y a qué hora',
   '/finanzas/ajustes': 'Miembros del hogar, Mercado Pago y exportar',
 };

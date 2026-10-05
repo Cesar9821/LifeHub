@@ -1,4 +1,5 @@
-import { Target, Archive, RotateCcw, Trash2 } from 'lucide-react';
+import Link from 'next/link';
+import { Target, Archive, RotateCcw, Trash2, Image as ImageIcon } from 'lucide-react';
 import { getGoals, getArchivedGoals, getLinkableSavings, summarizeGoals } from '@/services/metas';
 import { setGoalStatus, deleteGoal } from './actions';
 import GoalForm from './goal-form';
@@ -19,7 +20,14 @@ export default async function MetasPage() {
       <PageHeader
         title="Objetivos"
         subtitle="Tus metas de siempre, ahora como objetivos. Los proyectos activos viven en Proyectos."
-      />
+      >
+        <Link
+          href="/vision"
+          className="inline-flex items-center gap-1.5 min-h-11 px-3 rounded-xl border border-line-strong text-sm font-medium text-ink-2 hover:text-ink"
+        >
+          <ImageIcon size={16} /> Tablero de visión
+        </Link>
+      </PageHeader>
 
       {/* RESUMEN */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">

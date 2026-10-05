@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendToSubscriptions, type PushRow, type PushPayload } from '@/lib/push-server';
-import { phraseOfDay } from '@/lib/mindset-phrases';
+import { pickTip } from '@/lib/tips';
+import { FAMILY_DATE_EMOJI, nextOccurrence, turning, type FamilyDateKind } from '@/lib/wellbeing';
 import { formatCLP } from '@/lib/format';
 
 export const runtime = 'nodejs';
@@ -50,6 +51,10 @@ interface Prefs {
   reminders?: boolean;
   review_enabled?: boolean;
   review_time?: string;
+  /** Bienestar (20261006_bienestar.sql): pueden no existir aún. */
+  closing_enabled?: boolean;
+  closing_time?: string;
+  dates_enabled?: boolean;
 }
 
 interface M369Row {
@@ -173,16 +178,40 @@ export async function GET(request: NextRequest) {
   const now = nowHHMM();
   const soon = addDays(today, 3);
   const period = `${today.slice(0, 7)}-01`;
-  const phrase = phraseOfDay();
+  const tip = pickTip({ date: today, now: '08:00' }).tip;
 
-  const [{ data: prefsRows }, { data: subsRows }, { data: memberRows }, { data: m369Rows }, { data: sendRows }] =
-    await Promise.all([
-      db.from('notification_prefs').select('*').eq('enabled', true),
-      db.from('push_subscriptions').select('id, user_id, endpoint, p256dh, auth'),
-      db.from('household_members').select('user_id, household_id'),
-      db.from('mindset_369').select('user_id, morning, afternoon, night').eq('log_date', today),
-      db.from('notification_sends').select('user_id, kind').eq('sent_date', today),
-    ]);
+  const [
+    { data: prefsRows },
+    { data: subsRows },
+    { data: memberRows },
+    { data: m369Rows },
+    { data: sendRows },
+    { data: closedRows },
+    { data: dateRows },
+  ] = await Promise.all([
+    db.from('notification_prefs').select('*').eq('enabled', true),
+    db.from('push_subscriptions').select('id, user_id, endpoint, p256dh, auth'),
+    db.from('household_members').select('user_id, household_id'),
+    db.from('mindset_369').select('user_id, morning, afternoon, night').eq('log_date', today),
+    db.from('notification_sends').select('user_id, kind').eq('sent_date', today),
+    // Bienestar: si el SQL aún no corre, estas consultas fallan y quedan vacías.
+    db.from('daily_logs').select('user_id').eq('log_date', today).not('closed_at', 'is', null),
+    db.from('family_dates').select('household_id, name, kind, month, day, year'),
+  ]);
+
+  const closedToday = new Set(((closedRows as { user_id: string }[]) ?? []).map((r) => r.user_id));
+  const tomorrowStr = addDays(today, 1);
+  /** Fechas especiales de hoy y mañana, por hogar. */
+  const datesByHousehold = new Map<string, { text: string; today: boolean }[]>();
+  for (const d of (dateRows as { household_id: string; name: string; kind: FamilyDateKind; month: number; day: number; year: number | null }[]) ?? []) {
+    const next = nextOccurrence(Number(d.month), Number(d.day), today);
+    if (next !== today && next !== tomorrowStr) continue;
+    const age = d.kind === 'cumpleanos' ? turning(d.year, next) : null;
+    const what = d.kind === 'cumpleanos' ? `cumpleaños de ${d.name}${age ? ` (${age})` : ''}` : d.name;
+    const list = datesByHousehold.get(d.household_id) ?? [];
+    list.push({ text: `${FAMILY_DATE_EMOJI[d.kind] ?? '⭐'} ${next === today ? 'Hoy' : 'Mañana'}: ${what}`, today: next === today });
+    datesByHousehold.set(d.household_id, list);
+  }
 
   const prefsByUser = new Map<string, Prefs>();
   for (const p of (prefsRows as Prefs[]) || []) prefsByUser.set(p.user_id, p);
@@ -267,14 +296,44 @@ export async function GET(request: NextRequest) {
     const sent = sentByUser.get(userId) || new Set<string>();
     const hids = householdsByUser.get(userId) || [];
 
-    // LA FORJA — frase del día (motivación), a su hora.
+    // CONSEJO DEL DÍA — en la mañana, a la hora de "La Forja".
     if (prefs.mentalidad && due('forja', prefs.forja_time, sent)) {
       await deliver(userId, subs, 'forja', {
-        title: 'La Forja 🔥',
-        body: `“${phrase.text}”  — ${phrase.source}`,
-        url: '/mindset/forja',
+        title: '💡 Consejo del día',
+        body: tip.source ? `${tip.text} — ${tip.source}` : tip.text,
+        url: '/hoy',
         tag: 'forja',
       });
+    }
+
+    // CIERRE DEL DÍA — en la noche, si aún no se cerró.
+    if (prefs.closing_time && prefs.closing_enabled !== false && due('closing', prefs.closing_time, sent)) {
+      await deliver(
+        userId,
+        subs,
+        'closing',
+        closedToday.has(userId)
+          ? null
+          : { title: '🌙 Cierra tu día', body: 'Un minuto: qué salió bien, qué agradeces y con qué partes mañana.', url: '/cierre', tag: 'closing' }
+      );
+    }
+
+    // CUMPLEAÑOS Y FECHAS — a la hora del resumen, hoy y mañana.
+    if (prefs.dates_enabled !== false && prefs.closing_time !== undefined && due('dates', prefs.digest_time, sent)) {
+      const items = hids.flatMap((h) => datesByHousehold.get(h) ?? []);
+      await deliver(
+        userId,
+        subs,
+        'dates',
+        items.length === 0
+          ? null
+          : {
+              title: items.some((i) => i.today) ? '🎉 Fecha especial hoy' : '📅 Mañana hay fecha especial',
+              body: items.map((i) => i.text).join('  ·  '),
+              url: '/familia?ver=fechas',
+              tag: 'dates',
+            }
+      );
     }
 
     // 369 — cada bloque a su hora, si aún no está completo.

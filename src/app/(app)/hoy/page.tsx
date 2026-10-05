@@ -6,6 +6,7 @@ import { loadFrog, loadPriorities, loadTasks } from '@/services/tasks';
 import { loadAgenda, loadWeeklyPlan } from '@/services/planning';
 import { loadHabitsToday } from '@/services/habits';
 import { loadFinanceSnapshot } from '@/services/finance-snapshot';
+import { loadFamilyDates, loadVision, loadWellbeingToday } from '@/services/wellbeing';
 import { RefreshOnFocus } from '@/components/planning/refresh-on-focus';
 import { HoyView } from './hoy-view';
 
@@ -30,7 +31,7 @@ export default async function HoyPage() {
   const today = todayStr();
   const now = nowTimeChile();
 
-  const [name, tasksData, priorities, frog, agenda, habits, finance, weekPlan] = await Promise.all([
+  const [name, tasksData, priorities, frog, agenda, habits, finance, weekPlan, wellbeing, dates, vision] = await Promise.all([
     safe(getFirstName(), '', 'nombre'),
     safe(loadTasks(), { ready: false, tasks: [] }, 'tareas'),
     safe(loadPriorities(today), [], 'prioridades'),
@@ -39,6 +40,9 @@ export default async function HoyPage() {
     safe(loadHabitsToday(), { habits: [], dueCount: 0, doneCount: 0 }, 'hábitos'),
     safe(loadFinanceSnapshot(), null, 'finanzas'),
     safe(loadWeeklyPlan(weekStartOf(today)), null, 'plan semanal'),
+    safe(loadWellbeingToday(), null, 'bienestar'),
+    safe(loadFamilyDates(14), { ready: false, upcoming: [] }, 'fechas'),
+    safe(loadVision(), { ready: false, items: [] }, 'visión'),
   ]);
 
   return (
@@ -56,6 +60,9 @@ export default async function HoyPage() {
         habits={habits}
         finance={finance}
         weekPlan={weekPlan}
+        wellbeing={wellbeing}
+        dates={dates.upcoming}
+        vision={vision.items}
       />
     </>
   );

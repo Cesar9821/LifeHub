@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Briefcase, CalendarCheck, Inbox, Repeat, Sparkles, Wallet } from 'lucide-react';
+import { ArrowRight, Briefcase, Cake, CalendarCheck, HeartPulse, Inbox, Repeat, Sparkles, Wallet } from 'lucide-react';
 import { formatCLP } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { greetingFor, isoDow, longDateLabel, weekStartOf } from '@/lib/planning/dates';
@@ -10,6 +10,13 @@ import type { Priority, Task } from '@/services/tasks';
 import type { AgendaItem, WeeklyPlan } from '@/services/planning';
 import type { HabitsToday } from '@/services/habits';
 import type { FinanceSnapshot } from '@/services/finance-snapshot';
+import type { FamilyDate, VisionItem, WellbeingToday } from '@/services/wellbeing';
+import { pickTip } from '@/lib/tips';
+import { FAMILY_DATE_EMOJI, streakLabel, whenLabel, type UpcomingDate } from '@/lib/wellbeing';
+import { daysBetween } from '@/lib/planning/dates';
+import { TipCard } from '@/components/wellbeing/tip-card';
+import { ClosingCard } from '@/components/wellbeing/closing-card';
+import { WellbeingCard } from '@/components/wellbeing/wellbeing-card';
 import { toggleHabit } from '@/app/(app)/mindset/actions';
 import { Card, SectionHeader } from '@/components/ui/card';
 import { CheckButton } from '@/components/ui/check-button';
@@ -32,10 +39,28 @@ export interface HoyData {
   habits: HabitsToday;
   finance: FinanceSnapshot | null;
   weekPlan: WeeklyPlan | null;
+  wellbeing: WellbeingToday | null;
+  dates: UpcomingDate<FamilyDate>[];
+  vision: VisionItem[];
 }
 
 /** Pantalla Hoy (solo presentación: los datos llegan listos). */
-export function HoyView({ today, now, name, ready, tasks, priorities, frog, agenda, habits, finance, weekPlan }: HoyData) {
+export function HoyView({
+  today,
+  now,
+  name,
+  ready,
+  tasks,
+  priorities,
+  frog,
+  agenda,
+  habits,
+  finance,
+  weekPlan,
+  wellbeing,
+  dates,
+  vision,
+}: HoyData) {
   const weekStart = weekStartOf(today);
   const inboxCount = tasks.filter((t) => t.status === 'inbox').length;
   const todayTasks = tasks.filter((t) => isForToday(t, today));
@@ -59,6 +84,20 @@ export function HoyView({ today, now, name, ready, tasks, priorities, frog, agen
   const showReviewCard = ready && weekPlan && !weekPlan.reviewed_at && dow >= 6;
   const pendingHabits = habits.habits.filter((h) => h.pendingToday || h.doneToday);
 
+  // Consejo del día según cómo viene el día.
+  const tip = pickTip({
+    date: today,
+    now,
+    todayTasks: todayTasks.length,
+    habitsPending: habits.habits.filter((h) => h.pendingToday).length,
+    financeMargin: finance?.ready ? finance.money.margin : null,
+    sleepHours: wellbeing?.sleep ?? null,
+  });
+  const closingStreak = streakLabel(wellbeing?.closingStreak ?? 0, 'cerrando el día');
+  const prioStreak = streakLabel(wellbeing?.prioritiesStreak ?? 0, 'cumpliendo lo importante');
+  const soonDates = dates.filter((d) => d.days <= 14).slice(0, 3);
+  const visionToday = vision.length > 0 ? vision[Math.abs(daysBetween('2026-01-01', today)) % vision.length] : null;
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* 1. FECHA Y SALUDO */}
@@ -72,6 +111,12 @@ export function HoyView({ today, now, name, ready, tasks, priorities, frog, agen
           {weekPlan?.focus && (
             <p className="mt-1 text-[15px] text-ink-2">
               Foco de la semana: <span className="text-ink">{weekPlan.focus}</span>
+            </p>
+          )}
+          {(prioStreak || closingStreak) && (
+            <p className="mt-2 flex flex-wrap gap-1.5">
+              {prioStreak && <Chip tone="success">⭐ {prioStreak}</Chip>}
+              {closingStreak && <Chip tone="accent">🌙 {closingStreak}</Chip>}
             </p>
           )}
         </div>
@@ -90,6 +135,10 @@ export function HoyView({ today, now, name, ready, tasks, priorities, frog, agen
       </header>
 
       {!ready && <PlanningSetupCard />}
+
+      {wellbeing && <ClosingCard reflection={wellbeing.reflection} streak={wellbeing.closingStreak} now={now} />}
+
+      <TipCard tipId={tip.tip.id} reason={tip.reason} favorites={wellbeing?.favorites ?? []} canSave={Boolean(wellbeing?.ready)} />
 
       {showPlanCard && (
         <Link href={`/semana/planificar?semana=${weekStart}`} className="flex items-center gap-4 rounded-3xl border border-accent/30 bg-accent/5 p-4 hover:bg-accent/10">
@@ -123,6 +172,7 @@ export function HoyView({ today, now, name, ready, tasks, priorities, frog, agen
               <Priorities
                 items={priorities.map((p) => ({ id: p.id, position: p.position, title: p.title, area: asArea(p.area), done: p.done }))}
                 suggestions={suggestions}
+                streak={wellbeing?.prioritiesStreak ?? 0}
               />
             ) : (
               <p className="text-[15px] text-ink-2">Disponible cuando actives la planificación.</p>
@@ -225,6 +275,47 @@ export function HoyView({ today, now, name, ready, tasks, priorities, frog, agen
               </ul>
             )}
           </Card>
+
+          {/* BIENESTAR: agua y sueño */}
+          {wellbeing && (
+            <Card as="section">
+              <SectionHeader title="Bienestar" icon={<HeartPulse size={18} />} href="/cierre" action="Mi diario" className="-mt-2 mb-2" />
+              <WellbeingCard water={wellbeing.water} sleep={wellbeing.sleep} weekWater={wellbeing.weekWater} weekSleep={wellbeing.weekSleep} />
+            </Card>
+          )}
+
+          {/* FECHAS ESPECIALES (próximas 2 semanas) */}
+          {soonDates.length > 0 && (
+            <Card as="section">
+              <SectionHeader title="Fechas especiales" icon={<Cake size={18} />} href="/familia?ver=fechas" action="Todas" className="-mt-2" />
+              <ul className="space-y-1">
+                {soonDates.map((d) => (
+                  <li key={d.item.id} className="flex items-center gap-3 min-h-11">
+                    <span className="text-xl" aria-hidden>
+                      {FAMILY_DATE_EMOJI[d.item.kind]}
+                    </span>
+                    <span className="flex-1 min-w-0 truncate text-[15px] text-ink">
+                      {d.item.name}
+                      {d.turning != null && d.item.kind === 'cumpleanos' && <span className="text-ink-3"> · cumple {d.turning}</span>}
+                    </span>
+                    <Chip tone={d.days === 0 ? 'success' : d.days <= 2 ? 'accent' : 'neutral'}>{whenLabel(d.days)}</Chip>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+
+          {/* TU VISIÓN (una imagen por día) */}
+          {visionToday?.image_data && (
+            <Link href="/vision" className="block relative overflow-hidden rounded-3xl border border-line aspect-[16/10] group" aria-label={`Tu visión: ${visionToday.title}`}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={visionToday.image_data} alt="" className="absolute inset-0 h-full w-full object-cover transition-transform group-hover:scale-[1.02]" />
+              <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                <span className="block text-xs font-semibold uppercase tracking-wide text-white/70">Tu visión</span>
+                <span className="block text-[16px] font-semibold text-white leading-snug">{visionToday.title}</span>
+              </span>
+            </Link>
+          )}
 
           {/* 6. FINANZAS */}
           <Card as="section">

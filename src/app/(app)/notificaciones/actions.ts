@@ -102,7 +102,18 @@ export async function updateNotificationPrefs(formData: FormData) {
     review_time: time('review_time', '19:00'),
   };
 
-  let { error } = await supabase.from('notification_prefs').upsert({ ...base, ...extra }, { onConflict: 'user_id' });
+  // Bienestar (columnas de 20261006_bienestar.sql).
+  const wellbeing = {
+    closing_enabled: bool('closing_enabled'),
+    closing_time: time('closing_time', '21:30'),
+    dates_enabled: bool('dates_enabled'),
+  };
+
+  let { error } = await supabase.from('notification_prefs').upsert({ ...base, ...extra, ...wellbeing }, { onConflict: 'user_id' });
+  if (error && /closing_|dates_enabled/.test(error.message)) {
+    // Aún no se ejecuta el SQL de bienestar.
+    ({ error } = await supabase.from('notification_prefs').upsert({ ...base, ...extra }, { onConflict: 'user_id' }));
+  }
   if (error && /reminders|review_/.test(error.message)) {
     // Aún no se ejecuta el SQL nuevo: guarda lo de siempre.
     ({ error } = await supabase.from('notification_prefs').upsert(base, { onConflict: 'user_id' }));

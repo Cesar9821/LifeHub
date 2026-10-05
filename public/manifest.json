@@ -55,7 +55,7 @@
       "name": "Finanzas",
       "short_name": "Finanzas",
       "url": "/finanzas",
-      "icons": [{ "src": "/icon-inicio-192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icon-inicio-192.png?v=2", "sizes": "192x192" }]
     }
   ]
 }

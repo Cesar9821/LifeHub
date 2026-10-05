@@ -13,8 +13,8 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
   },
   icons: {
-    icon: '/icon-inicio-192.png',
-    apple: '/apple-icon-inicio.png',
+    icon: '/icon-inicio-192.png?v=2',
+    apple: '/apple-icon-inicio.png?v=2',
   },
 };
 
