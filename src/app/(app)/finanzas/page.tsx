@@ -1,6 +1,5 @@
 import Link from 'next/link';
-import { AlertTriangle, ArrowRight, PiggyBank, TrendingDown, Wallet } from 'lucide-react';
-import { formatCLP } from '@/lib/format';
+import { AlertTriangle, ArrowRight } from 'lucide-react';
 import { budgetStatus, STATUS_LABEL } from '@/lib/plan/budget';
 import {
   accountItems,
@@ -15,7 +14,9 @@ import { AccountsChecklist } from '@/components/finanzas/accounts-checklist';
 import { BudgetPots } from '@/components/finanzas/budget-pots';
 import { ExpenseList } from '@/components/finanzas/expense-list';
 import { SchemaMissingCard, SeedPlanCard } from '@/components/finanzas/seed-plan-card';
-import { UsageBar } from '@/components/finanzas/status-chip';
+import { MonthSummary } from '@/components/finanzas/month-summary';
+import { AffordCheck } from '@/components/finanzas/afford-check';
+import { monthMoney } from '@/lib/plan/afford';
 
 export const dynamic = 'force-dynamic';
 
@@ -69,54 +70,25 @@ export default async function MesPage({
 
   const recent = expenseListItems(plan, v.movements.slice(0, 5), registrantById);
 
+  // "¿Cómo estamos?" y "¿Puedo gastar?" se calculan SOBRE monthView (misma lógica).
+  const affordPots = pots.filter((p) => p.budget > 0).map(({ conceptId, name, budget, spent }) => ({ conceptId, name, budget, spent }));
+  const money = monthMoney({
+    income: v.income,
+    spent: v.spent,
+    accounts: v.checklist.map((c) => ({ kind: c.kind, state: c.state, amount: c.amount, paid: c.paid })),
+    pots: affordPots,
+  });
+
   return (
-    <div className="max-w-2xl mx-auto space-y-6 pb-28">
+    <div className="max-w-2xl mx-auto space-y-6">
       <div className="space-y-4">
-        <p className="text-sm font-bold text-ink-2">{firstName ? `Hola, ${firstName} 👋` : 'Hola 👋'}</p>
+        <h1 className="text-[28px] leading-tight font-semibold tracking-tight text-ink">¿Cómo estamos este mes?</h1>
         <MonthSelector period={month} basePath="/finanzas" />
       </div>
 
-      {/* DISPONIBLE */}
-      <section className="bg-gradient-to-br from-indigo-500/15 to-transparent border border-indigo-500/25 rounded-3xl p-6">
-        <p className="flex items-center gap-2 text-xs font-semibold text-indigo-300/90 tracking-wide">
-          <Wallet size={14} /> Disponible este mes
-        </p>
-        <p className={`mt-2 text-4xl font-semibold tabular-nums leading-none break-all ${v.available >= 0 ? 'text-ink' : 'text-rose-400'}`}>
-          {formatCLP(v.available)}
-        </p>
-        <p className="mt-3 text-xs font-bold text-ink-2">
-          Ingresos {formatCLP(v.income)} · gastado {formatCLP(v.spent)}
-        </p>
-      </section>
+      <MonthSummary money={money} saved={saved} expenseBudget={v.expenseBudget} status={totalStatus} month={month} />
 
-      <div className="grid grid-cols-2 gap-3">
-        <Link
-          href={`/finanzas/presupuestos?mes=${month.slice(0, 7)}`}
-          className="bg-surface border border-line rounded-2xl p-4 space-y-2.5 hover:border-white/15"
-        >
-          <p className="flex items-center gap-1.5 text-xs font-semibold text-ink-2 tracking-wide">
-            <TrendingDown size={13} className="text-rose-400" /> Gastado vs plan
-          </p>
-          <p className="text-lg font-semibold tabular-nums text-ink leading-none">{formatCLP(v.spent)}</p>
-          <UsageBar used={v.expenseBudget > 0 ? v.spent / v.expenseBudget : 0} status={totalStatus} />
-          <p className="text-xs font-bold text-ink-3">
-            de {formatCLP(v.expenseBudget)}
-            {v.expenseBudget > 0 && ` · ${Math.round((v.spent / v.expenseBudget) * 100)}%`}
-          </p>
-        </Link>
-        <Link
-          href="/finanzas/resumen"
-          className="bg-surface border border-line rounded-2xl p-4 space-y-2.5 hover:border-white/15"
-        >
-          <p className="flex items-center gap-1.5 text-xs font-semibold text-ink-2 tracking-wide">
-            <PiggyBank size={13} className="text-emerald-400" /> Ahorro acumulado
-          </p>
-          <p className={`text-lg font-semibold tabular-nums leading-none ${saved >= 0 ? 'text-emerald-300' : 'text-rose-400'}`}>
-            {formatCLP(saved)}
-          </p>
-          <p className="text-xs font-bold text-ink-3">Meses cerrados</p>
-        </Link>
-      </div>
+      {v.isCurrent && <AffordCheck money={money} pots={affordPots} />}
 
       {/* ALERTAS */}
       {v.alerts.length > 0 && (

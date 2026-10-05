@@ -15,6 +15,8 @@ export function CLPInput({
   className = '',
   accent = 'indigo',
   decimals = 0,
+  onValueChange,
+  id,
 }: {
   name: string;
   defaultValue?: string | number | null;
@@ -25,6 +27,8 @@ export function CLPInput({
   accent?: 'indigo' | 'emerald' | 'amber';
   /** Solo para montos con centavos, como una cuota de 47.498,33. */
   decimals?: number;
+  onValueChange?: (value: string) => void;
+  id?: string;
 }) {
   return (
     <NumberInput
@@ -37,6 +41,8 @@ export function CLPInput({
       accent={accent}
       decimals={decimals}
       prefix="$"
+      onValueChange={onValueChange}
+      id={id}
     />
   );
 }

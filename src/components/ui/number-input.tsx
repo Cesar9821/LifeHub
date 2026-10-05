@@ -20,6 +20,10 @@ export interface NumberInputProps {
   className?: string;
   accent?: 'indigo' | 'emerald' | 'amber';
   invalid?: boolean;
+  /** Avisa el valor limpio al escribir (para cálculos en vivo). */
+  onValueChange?: (value: string) => void;
+  /** Id del input visible (para asociar un <label>). */
+  id?: string;
 }
 
 const RING = {
@@ -45,6 +49,8 @@ export function NumberInput({
   className,
   accent = 'indigo',
   invalid = false,
+  onValueChange,
+  id,
 }: NumberInputProps) {
   const [state, setState] = useState(() => formatStored(defaultValue, decimals));
 
@@ -60,13 +66,18 @@ export function NumberInput({
         </span>
       )}
       <input
+        id={id}
         type="text"
         inputMode={decimals > 0 ? 'decimal' : 'numeric'}
         autoComplete="off"
         value={state.display}
         autoFocus={autoFocus}
         placeholder={placeholder}
-        onChange={(e) => setState(formatTyped(e.target.value, decimals, allowNegative))}
+        onChange={(e) => {
+          const next = formatTyped(e.target.value, decimals, allowNegative);
+          setState(next);
+          onValueChange?.(next.value);
+        }}
         className={`${base} ${prefix ? 'pl-7' : ''} ${suffix ? 'pr-12' : ''}`}
       />
       {suffix && (

@@ -68,7 +68,7 @@ export function ProjectForm({ project, preset, onDone }: { project?: Project; pr
         <Input id="project-next" name="next_action" defaultValue={project?.next_action ?? preset?.next_action ?? ''} placeholder="Ej: Revisar documentación" />
       </Field>
       <Field label="Tiempo reservado por semana (horas)" htmlFor="project-hours" hint="Ej: 1 o 1,5. Sin alarmas si no se cumple.">
-        <NumberInput name="weekly_hours" decimals={1} suffix="h" defaultValue={minutes ? minutes / 60 : ''} placeholder="0" />
+        <NumberInput id="project-hours" name="weekly_hours" decimals={1} suffix="h" defaultValue={minutes ? minutes / 60 : ''} placeholder="0" />
       </Field>
       <Field label="Notas (opcional)" htmlFor="project-notes">
         <Textarea id="project-notes" name="notes" rows={3} defaultValue={project?.notes ?? ''} />
