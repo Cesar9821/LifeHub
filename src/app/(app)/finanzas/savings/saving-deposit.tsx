@@ -14,14 +14,16 @@ export default function SavingDeposit({ id }: { id: string }) {
         <button
           onClick={() => setMode('deposit')}
           title="Abonar"
-          className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-3 py-2 rounded-xl font-semibold text-xs tracking-wide hover:bg-emerald-500/20 transition-all active:scale-95"
+          type="button"
+          className="flex items-center gap-1.5 min-h-11 bg-success/10 border border-success/25 text-success px-4 rounded-xl font-semibold text-sm hover:bg-success/20 transition-all active:scale-95"
         >
           <Plus size={13} /> Abonar
         </button>
         <button
           onClick={() => setMode('withdraw')}
           title="Retirar"
-          className="flex items-center gap-1.5 bg-white/5 border border-line text-ink-2 px-3 py-2 rounded-xl font-semibold text-xs tracking-wide hover:text-rose-400 hover:border-rose-500/20 transition-all active:scale-95"
+          type="button"
+          className="flex items-center gap-1.5 min-h-11 bg-surface-2 border border-line-strong text-ink-2 px-4 rounded-xl font-semibold text-sm hover:text-ink transition-all active:scale-95"
         >
           <Minus size={13} /> Retirar
         </button>
@@ -45,10 +47,8 @@ export default function SavingDeposit({ id }: { id: string }) {
       </div>
       <button
         type="submit"
-        className={`px-4 py-2.5 rounded-xl font-semibold text-xs tracking-wide transition-all active:scale-95 shrink-0 ${
-          isDeposit
-            ? 'bg-emerald-500 text-ink hover:bg-emerald-400'
-            : 'bg-slate-200 text-black hover:bg-white'
+        className={`min-h-11 px-4 rounded-xl font-semibold text-sm transition-all active:scale-95 shrink-0 ${
+          isDeposit ? 'bg-success text-bg hover:bg-success/90' : 'bg-ink text-bg hover:bg-white'
         }`}
       >
         {isDeposit ? 'Abonar' : 'Retirar'}
@@ -56,7 +56,8 @@ export default function SavingDeposit({ id }: { id: string }) {
       <button
         type="button"
         onClick={() => setMode(null)}
-        className="p-2 text-ink-3 hover:text-ink transition-colors shrink-0"
+        aria-label="Cancelar"
+        className="h-11 w-11 inline-flex items-center justify-center text-ink-3 hover:text-ink transition-colors shrink-0"
       >
         <X size={15} />
       </button>

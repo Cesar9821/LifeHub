@@ -1,4 +1,5 @@
-import { Activity, Download } from 'lucide-react';
+import { Download } from 'lucide-react';
+import { PageHeader } from '@/components/ui/card';
 import { formatCLP } from '@/lib/format';
 import { defaultMonth, expenseListItems, loadPlanPage, monthView } from '@/services/plan';
 import { MovementsBrowser } from '@/components/finanzas/movements-browser';
@@ -17,13 +18,7 @@ export default async function MovimientosPage({
 
   const header = (
     <div className="space-y-3">
-      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-line-strong bg-surface w-fit">
-        <Activity size={14} className="text-indigo-400" />
-        <span className="text-xs font-bold text-ink-2 tracking-wide">Todo lo registrado</span>
-      </div>
-      <h1 className="text-4xl sm:text-5xl font-semibold text-ink tracking-tight leading-none">
-        Movimientos<span className="text-indigo-500">.</span>
-      </h1>
+      <PageHeader title="Movimientos" subtitle="Todo lo registrado del mes" />
     </div>
   );
 

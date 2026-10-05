@@ -1,76 +1,44 @@
 'use client';
 
-import { useActionState, useEffect, useState, useRef } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { addSaving } from './actions';
 import { IDLE_STATE } from '@/lib/action';
+import { Field } from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { CLPInput } from '@/components/ui/clp-input';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { InlineMessage } from '@/components/ui/inline-message';
 
-function formatCLP(value: string): string {
-  const digits = value.replace(/\D/g, '');
-  if (!digits) return '';
-  return new Intl.NumberFormat('es-CL').format(parseInt(digits));
-}
-
-export default function SavingForm({ inputStyles }: { inputStyles: string }) {
+/** Nuevo ahorro: nombre y monto objetivo. */
+export default function SavingForm() {
   const [state, formAction] = useActionState(addSaving, IDLE_STATE);
-  const [displayAmount, setDisplayAmount] = useState('');
+  const [formKey, setFormKey] = useState(0);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (state.ok) {
       formRef.current?.reset();
+      // CLPInput guarda su propio estado: se reinicia montándolo de nuevo.
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDisplayAmount('');
+      setFormKey((k) => k + 1);
     }
   }, [state]);
 
   return (
     <form ref={formRef} action={formAction} className="space-y-4">
       <InlineMessage state={state} />
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-semibold text-ink-3 px-1 tracking-wide">Nombre de la Meta</label>
-          <input
-            name="name"
-            defaultValue={state.values?.name ?? ''}
-            placeholder="Ej: Fondo de Emergencia"
-            className={inputStyles}
-            required
-          />
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-semibold text-ink-3 px-1 tracking-wide">Monto Objetivo (CLP)</label>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-500 tabular-nums font-bold">$</span>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={displayAmount}
-              onChange={(e) => setDisplayAmount(formatCLP(e.target.value))}
-              placeholder="0"
-              className={`${inputStyles} pl-7 tabular-nums font-semibold text-amber-400 text-lg`}
-              required
-            />
-            <input
-              type="hidden"
-              name="target_amount"
-              value={displayAmount.replace(/\./g, '').replace(/,/g, '')}
-            />
-          </div>
-        </div>
-
-        <div className="flex items-end">
-          <SubmitButton
-            pendingText="Activando…"
-            className="w-full py-4 rounded-2xl shadow-[0_10px_20px_-10px_rgba(255,255,255,0.3)] tracking-wide text-xs"
-          >
-            <Plus size={18} strokeWidth={3} /> Activar Meta
-          </SubmitButton>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Field label="Nombre" htmlFor="saving-name" error={state.fieldErrors?.name}>
+          <Input id="saving-name" name="name" required defaultValue={state.values?.name ?? ''} placeholder="Ej: Fondo de emergencia" />
+        </Field>
+        <Field label="Meta (CLP)" htmlFor="saving-target" error={state.fieldErrors?.target_amount}>
+          <CLPInput key={formKey} id="saving-target" name="target_amount" required placeholder="1.000.000" />
+        </Field>
       </div>
+      <SubmitButton pendingText="Creando…" className="w-full sm:w-auto min-h-12">
+        <Plus size={18} /> Crear ahorro
+      </SubmitButton>
     </form>
   );
 }

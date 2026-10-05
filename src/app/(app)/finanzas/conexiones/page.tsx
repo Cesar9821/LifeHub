@@ -1,4 +1,5 @@
 import { RefreshCw, Unlink, CheckCircle2, AlertTriangle, Link2 } from 'lucide-react';
+import { PageHeader } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth';
 import { mpConfigured } from '@/lib/mercadopago';
@@ -28,13 +29,7 @@ export default async function ConexionesPage({
   return (
     <div className="max-w-2xl mx-auto space-y-8 pb-20">
       <div className="flex flex-col gap-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-sky-500/20 bg-sky-500/5 w-fit">
-          <Link2 size={12} className="text-sky-400" />
-          <span className="text-xs md:text-xs font-bold text-sky-400/80 tracking-wide">Integraciones</span>
-        </div>
-        <h1 className="text-4xl md:text-6xl font-semibold text-ink tracking-tight">
-          Conexiones<span className="text-sky-500">.</span>
-        </h1>
+        <PageHeader title="Conexiones" subtitle="Mercado Pago y otras integraciones" />
       </div>
 
       {params.mp === 'ok' && (
