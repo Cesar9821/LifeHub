@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { InlineMessage } from '@/components/ui/inline-message';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { ConfirmAction } from '@/components/ui/confirm-action';
-import { toast } from '@/components/ui/toast';
+import { withSuccessToast } from '@/components/ui/toast';
 import { BlockForm, AREA_CHOICES } from './block-form';
 import { ChoiceChips } from './chips';
 
@@ -27,14 +27,13 @@ const SCOPES = [
 ] as const;
 
 function OccurrenceForm({ item, onDone }: { item: AgendaItem; onDone: () => void }) {
-  const [state, formAction] = useActionState(editOccurrence, IDLE_STATE);
+  const [state, formAction] = useActionState(withSuccessToast(editOccurrence), IDLE_STATE);
   const [scope, setScope] = useState<'solo' | 'desde' | 'toda' | ''>('solo');
   const [area, setArea] = useState<string>(item.area ?? '');
   const err = state.fieldErrors ?? {};
 
   useEffect(() => {
     if (state.ok) {
-      toast(state.message ?? 'Guardado.');
       onDone();
     }
   }, [state, onDone]);
@@ -79,11 +78,10 @@ function OccurrenceForm({ item, onDone }: { item: AgendaItem; onDone: () => void
 }
 
 function FamilyEventForm({ item, onDone }: { item: AgendaItem; onDone: () => void }) {
-  const [state, formAction] = useActionState(updateFamilyEvent, IDLE_STATE);
+  const [state, formAction] = useActionState(withSuccessToast(updateFamilyEvent), IDLE_STATE);
   const err = state.fieldErrors ?? {};
   useEffect(() => {
     if (state.ok) {
-      toast(state.message ?? 'Guardado.');
       onDone();
     }
   }, [state, onDone]);
