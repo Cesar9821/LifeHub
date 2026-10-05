@@ -10,7 +10,7 @@ import {
   monthView,
   savedBefore,
 } from '@/services/plan';
-import MonthSelector from '@/app/finanzas/movimientos/month-selector';
+import MonthSelector from '@/app/(app)/finanzas/movimientos/month-selector';
 import { AccountsChecklist } from '@/components/finanzas/accounts-checklist';
 import { BudgetPots } from '@/components/finanzas/budget-pots';
 import { ExpenseList } from '@/components/finanzas/expense-list';

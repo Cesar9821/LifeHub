@@ -2,6 +2,7 @@ import { Target, Archive, RotateCcw, Trash2 } from 'lucide-react';
 import { getGoals, getArchivedGoals, getLinkableSavings, summarizeGoals } from '@/services/metas';
 import { setGoalStatus, deleteGoal } from './actions';
 import GoalForm from './goal-form';
+import { PageHeader } from '@/components/ui/card';
 import GoalCard from './goal-card';
 
 export const dynamic = 'force-dynamic';
@@ -14,19 +15,11 @@ export default async function MetasPage() {
   const done = goals.filter((g) => g.status === 'done');
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 md:space-y-10 pb-20">
-      {/* HEADER */}
-      <div className="flex flex-col gap-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-amber-500/20 bg-amber-500/5 w-fit">
-          <Target size={12} className="text-amber-400" />
-          <span className="text-xs md:text-xs font-bold text-amber-400/80 tracking-wide">
-            Objetivos y proyectos
-          </span>
-        </div>
-        <h1 className="text-4xl md:text-6xl font-semibold text-ink tracking-tight">
-          Metas<span className="text-amber-500">.</span>
-        </h1>
-      </div>
+    <div className="max-w-3xl mx-auto space-y-8">
+      <PageHeader
+        title="Objetivos"
+        subtitle="Tus metas de siempre, ahora como objetivos. Los proyectos activos viven en Proyectos."
+      />
 
       {/* RESUMEN */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">

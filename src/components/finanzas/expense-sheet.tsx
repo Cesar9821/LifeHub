@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
-import { saveExpense } from '@/app/finanzas/plan/actions';
+import { saveExpense } from '@/app/(app)/finanzas/plan/actions';
 import { IDLE_STATE } from '@/lib/action';
 import { CLPInput } from '@/components/ui/clp-input';
 import { InlineMessage } from '@/components/ui/inline-message';

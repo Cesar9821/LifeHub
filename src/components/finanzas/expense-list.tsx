@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Pencil, Trash2 } from 'lucide-react';
-import { deleteExpense } from '@/app/finanzas/plan/actions';
+import { deleteExpense } from '@/app/(app)/finanzas/plan/actions';
 import { formatCLP, shortDate } from '@/lib/format';
 import { ConfirmAction } from './confirm-action';
 import { ExpenseSheet } from './expense-sheet';

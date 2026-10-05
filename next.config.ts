@@ -7,8 +7,9 @@ const nextConfig: NextConfig = {
   // Redirige rutas antiguas a la nueva estructura de módulos.
   async redirects() {
     return [
-      // Pantalla de inicio rápido (antes /inicio) → Mes de Finanzas
-      { source: '/inicio', destination: '/finanzas', permanent: false },
+      // LifeHub 2.0: Hoy es el inicio; el antiguo hub de módulos se retiró
+      { source: '/hub', destination: '/hoy', permanent: false },
+      { source: '/inicio', destination: '/hoy', permanent: false },
       { source: '/dashboard', destination: '/finanzas', permanent: false },
       { source: '/transactions', destination: '/finanzas/movimientos', permanent: false },
       { source: '/fixed-expenses', destination: '/finanzas/presupuestos', permanent: false },

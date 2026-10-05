@@ -1,5 +1,4 @@
 import {
-  Users,
   Trash2,
   CheckCircle2,
   Circle,
@@ -10,7 +9,6 @@ import {
   CalendarDays,
   Clock,
   UtensilsCrossed,
-  Trophy,
 } from 'lucide-react';
 import {
   getTasks,
@@ -23,6 +21,7 @@ import {
   type ResetPeriod,
   type HouseholdEvent,
 } from '@/services/familia';
+import { PageHeader } from '@/components/ui/card';
 import { getHouseholdMembers } from '@/services/household';
 import { daysUntil } from '@/lib/format';
 import TaskForm from './task-form';
@@ -54,28 +53,10 @@ export default async function FamiliaPage() {
   const summary = summarizeFamilia(tasks, allItems);
   const nameById = new Map(members.map((m) => [m.user_id, m.full_name]));
 
-  // Ranking del hogar: 1 punto por tarea completada asignada.
-  const points = new Map<string, number>();
-  for (const t of tasks) if (t.done && t.assigned_to) points.set(t.assigned_to, (points.get(t.assigned_to) || 0) + 1);
-  const ranking = members
-    .map((m) => ({ name: m.full_name, pts: points.get(m.user_id) || 0 }))
-    .sort((a, b) => b.pts - a.pts);
-  const hasPoints = ranking.some((r) => r.pts > 0);
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 md:space-y-10 pb-20">
-      {/* HEADER */}
-      <div className="flex flex-col gap-3">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-orange-500/20 bg-orange-500/5 w-fit">
-          <Users size={12} className="text-orange-400" />
-          <span className="text-xs md:text-xs font-bold text-orange-400/80 tracking-wide">
-            Organización en casa
-          </span>
-        </div>
-        <h1 className="text-4xl md:text-6xl font-semibold text-ink tracking-tight">
-          Familia<span className="text-orange-500">.</span>
-        </h1>
-      </div>
+    <div className="max-w-3xl mx-auto space-y-8">
+      <PageHeader title="Hogar" subtitle="Compras, menú, eventos y tareas de la casa. Todo compartido con tu hogar." />
 
       {/* RESUMEN */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
@@ -84,26 +65,6 @@ export default async function FamiliaPage() {
         <StatTile label="Por comprar" value={String(summary.shoppingPending)} accent="text-orange-400" />
         <StatTile label="Completadas" value={String(summary.doneTasks)} accent="text-emerald-400" />
       </div>
-
-      {/* RANKING DEL HOGAR */}
-      {hasPoints && members.length > 1 && (
-        <div className="bg-surface border border-line rounded-3xl p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <Trophy size={16} className="text-amber-400" />
-            <h2 className="text-sm font-semibold text-ink tracking-wide">Ranking del hogar</h2>
-          </div>
-          <div className="space-y-2">
-            {ranking.map((r, i) => (
-              <div key={r.name} className="flex items-center justify-between">
-                <span className="text-sm font-bold text-ink">
-                  {['🥇', '🥈', '🥉'][i] ?? '·'} {r.name}
-                </span>
-                <span className="text-sm font-semibold tabular-nums text-amber-400">{r.pts} pts</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* TAREAS */}
       <section className="space-y-5">

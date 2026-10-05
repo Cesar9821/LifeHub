@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState } from 'react';
 import { Archive, Pencil, Plus } from 'lucide-react';
-import { archiveDebtItem, saveCmrSettings, saveDebtItem } from '@/app/finanzas/plan/actions';
+import { archiveDebtItem, saveCmrSettings, saveDebtItem } from '@/app/(app)/finanzas/plan/actions';
 import { IDLE_STATE } from '@/lib/action';
 import { formatCLP } from '@/lib/format';
 import { CLPInput } from '@/components/ui/clp-input';

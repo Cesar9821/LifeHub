@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useState } from 'react';
 import { AlertCircle, CheckCircle2, ChevronDown, Circle, Clock, X } from 'lucide-react';
 import Link from 'next/link';
-import { deleteExpense, payCmrMonth, undoCmrMonth } from '@/app/finanzas/plan/actions';
+import { deleteExpense, payCmrMonth, undoCmrMonth } from '@/app/(app)/finanzas/plan/actions';
 import { IDLE_STATE } from '@/lib/action';
 import { formatCLP, shortDate } from '@/lib/format';
 import { InlineMessage } from '@/components/ui/inline-message';

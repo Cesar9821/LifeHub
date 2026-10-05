@@ -16,7 +16,7 @@ export default function LoginPage() {
 
 function LoginForm() {
   const searchParams = useSearchParams();
-  const next = searchParams.get('next') || '/hub';
+  const next = searchParams.get('next') || '/hoy';
   const [state, formAction, pending] = useActionState<AuthState, FormData>(login, undefined);
 
   return (

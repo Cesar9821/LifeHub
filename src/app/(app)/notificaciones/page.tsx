@@ -1,5 +1,5 @@
-import Link from 'next/link';
-import { ArrowLeft, Wallet, Brain, Users, Target, Clock, Flame } from 'lucide-react';
+import { PageHeader } from '@/components/ui/card';
+import { Wallet, Brain, Users, Target, Clock, Flame } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth';
 import NotificationsManager from './notifications-manager';
@@ -73,27 +73,8 @@ export default async function NotificacionesPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-bg text-ink relative overflow-hidden font-sans">
-      <div className="absolute top-[-10%] left-[-5%] w-[45%] h-[45%] bg-indigo-600/10 rounded-full blur-[130px] pointer-events-none z-0" />
-
-      <header className="relative z-10 px-6 md:px-10 lg:px-16 py-6">
-        <Link
-          href="/hub"
-          className="inline-flex items-center gap-2 text-ink-2 hover:text-ink text-xs font-semibold tracking-wide transition-colors"
-        >
-          <ArrowLeft size={16} /> Volver al inicio
-        </Link>
-      </header>
-
-      <main className="relative z-10 px-6 md:px-10 lg:px-16 pb-20 max-w-2xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-3xl md:text-5xl font-semibold tracking-tight">
-            Notificaciones<span className="text-indigo-500">.</span>
-          </h1>
-          <p className="text-ink-3 font-medium mt-2 text-sm">
-            Activa los avisos, elige qué recibir y a qué hora.
-          </p>
-        </div>
+    <div className="max-w-2xl mx-auto space-y-6">
+      <PageHeader title="Notificaciones" subtitle="Activa los avisos, elige qué recibir y a qué hora." />
 
         <NotificationsManager />
 
@@ -179,7 +160,6 @@ export default async function NotificacionesPage() {
           La asignación de tareas llega al instante. El resto se envía a la hora que elijas.
           En iPhone requiere tener LifeHub instalado en la pantalla de inicio.
         </p>
-      </main>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from 'react';
 import { AlertTriangle, Database, Sparkles } from 'lucide-react';
-import { seedPlan } from '@/app/finanzas/plan/actions';
+import { seedPlan } from '@/app/(app)/finanzas/plan/actions';
 import { IDLE_STATE } from '@/lib/action';
 import { InlineMessage } from '@/components/ui/inline-message';
 import { SubmitButton } from '@/components/ui/submit-button';

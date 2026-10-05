@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Archive, Pencil, Settings2 } from 'lucide-react';
-import { setBudgetAmount, setConceptArchived, updateConcept } from '@/app/finanzas/plan/actions';
+import { setBudgetAmount, setConceptArchived, updateConcept } from '@/app/(app)/finanzas/plan/actions';
 import { IDLE_STATE } from '@/lib/action';
 import { formatCLP } from '@/lib/format';
 import type { BudgetStatus } from '@/lib/plan/budget';

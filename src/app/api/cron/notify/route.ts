@@ -326,7 +326,7 @@ export async function GET(request: NextRequest) {
       let payload: PushPayload | null = null;
       if (pending.length === 1) payload = { title: 'LifeHub', body: pending[0].text, url: pending[0].url, tag: 'digest' };
       else if (pending.length > 1)
-        payload = { title: 'Tus pendientes de hoy', body: pending.map((p) => p.text).join('  ·  '), url: '/hub', tag: 'digest' };
+        payload = { title: 'Tus pendientes de hoy', body: pending.map((p) => p.text).join('  ·  '), url: '/hoy', tag: 'digest' };
       await deliver(userId, subs, 'digest', payload);
     }
   }

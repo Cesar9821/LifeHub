@@ -121,7 +121,7 @@ export async function sendTestNotification() {
     const { sent, expiredEndpoints } = await sendToSubscriptions(subs, {
       title: 'LifeHub ✅',
       body: 'Las notificaciones están funcionando. ¡A por tus metas!',
-      url: '/hub',
+      url: '/hoy',
       tag: 'test',
     });
 
