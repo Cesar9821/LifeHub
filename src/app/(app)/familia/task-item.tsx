@@ -15,6 +15,7 @@ import type { HouseholdTask } from '@/services/familia';
 import { toggleTask, deleteTask, updateTask } from './actions';
 import { IDLE_STATE } from '@/lib/action';
 import { Input, Select } from '@/components/ui/input';
+import { ConfirmAction } from '@/components/ui/confirm-action';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { Button } from '@/components/ui/button';
 import { InlineMessage } from '@/components/ui/inline-message';
@@ -87,11 +88,15 @@ export default function TaskItem({
   const due = dueInfo(t);
 
   return (
-    <div className="group flex items-center gap-3 bg-surface border border-line rounded-2xl px-4 py-3 hover:bg-slate-800/40 transition-all">
+    <div className="flex items-center gap-1 bg-surface border border-line rounded-2xl pl-1 pr-1 py-1.5">
       <form action={toggleTask} className="shrink-0">
         <input type="hidden" name="id" value={t.id} />
         <input type="hidden" name="done" value={String(t.done)} />
-        <button type="submit" className="flex items-center" title={t.done ? 'Marcar pendiente' : 'Marcar hecha'}>
+        <button
+          type="submit"
+          className="h-11 w-11 flex items-center justify-center"
+          aria-label={t.done ? `Marcar pendiente: ${t.title}` : `Marcar hecha: ${t.title}`}
+        >
           {t.done ? (
             <CheckCircle2 size={20} className="text-emerald-400" />
           ) : (
@@ -101,10 +106,10 @@ export default function TaskItem({
       </form>
 
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-bold truncate ${t.done ? 'text-ink-3 line-through' : 'text-ink'}`}>
+        <p className={`text-[15px] break-words ${t.done ? 'text-ink-3 line-through' : 'text-ink'}`}>
           {t.title}
         </p>
-        <div className="flex items-center gap-3 mt-0.5">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5">
           {assigneeName && (
             <span className="inline-flex items-center gap-1 text-xs font-bold text-orange-400/80 tracking-wide">
               <UserCircle2 size={12} /> {assigneeName}
@@ -128,22 +133,25 @@ export default function TaskItem({
           type="button"
           onClick={() => setEditing(true)}
           title="Editar"
-          className="h-8 w-8 flex items-center justify-center rounded-lg text-ink-3 hover:text-orange-400 hover:bg-orange-500/10 transition-all opacity-0 group-hover:opacity-100 shrink-0"
+          aria-label={`Editar ${t.title}`}
+          className="h-11 w-11 flex items-center justify-center rounded-xl text-ink-3 hover:text-ink hover:bg-surface-3 shrink-0"
         >
-          <Pencil size={14} />
+          <Pencil size={15} />
         </button>
       )}
 
-      <form action={deleteTask} className="shrink-0">
-        <input type="hidden" name="id" value={t.id} />
-        <button
-          type="submit"
-          title="Eliminar"
-          className="h-8 w-8 flex items-center justify-center rounded-lg text-slate-700 hover:text-rose-500 hover:bg-rose-500/10 transition-all opacity-0 group-hover:opacity-100"
-        >
-          <Trash2 size={15} />
-        </button>
-      </form>
+      <ConfirmAction
+        action={deleteTask}
+        fields={{ id: t.id }}
+        title="¿Eliminar esta tarea?"
+        message={`"${t.title}" se borra para todo el hogar.`}
+        confirmLabel="Eliminar"
+        triggerTitle="Eliminar"
+        triggerClassName="h-11 w-11 shrink-0 flex items-center justify-center rounded-xl text-ink-3 hover:text-danger hover:bg-danger/10"
+      >
+        <Trash2 size={16} />
+        <span className="sr-only">Eliminar {t.title}</span>
+      </ConfirmAction>
     </div>
   );
 }

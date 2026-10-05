@@ -1,5 +1,7 @@
 import Link from 'next/link';
-import { Settings, Download, Database, ShieldCheck, Users, Crown, UserMinus, Home, Link2, ArrowRight } from 'lucide-react';
+import { PageHeader } from '@/components/ui/card';
+import { ConfirmAction } from '@/components/ui/confirm-action';
+import { Download, Database, ShieldCheck, Users, Crown, UserMinus, Home, Link2, ArrowRight } from 'lucide-react';
 import { getHouseholdMembers, getHouseholdName, isHouseholdOwner } from '@/services/household';
 import { removeMember, renameHousehold } from './actions';
 import InviteMember from './invite-member';
@@ -33,15 +35,7 @@ export default async function AjustesPage() {
     <div className="space-y-8 md:space-y-12 pb-20 max-w-5xl">
       {/* HEADER */}
       <div className="flex flex-col gap-4">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-line-strong bg-surface w-fit">
-          <Settings size={14} className="text-indigo-400" />
-          <span className="text-xs font-bold text-ink-2 tracking-wide">
-            Configuración
-          </span>
-        </div>
-        <h1 className="text-4xl sm:text-5xl md:text-7xl font-semibold text-ink tracking-tight leading-none">
-          Ajustes<span className="text-indigo-500">.</span>
-        </h1>
+        <PageHeader title="Ajustes" subtitle="Hogar, miembros y respaldo de datos" />
       </div>
 
       {/* HOGAR */}
@@ -59,18 +53,22 @@ export default async function AjustesPage() {
 
         {/* Nombre del hogar */}
         <form action={renameHousehold} className="flex flex-col sm:flex-row gap-3 mb-8">
-          <div className="flex items-center gap-2 flex-1">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
             <Home size={15} className="text-ink-3 shrink-0" />
+            <label htmlFor="household-name" className="sr-only">
+              Nombre del hogar
+            </label>
             <input
+              id="household-name"
               name="name"
               defaultValue={householdName}
               placeholder="Nombre del hogar"
-              className="flex-1 bg-black/30 border border-line-strong rounded-xl p-3 text-sm text-ink placeholder:text-ink-3 outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+              className="flex-1 min-w-0 min-h-11 bg-surface-2 border border-line-strong rounded-xl px-3 text-[15px] text-ink placeholder:text-ink-3 outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent transition-all"
             />
           </div>
           <button
             type="submit"
-            className="bg-white/5 border border-line-strong text-ink-2 px-5 py-3 rounded-xl font-semibold text-xs tracking-wide hover:bg-white/10 hover:text-ink transition-all active:scale-95 shrink-0"
+            className="min-h-11 bg-surface-2 border border-line-strong text-ink px-5 rounded-xl font-semibold text-sm hover:bg-surface-3 transition-all active:scale-95 shrink-0"
           >
             Guardar nombre
           </button>
@@ -118,16 +116,18 @@ export default async function AjustesPage() {
                 </div>
 
                 {isOwner && !m.is_me && (
-                  <form action={removeMember} className="shrink-0">
-                    <input type="hidden" name="user_id" value={m.user_id} />
-                    <button
-                      type="submit"
-                      title="Quitar del hogar"
-                      className="p-2 text-ink-3 hover:text-rose-400 transition-colors opacity-60 md:opacity-0 md:group-hover:opacity-100"
-                    >
-                      <UserMinus size={15} />
-                    </button>
-                  </form>
+                  <ConfirmAction
+                    action={removeMember}
+                    fields={{ user_id: m.user_id }}
+                    title={`¿Quitar a ${m.full_name} del hogar?`}
+                    message="Dejará de ver y editar las finanzas y lo compartido del hogar. Sus datos personales no se borran."
+                    confirmLabel="Quitar"
+                    triggerTitle="Quitar del hogar"
+                    triggerClassName="h-11 w-11 shrink-0 flex items-center justify-center rounded-xl text-ink-3 hover:text-rose-400 hover:bg-rose-500/10"
+                  >
+                    <UserMinus size={16} />
+                    <span className="sr-only">Quitar a {m.full_name} del hogar</span>
+                  </ConfirmAction>
                 )}
               </div>
             ))
@@ -211,7 +211,7 @@ export default async function AjustesPage() {
           <p className="text-sm font-semibold text-ink mb-1">Tus datos son privados</p>
           <p className="text-xs text-ink-3 font-medium leading-relaxed max-w-xl">
             Las finanzas están aisladas por hogar: solo sus miembros pueden verlas.
-            Los datos de Mentalidad son personales de cada usuario, incluso dentro del
+            Los hábitos y el registro diario son personales de cada usuario, incluso dentro del
             mismo hogar.
           </p>
         </div>

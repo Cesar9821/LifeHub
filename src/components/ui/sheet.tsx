@@ -53,12 +53,12 @@ export function Sheet({
       >
         <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-line-strong sm:hidden" aria-hidden />
         {title && (
-          <div className="flex items-center justify-between gap-3 mb-4">
+          <div className="flex items-center justify-between gap-3 mb-4 pr-1">
             <h2 className="text-lg font-semibold text-ink">{title}</h2>
             <button
               type="button"
               onClick={onClose}
-              className="h-11 w-11 -mr-2 inline-flex items-center justify-center rounded-full text-ink-3 hover:text-ink hover:bg-surface-3"
+              className="h-11 w-11 -mr-1 shrink-0 inline-flex items-center justify-center rounded-full text-ink-3 hover:text-ink hover:bg-surface-3"
               aria-label="Cerrar"
             >
               <X size={20} />

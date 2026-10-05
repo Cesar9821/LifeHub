@@ -15,7 +15,7 @@ export interface SubNavItem {
 export function SubNav({ items, className }: { items: SubNavItem[]; className?: string }) {
   const pathname = usePathname();
   return (
-    <nav aria-label="Secciones" className={cn('-mx-4 px-4 overflow-x-auto no-scrollbar', className)}>
+    <nav aria-label="Secciones" className={cn('-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto no-scrollbar', className)}>
       <ul className="flex gap-1.5 w-max">
         {items.map((item) => {
           const active = item.exact

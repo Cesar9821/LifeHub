@@ -12,7 +12,7 @@ import { Input, Select } from '@/components/ui/input';
 import { InlineMessage } from '@/components/ui/inline-message';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { CheckButton } from '@/components/ui/check-button';
-import { toast } from '@/components/ui/toast';
+import { withSuccessToast } from '@/components/ui/toast';
 import { BlockForm, AREA_CHOICES, type BlockInitial } from './block-form';
 import { AreaDot } from './area';
 
@@ -80,10 +80,9 @@ export function WeekGoalsForm({
   objectives: WeeklyObjective[];
   onDone?: () => void;
 }) {
-  const [state, formAction] = useActionState(saveWeekGoals, IDLE_STATE);
+  const [state, formAction] = useActionState(withSuccessToast(saveWeekGoals), IDLE_STATE);
   useEffect(() => {
     if (state.ok) {
-      toast(state.message ?? 'Guardado.');
       onDone?.();
     }
   }, [state, onDone]);

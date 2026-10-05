@@ -17,7 +17,7 @@ export function Field({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`flex flex-col gap-1.5 ${className || ''}`}>
+    <div className={`flex flex-col gap-1.5 min-w-0 ${className || ''}`}>
       {label && (
         <label
           htmlFor={htmlFor}

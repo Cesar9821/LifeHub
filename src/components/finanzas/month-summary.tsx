@@ -39,7 +39,7 @@ export function MonthSummary({
 }) {
   const pct = expenseBudget > 0 ? Math.round((money.spent / expenseBudget) * 100) : 0;
   return (
-    <section aria-label="¿Cómo estamos este mes?" className="space-y-3">
+    <section aria-label="Resumen del mes" className="space-y-3">
       <div className="bg-surface border border-line rounded-3xl p-5 space-y-3">
         <p className="text-sm text-ink-3">Plata disponible este mes</p>
         <p className={cn('text-[40px] leading-none font-semibold tracking-tight tabular-nums break-all', money.available >= 0 ? 'text-ink' : 'text-danger')}>

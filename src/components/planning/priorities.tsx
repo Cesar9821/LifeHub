@@ -29,14 +29,14 @@ export interface Suggestion {
 
 function SuggestionChip({ s }: { s: Suggestion }) {
   return (
-    <form action={addPriorityFromTask}>
+    <form action={addPriorityFromTask} className="min-w-0 max-w-full">
       {s.taskId ? <input type="hidden" name="task_id" value={s.taskId} /> : <input type="hidden" name="title" value={s.title} />}
       <button
         type="submit"
-        className="min-h-11 max-w-full inline-flex items-center gap-1.5 px-3.5 rounded-full border border-dashed border-line-strong text-sm text-ink-2 hover:text-ink hover:border-accent/50"
+        className="min-h-11 w-full max-w-full inline-flex items-center gap-1.5 px-3.5 rounded-full border border-dashed border-line-strong text-sm text-ink-2 hover:text-ink hover:border-accent/50 text-left"
       >
         <Plus size={14} className="shrink-0" />
-        <span className="truncate">{s.title}</span>
+        <span className="truncate min-w-0">{s.title}</span>
         {s.hint && <span className="text-ink-3 shrink-0">· {s.hint}</span>}
       </button>
     </form>

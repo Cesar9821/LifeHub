@@ -347,10 +347,14 @@ export async function removeOccurrence(formData: FormData) {
 
   const plan = planScopeEdit({ valid_from: rule.valid_from as string }, occurrenceDate, scope);
   if (plan.kind === 'override') {
+    // Un evento puede no tener horario: así la excepción "cancelada" cumple la
+    // regla de la tabla (un bloque exige inicio y término).
     const { error } = await upsertOverride(supabase, householdId, user.id, routineId, occurrenceDate, {
-      kind: 'block',
+      kind: 'event',
       title: 'Cancelado',
       block_date: occurrenceDate,
+      start_time: null,
+      end_time: null,
       cancelled: true,
     });
     if (error) console.error('Error saltando ocurrencia:', error.message);

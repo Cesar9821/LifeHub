@@ -115,3 +115,9 @@ export async function depositSaving(formData: FormData) {
   revalidatePath('/finanzas/movimientos');
   revalidatePath('/finanzas/dashboard');
 }
+
+/** Versión para formularios (ConfirmAction): elimina el ahorro del hogar. */
+export async function deleteSavingForm(formData: FormData) {
+  const id = String(formData.get('id') || '');
+  if (id) await deleteSaving(id);
+}

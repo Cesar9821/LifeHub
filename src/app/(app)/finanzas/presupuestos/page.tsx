@@ -1,4 +1,5 @@
-import { CalendarPlus, Download, PieChart, RotateCcw } from 'lucide-react';
+import { CalendarPlus, Download, RotateCcw } from 'lucide-react';
+import { PageHeader } from '@/components/ui/card';
 import { formatCLP } from '@/lib/format';
 import { budgetStatus } from '@/lib/plan/budget';
 import { addMonths, monthShort } from '@/lib/plan/months';
@@ -25,13 +26,7 @@ export default async function PresupuestoPage({
   const header = (
     <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
       <div className="space-y-3">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-line-strong bg-surface w-fit">
-          <PieChart size={14} className="text-indigo-400" />
-          <span className="text-xs font-bold text-ink-2 tracking-wide">Plan del hogar</span>
-        </div>
-        <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold text-ink tracking-tight leading-none">
-          Presupuesto<span className="text-indigo-500">.</span>
-        </h1>
+        <PageHeader title="Presupuesto" subtitle="El plan del hogar, concepto por concepto" />
       </div>
       {plan.seeded && <MonthSelector period={month} basePath="/finanzas/presupuestos" />}
     </div>

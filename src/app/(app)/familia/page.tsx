@@ -21,7 +21,9 @@ import {
   type ResetPeriod,
   type HouseholdEvent,
 } from '@/services/familia';
+import Link from 'next/link';
 import { PageHeader } from '@/components/ui/card';
+import { ConfirmAction } from '@/components/ui/confirm-action';
 import { getHouseholdMembers } from '@/services/household';
 import { daysUntil } from '@/lib/format';
 import TaskForm from './task-form';
@@ -40,7 +42,22 @@ import {
 
 export const dynamic = 'force-dynamic';
 
-export default async function FamiliaPage() {
+const TABS = [
+  { key: 'compras', label: 'Compras', icon: ShoppingCart },
+  { key: 'tareas', label: 'Tareas', icon: ListTodo },
+  { key: 'calendario', label: 'Calendario', icon: CalendarDays },
+  { key: 'menu', label: 'Menú', icon: UtensilsCrossed },
+] as const;
+type Tab = (typeof TABS)[number]['key'];
+
+/**
+ * Hogar: lo compartido de la casa. Una pestaña a la vez para que en el
+ * celular no sea una página interminable.
+ */
+export default async function FamiliaPage({ searchParams }: { searchParams: Promise<{ ver?: string }> }) {
+  const { ver } = await searchParams;
+  const tab: Tab = TABS.some((t) => t.key === ver) ? (ver as Tab) : 'compras';
+
   const [tasks, shoppingData, members, events, mealPlan] = await Promise.all([
     getTasks(),
     getShoppingData(),
@@ -52,104 +69,122 @@ export default async function FamiliaPage() {
   const { lists, orphans, allItems } = shoppingData;
   const summary = summarizeFamilia(tasks, allItems);
   const nameById = new Map(members.map((m) => [m.user_id, m.full_name]));
-
+  const counts: Record<Tab, number> = {
+    compras: summary.shoppingPending,
+    tareas: summary.pendingTasks,
+    calendario: events.length,
+    menu: 0,
+  };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
-      <PageHeader title="Hogar" subtitle="Compras, menú, eventos y tareas de la casa. Todo compartido con tu hogar." />
+    <div className="max-w-3xl mx-auto space-y-5">
+      <PageHeader title="Hogar" subtitle="Compras, tareas, calendario y menú. Todo compartido con tu hogar." />
 
-      {/* RESUMEN */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        <StatTile label="Tareas pendientes" value={String(summary.pendingTasks)} accent="text-ink" />
-        <StatTile label="Eventos próximos" value={String(events.length)} accent="text-sky-400" />
-        <StatTile label="Por comprar" value={String(summary.shoppingPending)} accent="text-orange-400" />
-        <StatTile label="Completadas" value={String(summary.doneTasks)} accent="text-emerald-400" />
-      </div>
+      <nav aria-label="Secciones del hogar" className="-mx-4 px-4 overflow-x-auto no-scrollbar">
+        <ul className="flex gap-1.5 w-max">
+          {TABS.map((t) => {
+            const Icon = t.icon;
+            const active = tab === t.key;
+            return (
+              <li key={t.key}>
+                <Link
+                  href={t.key === 'compras' ? '/familia' : `/familia?ver=${t.key}`}
+                  aria-current={active ? 'page' : undefined}
+                  className={`inline-flex items-center gap-2 min-h-11 px-4 rounded-full text-sm font-medium whitespace-nowrap border ${
+                    active ? 'bg-ink text-bg border-ink' : 'bg-surface border-line text-ink-2 hover:text-ink'
+                  }`}
+                >
+                  <Icon size={16} /> {t.label}
+                  {counts[t.key] > 0 && <span className={active ? 'text-bg/70' : 'text-ink-3'}>{counts[t.key]}</span>}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
 
-      {/* TAREAS */}
-      <section className="space-y-5">
-        <div className="flex items-center gap-2 px-1">
-          <ListTodo size={18} className="text-orange-400" />
-          <h2 className="text-lg font-semibold text-ink tracking-wide">Tareas del hogar</h2>
-        </div>
-
-        <div className="bg-surface border border-line rounded-3xl p-6 md:p-7">
-          <TaskForm members={members} />
-        </div>
-
-        {tasks.length === 0 ? (
-          <EmptyState icon={<ListTodo size={34} className="text-slate-800" />} text="Sin tareas por ahora" />
-        ) : (
-          <div className="space-y-2">
-            {tasks.map((t) => (
-              <TaskItem
-                key={t.id}
-                task={t}
-                members={members}
-                assigneeName={t.assigned_to ? nameById.get(t.assigned_to) ?? null : null}
-              />
-            ))}
+      {tab === 'tareas' && (
+        <section className="space-y-4" aria-label="Tareas del hogar">
+          <div className="bg-surface border border-line rounded-3xl p-5">
+            <TaskForm members={members} />
           </div>
-        )}
-      </section>
-
-      {/* CALENDARIO */}
-      <section className="space-y-5">
-        <div className="flex items-center gap-2 px-1">
-          <CalendarDays size={18} className="text-orange-400" />
-          <h2 className="text-lg font-semibold text-ink tracking-wide">Calendario</h2>
-        </div>
-
-        <div className="bg-surface border border-line rounded-3xl p-6 md:p-7">
-          <EventForm />
-        </div>
-
-        {events.length === 0 ? (
-          <EmptyState icon={<CalendarDays size={34} className="text-slate-800" />} text="Sin eventos próximos" />
-        ) : (
-          <div className="space-y-2">
-            {events.map((e) => (
-              <EventRow key={e.id} event={e} />
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* MENÚ SEMANAL */}
-      <section className="space-y-5">
-        <div className="flex items-center gap-2 px-1">
-          <UtensilsCrossed size={18} className="text-orange-400" />
-          <h2 className="text-lg font-semibold text-ink tracking-wide">Menú de la semana</h2>
-        </div>
-        <MealPlanner plan={mealPlan} />
-      </section>
-
-      {/* COMPRAS */}
-      <section className="space-y-5">
-        <div className="flex items-center gap-2 px-1">
-          <ShoppingCart size={18} className="text-orange-400" />
-          <h2 className="text-lg font-semibold text-ink tracking-wide">Listas de compras</h2>
-        </div>
-
-        <ListForm />
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {lists.map((list) => (
-            <ShoppingListCard key={list.id} list={list} />
-          ))}
-        </div>
-
-        {orphans.length > 0 && (
-          <div className="bg-surface border border-line rounded-3xl p-5 md:p-6 space-y-3">
-            <h3 className="text-base font-semibold text-ink tracking-wide">Otros</h3>
-            <div className="space-y-1.5">
-              {orphans.map((item) => (
-                <ShoppingRow key={item.id} item={item} />
+          {tasks.length === 0 ? (
+            <EmptyState icon={<ListTodo size={28} />} text="Sin tareas por ahora. Agrega lo que haya que hacer en la casa." />
+          ) : (
+            <div className="space-y-2">
+              {tasks.map((t) => (
+                <TaskItem
+                  key={t.id}
+                  task={t}
+                  members={members}
+                  assigneeName={t.assigned_to ? nameById.get(t.assigned_to) ?? null : null}
+                />
               ))}
             </div>
+          )}
+        </section>
+      )}
+
+      {tab === 'calendario' && (
+        <section className="space-y-4" aria-label="Calendario del hogar">
+          <div className="bg-surface border border-line rounded-3xl p-5">
+            <EventForm />
           </div>
-        )}
-      </section>
+          {events.length === 0 ? (
+            <EmptyState icon={<CalendarDays size={28} />} text="Sin eventos próximos." />
+          ) : (
+            <div className="space-y-2">
+              {events.map((e) => (
+                <EventRow key={e.id} event={e} />
+              ))}
+            </div>
+          )}
+          <p className="text-sm text-ink-3 px-1">Los eventos del hogar también aparecen en Hoy y en tu Semana.</p>
+        </section>
+      )}
+
+      {tab === 'menu' && (
+        <section aria-label="Menú de la semana">
+          <MealPlanner plan={mealPlan} />
+        </section>
+      )}
+
+      {tab === 'compras' && (
+        <section className="space-y-4" aria-label="Listas de compras">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {lists.map((list) => (
+              <ShoppingListCard key={list.id} list={list} />
+            ))}
+          </div>
+
+          {orphans.length > 0 && (
+            <div className="bg-surface border border-line rounded-3xl p-5 space-y-2">
+              <h3 className="text-base font-semibold text-ink">Otros</h3>
+              <div className="space-y-1">
+                {orphans.map((item) => (
+                  <ShoppingRow key={item.id} item={item} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {lists.length === 0 && orphans.length === 0 && (
+            <EmptyState
+              icon={<ShoppingCart size={28} />}
+              text="Crea tu primera lista: Supermercado, Feria, Farmacia… Se pueden reiniciar solas cada semana o mes."
+            />
+          )}
+
+          <details className="bg-surface border border-line rounded-3xl" open={lists.length === 0}>
+            <summary className="cursor-pointer list-none min-h-12 px-5 flex items-center text-[15px] font-medium text-ink-2">
+              + Nueva lista
+            </summary>
+            <div className="px-5 pb-5">
+              <ListForm />
+            </div>
+          </details>
+        </section>
+      )}
     </div>
   );
 }
@@ -179,22 +214,25 @@ function ShoppingListCard({ list }: { list: ShoppingListWithItems }) {
               <button
                 type="submit"
                 title="Reiniciar (desmarcar todo)"
-                className="h-8 w-8 flex items-center justify-center rounded-lg text-ink-3 hover:text-orange-400 hover:bg-orange-500/10 transition-all"
+                aria-label={`Reiniciar ${list.name} (desmarcar todo)`}
+                className="h-11 w-11 flex items-center justify-center rounded-xl text-ink-3 hover:text-ink hover:bg-surface-3"
               >
-                <RotateCcw size={14} />
+                <RotateCcw size={16} />
               </button>
             </form>
           )}
-          <form action={deleteShoppingList}>
-            <input type="hidden" name="id" value={list.id} />
-            <button
-              type="submit"
-              title="Eliminar lista"
-              className="h-8 w-8 flex items-center justify-center rounded-lg text-slate-700 hover:text-rose-500 hover:bg-rose-500/10 transition-all"
-            >
-              <Trash2 size={14} />
-            </button>
-          </form>
+          <ConfirmAction
+            action={deleteShoppingList}
+            fields={{ id: list.id }}
+            title={`¿Eliminar la lista "${list.name}"?`}
+            message="Se borra con todos sus productos."
+            confirmLabel="Eliminar"
+            triggerTitle="Eliminar lista"
+            triggerClassName="h-11 w-11 flex items-center justify-center rounded-xl text-ink-3 hover:text-danger hover:bg-danger/10"
+          >
+            <Trash2 size={16} />
+            <span className="sr-only">Eliminar lista {list.name}</span>
+          </ConfirmAction>
         </div>
       </div>
 
@@ -213,11 +251,15 @@ function ShoppingListCard({ list }: { list: ShoppingListWithItems }) {
 
 function ShoppingRow({ item }: { item: ShoppingItem }) {
   return (
-    <div className="group flex items-center gap-3">
+    <div className="flex items-center gap-1 min-h-11">
       <form action={toggleShoppingItem} className="shrink-0">
         <input type="hidden" name="id" value={item.id} />
         <input type="hidden" name="checked" value={String(item.checked)} />
-        <button type="submit" className="flex items-center">
+        <button
+          type="submit"
+          aria-label={item.checked ? `Desmarcar ${item.name}` : `Marcar ${item.name} como comprado`}
+          className="h-11 w-11 -ml-2 flex items-center justify-center"
+        >
           {item.checked ? (
             <CheckCircle2 size={19} className="text-emerald-400" />
           ) : (
@@ -226,7 +268,7 @@ function ShoppingRow({ item }: { item: ShoppingItem }) {
         </button>
       </form>
       <div className="flex-1 min-w-0">
-        <span className={`text-sm font-bold ${item.checked ? 'text-ink-3 line-through' : 'text-ink'}`}>
+        <span className={`text-[15px] break-words ${item.checked ? 'text-ink-3 line-through' : 'text-ink'}`}>
           {item.name}
         </span>
         {item.quantity && <span className="text-xs tabular-nums text-ink-3 ml-2">{item.quantity}</span>}
@@ -235,10 +277,11 @@ function ShoppingRow({ item }: { item: ShoppingItem }) {
         <input type="hidden" name="id" value={item.id} />
         <button
           type="submit"
-          title="Eliminar"
-          className="h-7 w-7 flex items-center justify-center rounded-lg text-slate-700 hover:text-rose-500 hover:bg-rose-500/10 transition-all opacity-0 group-hover:opacity-100"
+          title="Quitar"
+          aria-label={`Quitar ${item.name}`}
+          className="h-11 w-11 flex items-center justify-center rounded-xl text-ink-3 hover:text-danger hover:bg-danger/10"
         >
-          <Trash2 size={13} />
+          <Trash2 size={15} />
         </button>
       </form>
     </div>
@@ -265,13 +308,13 @@ function eventWhen(e: HouseholdEvent): { day: string; mon: string; label: string
 function EventRow({ event: e }: { event: HouseholdEvent }) {
   const w = eventWhen(e);
   return (
-    <div className="group flex items-center gap-3 bg-surface border border-line rounded-2xl px-4 py-3 hover:bg-slate-800/40 transition-all">
+    <div className="flex items-center gap-3 bg-surface border border-line rounded-2xl pl-4 pr-1 py-2">
       <div className="shrink-0 h-12 w-12 rounded-xl bg-sky-500/10 border border-sky-500/20 flex flex-col items-center justify-center leading-none">
         <span className="text-base font-semibold text-sky-300 tabular-nums">{w.day}</span>
         <span className="text-xs font-semibold text-sky-400/70">{w.mon}</span>
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold text-ink truncate">{e.title}</p>
+        <p className="text-[15px] font-medium text-ink truncate">{e.title}</p>
         <div className="flex items-center gap-3 mt-0.5">
           <span className={`text-xs font-semibold tracking-wide ${w.tone}`}>{w.label}</span>
           {e.event_time && (
@@ -281,36 +324,27 @@ function EventRow({ event: e }: { event: HouseholdEvent }) {
           )}
         </div>
       </div>
-      <form action={deleteEvent} className="shrink-0">
-        <input type="hidden" name="id" value={e.id} />
-        <button
-          type="submit"
-          title="Eliminar"
-          className="h-8 w-8 flex items-center justify-center rounded-lg text-slate-700 hover:text-rose-500 hover:bg-rose-500/10 transition-all opacity-0 group-hover:opacity-100"
-        >
-          <Trash2 size={15} />
-        </button>
-      </form>
-    </div>
-  );
-}
-
-function StatTile({ label, value, accent }: { label: string; value: string; accent: string }) {
-  return (
-    <div className="bg-surface border border-line-strong p-4 md:p-5 rounded-2xl text-center">
-      <p className="text-xs md:text-xs font-semibold text-ink-3 tracking-wide mb-1.5">
-        {label}
-      </p>
-      <p className={`text-2xl md:text-3xl font-semibold tabular-nums tracking-tight ${accent}`}>{value}</p>
+      <ConfirmAction
+        action={deleteEvent}
+        fields={{ id: e.id }}
+        title="¿Eliminar este evento?"
+        message="Se borra del calendario de todo el hogar."
+        confirmLabel="Eliminar"
+        triggerTitle="Eliminar"
+        triggerClassName="h-11 w-11 shrink-0 flex items-center justify-center rounded-xl text-ink-3 hover:text-danger hover:bg-danger/10"
+      >
+        <Trash2 size={16} />
+        <span className="sr-only">Eliminar {e.title}</span>
+      </ConfirmAction>
     </div>
   );
 }
 
 function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
-    <div className="border-2 border-dashed border-slate-800/50 rounded-3xl p-10 md:p-14 flex flex-col items-center justify-center text-center gap-3">
+    <div className="border border-dashed border-line-strong rounded-3xl px-6 py-8 flex flex-col items-center justify-center text-center gap-2 text-ink-3">
       {icon}
-      <p className="text-ink-3 font-semibold text-xs tracking-wide">{text}</p>
+      <p className="text-[15px] text-ink-2">{text}</p>
     </div>
   );
 }

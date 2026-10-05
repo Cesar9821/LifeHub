@@ -1,3 +1,5 @@
+import { todayStr } from './format';
+
 /**
  * Frases para encender el día — inspiradas en los principios de Brian Tracy
  * (claridad, disciplina, "cómete la rana") e Ilia Topuria (autocreencia,
@@ -27,13 +29,13 @@ export const PHRASES: Phrase[] = [
   { text: 'Tu palabra contigo mismo vale más que cualquier promesa a otro.', source: 'Mentalidad de campeón' },
 ];
 
-/** Día del año (1-366) para elegir una frase estable durante todo el día. */
-function dayOfYear(d: Date): number {
-  const start = new Date(d.getFullYear(), 0, 0);
-  const diff = d.getTime() - start.getTime();
-  return Math.floor(diff / 86_400_000);
+/** Día del año (1-366) de una fecha YYYY-MM-DD. */
+function dayOfYear(date: string): number {
+  const [y, m, d] = date.split('-').map(Number);
+  return Math.round((Date.UTC(y, m - 1, d) - Date.UTC(y, 0, 0)) / 86_400_000);
 }
 
-export function phraseOfDay(date = new Date()): Phrase {
+/** Frase estable durante todo el día de Chile (el servidor corre en UTC). */
+export function phraseOfDay(date: string = todayStr()): Phrase {
   return PHRASES[dayOfYear(date) % PHRASES.length];
 }

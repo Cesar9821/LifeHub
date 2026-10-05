@@ -1,4 +1,5 @@
-import { BarChart3, Download, Users } from 'lucide-react';
+import { Download, Users } from 'lucide-react';
+import { PageHeader } from '@/components/ui/card';
 import { formatCLP } from '@/lib/format';
 import { monthShort } from '@/lib/plan/months';
 import { defaultMonth, loadPlanPage, yearView } from '@/services/plan';
@@ -17,15 +18,7 @@ export default async function ResumenPage() {
 
   const header = (
     <div className="space-y-3">
-      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-line-strong bg-surface w-fit">
-        <BarChart3 size={14} className="text-emerald-400" />
-        <span className="text-xs font-bold text-ink-2 tracking-wide">
-          {plan.months.length > 0 ? `${monthShort(plan.months[0])} – ${monthShort(plan.months[plan.months.length - 1])}` : 'Plan del hogar'}
-        </span>
-      </div>
-      <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold text-ink tracking-tight leading-none">
-        Resumen anual<span className="text-emerald-500">.</span>
-      </h1>
+      <PageHeader title="Resumen anual" subtitle={plan.months.length > 0 ? `${monthShort(plan.months[0])} – ${monthShort(plan.months[plan.months.length - 1])}` : undefined} />
     </div>
   );
 
@@ -87,8 +80,42 @@ export default async function ResumenPage() {
       {/* TABLA MES A MES */}
       <section className="bg-surface border border-line rounded-3xl p-5 space-y-3">
         <h2 className="text-sm font-semibold text-ink tracking-wide">Mes a mes</h2>
-        <div className="overflow-x-auto -mx-5 px-5">
-          <table className="w-full text-xs min-w-[760px]">
+        {/* Celular: tarjetas por mes (sin scroll horizontal) */}
+        <ul className="xl:hidden divide-y divide-line tabular-nums">
+          {rows.map((r) => {
+            const overDebt = r.debtPct > DEBT_LIMIT;
+            return (
+              <li key={r.month} className={`py-3 ${r.month === month ? 'text-ink' : 'text-ink-2'}`}>
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-[15px] font-semibold">
+                    {monthShort(r.month)}
+                    {r.projected && <span className="ml-1.5 text-xs font-normal text-ink-3">proyectado</span>}
+                  </span>
+                  <span className={`text-[15px] font-semibold ${r.balance < 0 ? 'text-rose-400' : ''}`}>{formatCLP(r.balance)}</span>
+                </div>
+                <dl className="mt-1 grid grid-cols-2 gap-x-3 gap-y-0.5 text-xs">
+                  <dt className="text-ink-3">Ingresos</dt>
+                  <dd className="text-right text-emerald-300">{formatCLP(r.income)}</dd>
+                  <dt className="text-ink-3">{r.projected ? 'Presupuestado' : 'Gastado'}</dt>
+                  <dd className="text-right text-rose-300">{formatCLP(r.projected ? Math.max(r.expenseBudget, r.spent) : r.spent)}</dd>
+                  <dt className="text-ink-3">Ahorro acumulado</dt>
+                  <dd className="text-right text-amber-300">{formatCLP(r.accumulated)}</dd>
+                  <dt className="text-ink-3">Pago CMR</dt>
+                  <dd className={`text-right ${overDebt ? 'text-rose-400' : ''}`}>
+                    {formatCLP(r.debtPayment)} · {pct(r.debtPct)}
+                    {overDebt && ' ⚠'}
+                  </dd>
+                </dl>
+              </li>
+            );
+          })}
+          <li className="py-3 text-ink font-semibold flex items-baseline justify-between gap-3">
+            <span>Total del período</span>
+            <span>{formatCLP(totals.balance)}</span>
+          </li>
+        </ul>
+        <div className="hidden xl:block overflow-x-auto">
+          <table className="w-full text-xs">
             <thead>
               <tr className="text-ink-3 text-xs tracking-wide">
                 <th className="text-left font-semibold py-2 pr-3">Mes</th>

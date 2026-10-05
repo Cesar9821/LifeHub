@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { InlineMessage } from '@/components/ui/inline-message';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from '@/components/ui/toast';
+import { withSuccessToast } from '@/components/ui/toast';
 import { ChoiceChips } from './chips';
 
 type Mode = 'menu' | 'task' | 'event' | 'gasto' | 'idea' | 'reminder';
@@ -52,7 +52,7 @@ function nextHour(): string {
 }
 
 function CaptureForm({ mode, onDone }: { mode: Exclude<Mode, 'menu' | 'gasto'>; onDone: () => void }) {
-  const [state, formAction] = useActionState(captureItem, IDLE_STATE);
+  const [state, formAction] = useActionState(withSuccessToast(captureItem), IDLE_STATE);
   const [when, setWhen] = useState<'inbox' | 'hoy' | 'semana' | ''>('inbox');
   const [area, setArea] = useState<string>('');
   const [shared, setShared] = useState(false);
@@ -60,7 +60,6 @@ function CaptureForm({ mode, onDone }: { mode: Exclude<Mode, 'menu' | 'gasto'>; 
 
   useEffect(() => {
     if (state.ok) {
-      toast(state.message ?? 'Guardado.');
       onDone();
     }
   }, [state, onDone]);
@@ -109,26 +108,31 @@ function CaptureForm({ mode, onDone }: { mode: Exclude<Mode, 'menu' | 'gasto'>; 
         </div>
       )}
 
-      {(mode === 'reminder' || mode === 'event') && (
+      {mode === 'reminder' && (
         <div className="grid grid-cols-2 gap-3">
           <Field label="Día" htmlFor="capture-date" error={err.date}>
             <Input id="capture-date" type="date" name="date" required defaultValue={todayStr()} />
           </Field>
-          <Field label={mode === 'event' ? 'Desde (opcional)' : 'Hora'} htmlFor="capture-time" error={err.time}>
-            <Input
-              id="capture-time"
-              type="time"
-              name="time"
-              required={mode === 'reminder'}
-              defaultValue={mode === 'reminder' ? nextHour() : ''}
-            />
+          <Field label="Hora" htmlFor="capture-time" error={err.time}>
+            <Input id="capture-time" type="time" name="time" required defaultValue={nextHour()} />
           </Field>
-          {mode === 'event' && (
-            <Field label="Hasta (opcional)" htmlFor="capture-end" error={err.end_time} className="col-span-2 sm:col-span-1">
+        </div>
+      )}
+
+      {mode === 'event' && (
+        <>
+          <Field label="Día" htmlFor="capture-date" error={err.date}>
+            <Input id="capture-date" type="date" name="date" required defaultValue={todayStr()} />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Desde (opcional)" htmlFor="capture-time" error={err.time}>
+              <Input id="capture-time" type="time" name="time" />
+            </Field>
+            <Field label="Hasta (opcional)" htmlFor="capture-end" error={err.end_time}>
               <Input id="capture-end" type="time" name="end_time" />
             </Field>
-          )}
-        </div>
+          </div>
+        </>
       )}
 
       {mode === 'event' && (

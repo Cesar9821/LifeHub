@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { InlineMessage } from '@/components/ui/inline-message';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { ConfirmAction } from '@/components/ui/confirm-action';
-import { toast } from '@/components/ui/toast';
+import { withSuccessToast } from '@/components/ui/toast';
 import { BlockForm, AREA_CHOICES } from './block-form';
 import { ChoiceChips } from './chips';
 
@@ -27,14 +27,13 @@ const SCOPES = [
 ] as const;
 
 function OccurrenceForm({ item, onDone }: { item: AgendaItem; onDone: () => void }) {
-  const [state, formAction] = useActionState(editOccurrence, IDLE_STATE);
+  const [state, formAction] = useActionState(withSuccessToast(editOccurrence), IDLE_STATE);
   const [scope, setScope] = useState<'solo' | 'desde' | 'toda' | ''>('solo');
   const [area, setArea] = useState<string>(item.area ?? '');
   const err = state.fieldErrors ?? {};
 
   useEffect(() => {
     if (state.ok) {
-      toast(state.message ?? 'Guardado.');
       onDone();
     }
   }, [state, onDone]);
@@ -79,11 +78,10 @@ function OccurrenceForm({ item, onDone }: { item: AgendaItem; onDone: () => void
 }
 
 function FamilyEventForm({ item, onDone }: { item: AgendaItem; onDone: () => void }) {
-  const [state, formAction] = useActionState(updateFamilyEvent, IDLE_STATE);
+  const [state, formAction] = useActionState(withSuccessToast(updateFamilyEvent), IDLE_STATE);
   const err = state.fieldErrors ?? {};
   useEffect(() => {
     if (state.ok) {
-      toast(state.message ?? 'Guardado.');
       onDone();
     }
   }, [state, onDone]);
@@ -93,14 +91,14 @@ function FamilyEventForm({ item, onDone }: { item: AgendaItem; onDone: () => voi
       <Field label="Nombre" htmlFor="fe-title" error={err.title}>
         <Input id="fe-title" name="title" required defaultValue={item.title} />
       </Field>
-      <div className="grid grid-cols-3 gap-3">
-        <Field label="Día" htmlFor="fe-date" className="col-span-3 sm:col-span-1">
-          <Input id="fe-date" type="date" name="date" required defaultValue={item.date} />
-        </Field>
-        <Field label="Desde" htmlFor="fe-start">
+      <Field label="Día" htmlFor="fe-date">
+        <Input id="fe-date" type="date" name="date" required defaultValue={item.date} />
+      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Desde (opcional)" htmlFor="fe-start">
           <Input id="fe-start" type="time" name="start" defaultValue={item.start ?? ''} />
         </Field>
-        <Field label="Hasta" htmlFor="fe-end" error={err.end}>
+        <Field label="Hasta (opcional)" htmlFor="fe-end" error={err.end}>
           <Input id="fe-end" type="time" name="end" defaultValue={item.end ?? ''} />
         </Field>
       </div>

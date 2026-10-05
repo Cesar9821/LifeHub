@@ -35,6 +35,7 @@ import { formatCLP } from '@/lib/format';
 import { Field } from '@/components/ui/field';
 import { Input, Select } from '@/components/ui/input';
 import { SubmitButton } from '@/components/ui/submit-button';
+import { ConfirmAction } from '@/components/ui/confirm-action';
 import { Button } from '@/components/ui/button';
 import { InlineMessage } from '@/components/ui/inline-message';
 import { NumberInput } from '@/components/ui/number-input';
@@ -155,9 +156,9 @@ export default function GoalCard({
         isDone ? 'border-emerald-500/20 opacity-80' : 'border-line'
       }`}
     >
-      {/* Encabezado */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
+      {/* Encabezado: en el celular las acciones van debajo del título (no lo aplastan) */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap mb-1.5">
             <span className="text-xs font-semibold text-amber-400 border border-amber-500/20 bg-amber-500/5 px-2 py-0.5 rounded-md tracking-wide">
               {g.category}
@@ -195,14 +196,14 @@ export default function GoalCard({
         </div>
 
         {/* Acciones */}
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center flex-wrap gap-1 shrink-0 -ml-2 sm:ml-0">
           {!isDone && (
-            <div className="flex flex-col">
+            <div className="flex">
               {!isFirst && (
                 <form action={moveGoal}>
                   <input type="hidden" name="id" value={g.id} />
                   <input type="hidden" name="dir" value="up" />
-                  <button type="submit" title="Subir" className="h-5 flex items-center text-ink-3 hover:text-amber-400 transition-colors">
+                  <button type="submit" title="Subir" className="h-11 w-9 flex items-center justify-center rounded-xl text-ink-3 hover:text-amber-400 transition-colors">
                     <ChevronUp size={16} />
                   </button>
                 </form>
@@ -211,7 +212,7 @@ export default function GoalCard({
                 <form action={moveGoal}>
                   <input type="hidden" name="id" value={g.id} />
                   <input type="hidden" name="dir" value="down" />
-                  <button type="submit" title="Bajar" className="h-5 flex items-center text-ink-3 hover:text-amber-400 transition-colors">
+                  <button type="submit" title="Bajar" className="h-11 w-9 flex items-center justify-center rounded-xl text-ink-3 hover:text-amber-400 transition-colors">
                     <ChevronDown size={16} />
                   </button>
                 </form>
@@ -223,7 +224,7 @@ export default function GoalCard({
               type="button"
               onClick={() => setEditing(true)}
               title="Editar meta"
-              className="h-9 w-9 flex items-center justify-center rounded-xl text-ink-3 hover:text-amber-400 hover:bg-amber-500/10 transition-all"
+              className="h-11 w-11 flex items-center justify-center rounded-xl text-ink-3 hover:text-amber-400 hover:bg-amber-500/10 transition-all"
             >
               <Pencil size={15} />
             </button>
@@ -232,7 +233,7 @@ export default function GoalCard({
             <form action={setGoalStatus}>
               <input type="hidden" name="id" value={g.id} />
               <input type="hidden" name="status" value="active" />
-              <button type="submit" title="Reactivar" className="h-9 w-9 flex items-center justify-center rounded-xl text-ink-3 hover:text-amber-400 hover:bg-amber-500/10 transition-all">
+              <button type="submit" title="Reactivar" className="h-11 w-11 flex items-center justify-center rounded-xl text-ink-3 hover:text-amber-400 hover:bg-amber-500/10 transition-all">
                 <RotateCcw size={16} />
               </button>
             </form>
@@ -240,7 +241,7 @@ export default function GoalCard({
             <form action={setGoalStatus}>
               <input type="hidden" name="id" value={g.id} />
               <input type="hidden" name="status" value="done" />
-              <button type="submit" title="Completar" className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-ink text-xs font-semibold tracking-wide px-3 py-2.5 rounded-xl transition-all active:scale-95">
+              <button type="submit" title="Completar" className="inline-flex items-center gap-1.5 min-h-11 bg-success/15 border border-success/30 text-success hover:bg-success/25 text-sm font-semibold px-3.5 rounded-xl transition-all active:scale-95">
                 <Check size={13} /> Completar
               </button>
             </form>
@@ -248,16 +249,22 @@ export default function GoalCard({
           <form action={setGoalStatus}>
             <input type="hidden" name="id" value={g.id} />
             <input type="hidden" name="status" value="archived" />
-            <button type="submit" title="Archivar" className="h-9 w-9 flex items-center justify-center rounded-xl text-ink-3 hover:text-ink-2 hover:bg-white/5 transition-all">
+            <button type="submit" title="Archivar" className="h-11 w-11 flex items-center justify-center rounded-xl text-ink-3 hover:text-ink-2 hover:bg-white/5 transition-all">
               <Archive size={15} />
             </button>
           </form>
-          <form action={deleteGoal}>
-            <input type="hidden" name="id" value={g.id} />
-            <button type="submit" title="Eliminar meta" className="h-9 w-9 flex items-center justify-center rounded-xl text-ink-3 hover:text-rose-500 hover:bg-rose-500/10 transition-all">
-              <Trash2 size={16} />
-            </button>
-          </form>
+          <ConfirmAction
+            action={deleteGoal}
+            fields={{ id: g.id }}
+            title={`¿Eliminar "${g.title}"?`}
+            message="Se borra con sus hitos y su avance. Si solo quieres sacarla de la vista, mejor archívala."
+            confirmLabel="Eliminar"
+            triggerTitle="Eliminar meta"
+            triggerClassName="h-11 w-11 flex items-center justify-center rounded-xl text-ink-3 hover:text-rose-500 hover:bg-rose-500/10 transition-all"
+          >
+            <Trash2 size={16} />
+            <span className="sr-only">Eliminar meta</span>
+          </ConfirmAction>
         </div>
       </div>
 
@@ -330,8 +337,8 @@ export default function GoalCard({
               </form>
               <form action={deleteMilestone}>
                 <input type="hidden" name="id" value={m.id} />
-                <button type="submit" title="Eliminar hito" className="h-7 w-7 flex items-center justify-center rounded-lg text-slate-700 hover:text-rose-500 hover:bg-rose-500/10 transition-all opacity-0 group-hover:opacity-100">
-                  <Trash2 size={13} />
+                <button type="submit" title="Eliminar hito" aria-label={`Eliminar hito ${m.title}`} className="h-11 w-11 flex items-center justify-center rounded-xl text-ink-3 hover:text-rose-500 hover:bg-rose-500/10 transition-all">
+                  <Trash2 size={15} />
                 </button>
               </form>
             </div>
