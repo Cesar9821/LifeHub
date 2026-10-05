@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { Trash2, Users } from 'lucide-react';
+import Link from 'next/link';
+import { Timer, Trash2, Users } from 'lucide-react';
 import { deleteTask, organizeTask, setTaskStatus, toggleTaskDone } from '@/app/(app)/tareas/actions';
 import { cn } from '@/lib/utils';
 import { shortDayLabel } from '@/lib/planning/dates';
@@ -181,6 +182,14 @@ export function TaskRow({
               ))}
             </div>
           </div>
+        )}
+        {!done && (
+          <Link
+            href={`/enfoque?tarea=${task.id}`}
+            className="mb-5 w-full inline-flex items-center justify-center gap-2 min-h-11 rounded-xl border border-accent/30 bg-accent/5 text-sm font-semibold text-accent hover:bg-accent/10"
+          >
+            <Timer size={16} /> Enfocarme en esta tarea
+          </Link>
         )}
         <TaskForm task={task} projects={projects} onDone={close} />
         <div className="mt-4 pt-4 border-t border-line">

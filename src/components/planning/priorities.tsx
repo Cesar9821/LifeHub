@@ -72,8 +72,32 @@ function AddPriority() {
   );
 }
 
+const BURST_COLORS = ['#60a5fa', '#2dd4bf', '#34d399', '#a3e635', '#fb923c', '#c084fc', '#8b9cff', '#fbbf24'];
+
+/** Celebración al cumplir todo lo importante (con la racha, si hay). */
+function Celebration({ streak }: { streak: number }) {
+  return (
+    <div role="status" className="burst animate-pop rounded-2xl border border-success/30 bg-success/10 px-4 py-3 text-center">
+      {BURST_COLORS.map((c, i) => {
+        const a = (i / BURST_COLORS.length) * Math.PI * 2;
+        return (
+          <i
+            key={c}
+            aria-hidden
+            style={{ background: c, ['--x' as string]: `${Math.round(Math.cos(a) * 90)}px`, ['--y' as string]: `${Math.round(Math.sin(a) * 40)}px` }}
+          />
+        );
+      })}
+      <p className="text-[15px] font-semibold text-success">🎉 Lo importante está hecho</p>
+      <p className="text-sm text-ink-2">
+        {streak > 1 ? `${streak} días seguidos cumpliendo. Lo demás es extra.` : 'Lo demás es extra. Bien hecho.'}
+      </p>
+    </div>
+  );
+}
+
 /** "Lo importante": máximo 3, se marcan con un toque. */
-export function Priorities({ items, suggestions }: { items: PriorityView[]; suggestions: Suggestion[] }) {
+export function Priorities({ items, suggestions, streak = 0 }: { items: PriorityView[]; suggestions: Suggestion[]; streak?: number }) {
   const full = items.length >= MAX_PRIORITIES;
   const allDone = items.length > 0 && items.every((p) => p.done);
 
@@ -108,7 +132,7 @@ export function Priorities({ items, suggestions }: { items: PriorityView[]; sugg
         </ol>
       )}
 
-      {allDone && <p className="text-sm text-success">Lo importante está hecho. Lo demás es extra.</p>}
+      {allDone && <Celebration streak={streak} />}
 
       {full ? (
         !allDone && <p className="text-sm text-ink-3">Tres es suficiente. Si aparece algo más importante, quita uno.</p>

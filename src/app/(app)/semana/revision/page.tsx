@@ -7,6 +7,10 @@ import { loadWeeklyPlan } from '@/services/planning';
 import { loadFinanceSnapshot } from '@/services/finance-snapshot';
 import { Card, PageHeader } from '@/components/ui/card';
 import { ReviewForm } from '@/components/planning/review-form';
+import { loadWheelWeek, WELLBEING_SQL_MISSING } from '@/services/wellbeing';
+import { WHEEL_LABEL, weakestArea, wheelAverage, wheelFilled } from '@/lib/wellbeing';
+import { WheelBars, WheelChart } from '@/components/wellbeing/wheel-chart';
+import { WheelForm } from '@/components/wellbeing/wheel-form';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,12 +30,16 @@ function Metric({ icon, title, children }: { icon: React.ReactNode; title: strin
 export default async function RevisionPage({ searchParams }: { searchParams: Promise<{ semana?: string }> }) {
   const { semana } = await searchParams;
   const weekStart = weekStartOf(isDateStr(semana) ? semana : todayStr());
-  const [r, plan, finance] = await Promise.all([
+  const [r, plan, finance, wheel] = await Promise.all([
     loadWeekReview(weekStart),
     loadWeeklyPlan(weekStart),
     loadFinanceSnapshot().catch(() => null),
+    loadWheelWeek(weekStart),
   ]);
   const objDone = plan.objectives.filter((o) => o.done).length;
+  const filled = wheelFilled(wheel.self);
+  const weakest = filled ? weakestArea(wheel.self) : null;
+  const avg = filled ? wheelAverage(wheel.self) : null;
 
   return (
     <div className="max-w-2xl mx-auto space-y-5">
@@ -89,6 +97,45 @@ export default async function RevisionPage({ searchParams }: { searchParams: Pro
                 </span>
               ))}
         </Metric>
+      </Card>
+
+      <Card as="section" aria-labelledby="rueda" className="space-y-4">
+        <div>
+          <h2 id="rueda" className="text-[16px] font-semibold text-ink">
+            Rueda de la vida
+          </h2>
+          <p className="text-sm text-ink-2">Ponle nota a cada área: ¿cómo la sientes esta semana? Así ves qué se está quedando atrás.</p>
+        </div>
+        {!wheel.ready ? (
+          <p className="rounded-2xl border border-warning/30 bg-warning/5 p-4 text-sm text-ink-2">{WELLBEING_SQL_MISSING}</p>
+        ) : (
+          <>
+            {filled && (
+              <>
+                <WheelChart self={wheel.self} previous={wheel.previous} />
+                {weakest && (
+                  <p className="rounded-2xl bg-surface-2 p-3 text-[15px] text-ink">
+                    Promedio <span className="font-semibold tabular-nums">{avg}</span>. La que más necesita atención:{' '}
+                    <span className="font-semibold">{WHEEL_LABEL[weakest]}</span>. ¿Una acción chica para ella la próxima semana?
+                  </p>
+                )}
+                <WheelBars self={wheel.self} activity={wheel.activity} />
+                <p className="text-xs text-ink-3">
+                  La actividad se calcula con lo que registraste: tareas hechas, prioridades, hábitos, enfoque, cierres del día, tareas y eventos del
+                  hogar y movimientos.
+                </p>
+              </>
+            )}
+            <details open={!filled} className="group">
+              <summary className="cursor-pointer list-none min-h-11 inline-flex items-center text-sm font-medium text-accent">
+                {filled ? 'Cambiar mis notas' : 'Poner mis notas'}
+              </summary>
+              <div className="pt-2">
+                <WheelForm weekStart={weekStart} initial={wheel.self} />
+              </div>
+            </details>
+          </>
+        )}
       </Card>
 
       <Card as="section" className="space-y-3">

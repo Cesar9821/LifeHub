@@ -9,6 +9,7 @@ import {
   CalendarDays,
   Clock,
   UtensilsCrossed,
+  Cake,
 } from 'lucide-react';
 import {
   getTasks,
@@ -32,6 +33,8 @@ import ShoppingForm from './shopping-form';
 import ListForm from './list-form';
 import EventForm from './event-form';
 import MealPlanner from './meal-planner';
+import { FamilyDates } from '@/components/wellbeing/family-dates';
+import { loadFamilyDates, WELLBEING_SQL_MISSING } from '@/services/wellbeing';
 import {
   toggleShoppingItem,
   deleteShoppingItem,
@@ -47,6 +50,7 @@ const TABS = [
   { key: 'tareas', label: 'Tareas', icon: ListTodo },
   { key: 'calendario', label: 'Calendario', icon: CalendarDays },
   { key: 'menu', label: 'Menú', icon: UtensilsCrossed },
+  { key: 'fechas', label: 'Fechas', icon: Cake },
 ] as const;
 type Tab = (typeof TABS)[number]['key'];
 
@@ -58,12 +62,13 @@ export default async function FamiliaPage({ searchParams }: { searchParams: Prom
   const { ver } = await searchParams;
   const tab: Tab = TABS.some((t) => t.key === ver) ? (ver as Tab) : 'compras';
 
-  const [tasks, shoppingData, members, events, mealPlan] = await Promise.all([
+  const [tasks, shoppingData, members, events, mealPlan, dates] = await Promise.all([
     getTasks(),
     getShoppingData(),
     getHouseholdMembers(),
     getUpcomingEvents(),
     getMealPlan(),
+    loadFamilyDates(),
   ]);
 
   const { lists, orphans, allItems } = shoppingData;
@@ -74,11 +79,12 @@ export default async function FamiliaPage({ searchParams }: { searchParams: Prom
     tareas: summary.pendingTasks,
     calendario: events.length,
     menu: 0,
+    fechas: dates.upcoming.filter((u) => u.days <= 30).length,
   };
 
   return (
     <div className="max-w-3xl mx-auto space-y-5">
-      <PageHeader title="Hogar" subtitle="Compras, tareas, calendario y menú. Todo compartido con tu hogar." />
+      <PageHeader title="Hogar" subtitle="Compras, tareas, calendario, menú y fechas. Todo compartido con tu hogar." />
 
       <nav aria-label="Secciones del hogar" className="-mx-4 px-4 overflow-x-auto no-scrollbar">
         <ul className="flex gap-1.5 w-max">
@@ -142,6 +148,13 @@ export default async function FamiliaPage({ searchParams }: { searchParams: Prom
           <p className="text-sm text-ink-3 px-1">Los eventos del hogar también aparecen en Hoy y en tu Semana.</p>
         </section>
       )}
+
+      {tab === 'fechas' &&
+        (dates.ready ? (
+          <FamilyDates upcoming={dates.upcoming} />
+        ) : (
+          <p className="rounded-2xl border border-warning/30 bg-warning/5 p-4 text-sm text-ink-2">{WELLBEING_SQL_MISSING}</p>
+        ))}
 
       {tab === 'menu' && (
         <section aria-label="Menú de la semana">
