@@ -8,7 +8,7 @@ import { Field } from '@/components/ui/field';
 import { Input, Select, Textarea } from '@/components/ui/input';
 import { InlineMessage } from '@/components/ui/inline-message';
 import { SubmitButton } from '@/components/ui/submit-button';
-import { toast } from '@/components/ui/toast';
+import { withSuccessToast } from '@/components/ui/toast';
 import { AREA_CHOICES } from './block-form';
 import { ChoiceChips } from './chips';
 import type { TaskView } from './task-row';
@@ -30,7 +30,7 @@ export function TaskForm({
   projects?: ProjectOption[];
   onDone?: () => void;
 }) {
-  const [state, formAction] = useActionState(saveTask, IDLE_STATE);
+  const [state, formAction] = useActionState(withSuccessToast(saveTask), IDLE_STATE);
   const [area, setArea] = useState<string>(task?.area ?? defaults?.area ?? '');
   const [category, setCategory] = useState<string>(task?.category ?? defaults?.category ?? '');
   const initialStatus = task?.status && task.status !== 'inbox' ? task.status : defaults?.status ?? 'pendiente';
@@ -39,7 +39,6 @@ export function TaskForm({
 
   useEffect(() => {
     if (state.ok) {
-      toast(state.message ?? 'Guardado.');
       onDone?.();
     }
   }, [state, onDone]);

@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { InlineMessage } from '@/components/ui/inline-message';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { ConfirmAction } from '@/components/ui/confirm-action';
-import { toast } from '@/components/ui/toast';
+import { withSuccessToast } from '@/components/ui/toast';
 import { ChoiceChips } from './chips';
 
 export interface HabitEditable {
@@ -27,7 +27,7 @@ export interface HabitEditable {
 const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
 function HabitForm({ habit, onDone }: { habit?: HabitEditable; onDone: () => void }) {
-  const [state, formAction] = useActionState(saveSimpleHabit, IDLE_STATE);
+  const [state, formAction] = useActionState(withSuccessToast(saveSimpleHabit), IDLE_STATE);
   const initialMode = habit?.days_of_week?.length ? 'days' : habit?.frequency === 'weekly' ? 'weekly' : 'daily';
   const [mode, setMode] = useState<'daily' | 'days' | 'weekly' | ''>(initialMode);
   const [days, setDays] = useState<number[]>(habit?.days_of_week ?? []);
@@ -36,7 +36,6 @@ function HabitForm({ habit, onDone }: { habit?: HabitEditable; onDone: () => voi
 
   useEffect(() => {
     if (state.ok) {
-      toast(state.message ?? 'Guardado.');
       onDone();
     }
   }, [state, onDone]);
@@ -125,39 +124,41 @@ export function NewHabitButton() {
   );
 }
 
-const iconBtn = 'h-11 w-11 inline-flex items-center justify-center rounded-full text-ink-3 hover:text-ink hover:bg-surface-2';
+const iconBtn = 'h-11 w-11 shrink-0 inline-flex items-center justify-center rounded-full text-ink-3 hover:text-ink hover:bg-surface-2';
+const secondaryBtn =
+  'w-full inline-flex items-center justify-center gap-2 min-h-11 rounded-xl border border-line text-sm font-medium text-ink-2 hover:text-ink';
 
-/** Editar, pausar o eliminar un hábito. */
+/** Un solo botón (Editar): dentro están pausar y eliminar. Menos íconos en el celular. */
 export function HabitActions({ habit }: { habit: HabitEditable }) {
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
   return (
-    <div className="flex items-center shrink-0">
+    <>
       <button type="button" onClick={() => setOpen(true)} className={iconBtn} aria-label={`Editar ${habit.name}`}>
         <Pencil size={16} />
       </button>
-      <form action={toggleHabitActive}>
-        <input type="hidden" name="id" value={habit.id} />
-        <input type="hidden" name="is_active" value={String(habit.is_active)} />
-        <button type="submit" className={iconBtn} aria-label={`Pausar ${habit.name}`}>
-          <Pause size={16} />
-        </button>
-      </form>
-      <ConfirmAction
-        action={deleteHabit}
-        fields={{ id: habit.id }}
-        title={`¿Eliminar "${habit.name}"?`}
-        message="Se borra con todo su historial. Si solo quieres dejarlo un tiempo, mejor pausarlo."
-        confirmLabel="Eliminar"
-        triggerClassName={iconBtn}
-        triggerTitle="Eliminar"
-      >
-        <Trash2 size={16} />
-        <span className="sr-only">Eliminar {habit.name}</span>
-      </ConfirmAction>
       <Sheet open={open} onClose={close} title="Editar hábito">
         <HabitForm habit={habit} onDone={close} />
+        <div className="mt-4 pt-4 border-t border-line grid grid-cols-2 gap-2">
+          <form action={toggleHabitActive} onSubmit={() => setTimeout(close, 50)}>
+            <input type="hidden" name="id" value={habit.id} />
+            <input type="hidden" name="is_active" value={String(habit.is_active)} />
+            <button type="submit" className={secondaryBtn}>
+              <Pause size={15} /> Pausar
+            </button>
+          </form>
+          <ConfirmAction
+            action={deleteHabit}
+            fields={{ id: habit.id }}
+            title={`¿Eliminar "${habit.name}"?`}
+            message="Se borra con todo su historial. Si solo quieres dejarlo un tiempo, mejor pausarlo."
+            confirmLabel="Eliminar"
+            triggerClassName={`${secondaryBtn} hover:text-danger hover:border-danger/30`}
+          >
+            <Trash2 size={15} /> Eliminar
+          </ConfirmAction>
+        </div>
       </Sheet>
-    </div>
+    </>
   );
 }

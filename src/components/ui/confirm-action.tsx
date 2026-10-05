@@ -43,6 +43,21 @@ export function ConfirmAction({
 }) {
   const [open, setOpen] = useState(false);
 
+  // Escape cierra; el fondo no se desplaza mientras está abierto.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
   return (
     <>
       <button type="button" title={triggerTitle} onClick={() => setOpen(true)} className={triggerClassName}>
@@ -57,6 +72,7 @@ export function ConfirmAction({
           <div
             role="alertdialog"
             aria-modal="true"
+            aria-label={title}
             className="w-full max-w-sm bg-surface-2 border border-line-strong rounded-3xl p-6 space-y-4 animate-sheet-up"
             onClick={(e) => e.stopPropagation()}
           >

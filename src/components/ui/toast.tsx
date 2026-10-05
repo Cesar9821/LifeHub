@@ -39,3 +39,20 @@ export function Toaster() {
     </div>
   );
 }
+
+/**
+ * Envuelve una Server Action con contrato FormState y muestra el aviso de
+ * éxito apenas responde el servidor. Así el aviso aparece aunque el
+ * formulario desaparezca al refrescarse la pantalla (por ejemplo, un estado
+ * vacío que deja de mostrarse).
+ */
+export function withSuccessToast<S extends { ok: boolean; message?: string }>(
+  action: (prev: S, formData: FormData) => Promise<S>,
+  fallback = 'Guardado.'
+) {
+  return async (prev: S, formData: FormData): Promise<S> => {
+    const result = await action(prev, formData);
+    if (result.ok) toast(result.message ?? fallback);
+    return result;
+  };
+}

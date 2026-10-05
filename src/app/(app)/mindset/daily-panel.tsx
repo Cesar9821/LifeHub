@@ -103,7 +103,9 @@ export default function DailyPanel({
                   key={value}
                   type="button"
                   onClick={() => setSelectedMood(value)}
-                  className={`flex-1 py-2.5 rounded-xl text-lg border transition-all active:scale-95 ${
+                  aria-label={`Ánimo ${value} de 5`}
+                  aria-pressed={active}
+                  className={`flex-1 min-h-11 rounded-xl text-lg border transition-all active:scale-95 ${
                     active
                       ? 'bg-amber-500/20 border-amber-500/40'
                       : 'bg-black/20 border-line opacity-40 hover:opacity-70'
@@ -133,12 +135,16 @@ export default function DailyPanel({
                   key={value}
                   type="button"
                   onClick={() => setSelectedEnergy(value)}
-                  className={`flex-1 h-9 rounded-xl border transition-all active:scale-95 ${
+                  aria-label={`Energía ${value} de 5`}
+                  aria-pressed={active}
+                  className={`flex-1 min-h-11 rounded-xl border text-sm font-semibold transition-all active:scale-95 ${
                     active
                       ? 'bg-violet-500 border-violet-400'
-                      : 'bg-black/20 border-line hover:border-violet-500/30'
+                      : 'bg-black/20 border-line text-ink-3 hover:border-violet-500/30'
                   }`}
-                />
+                >
+                  {value}
+                </button>
               );
             })}
           </div>

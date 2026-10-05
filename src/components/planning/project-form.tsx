@@ -11,7 +11,7 @@ import { Input, Textarea } from '@/components/ui/input';
 import { NumberInput } from '@/components/ui/number-input';
 import { InlineMessage } from '@/components/ui/inline-message';
 import { SubmitButton } from '@/components/ui/submit-button';
-import { toast } from '@/components/ui/toast';
+import { withSuccessToast } from '@/components/ui/toast';
 import { ChoiceChips } from './chips';
 
 const STATUS = [
@@ -36,13 +36,12 @@ export interface ProjectPreset {
 }
 
 export function ProjectForm({ project, preset, onDone }: { project?: Project; preset?: ProjectPreset; onDone?: () => void }) {
-  const [state, formAction] = useActionState(saveProject, IDLE_STATE);
+  const [state, formAction] = useActionState(withSuccessToast(saveProject), IDLE_STATE);
   const [status, setStatus] = useState<string>(project?.status ?? preset?.status ?? 'activo');
   const [priority, setPriority] = useState<string>(project?.priority ?? preset?.priority ?? 'normal');
   const err = state.fieldErrors ?? {};
   useEffect(() => {
     if (state.ok) {
-      toast(state.message ?? 'Guardado.');
       onDone?.();
     }
   }, [state, onDone]);

@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { InlineMessage } from '@/components/ui/inline-message';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { ConfirmAction } from '@/components/ui/confirm-action';
-import { toast } from '@/components/ui/toast';
+import { withSuccessToast } from '@/components/ui/toast';
 import { AREA_CHOICES } from './block-form';
 import { ChoiceChips } from './chips';
 import { AreaDot } from './area';
@@ -22,14 +22,13 @@ import { AreaDot } from './area';
 const DAY_NAMES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
 export function RoutineForm({ routine, onDone }: { routine?: Routine; onDone?: () => void }) {
-  const [state, formAction] = useActionState(saveRoutine, IDLE_STATE);
+  const [state, formAction] = useActionState(withSuccessToast(saveRoutine), IDLE_STATE);
   const [days, setDays] = useState<number[]>(routine?.days_of_week ?? []);
   const [area, setArea] = useState<string>(routine?.area ?? '');
   const err = state.fieldErrors ?? {};
 
   useEffect(() => {
     if (state.ok) {
-      toast(state.message ?? 'Guardado.');
       onDone?.();
     }
   }, [state, onDone]);
@@ -121,7 +120,9 @@ export function NewRoutineButton() {
   );
 }
 
-const iconBtn = 'h-11 w-11 inline-flex items-center justify-center rounded-full text-ink-3 hover:text-ink hover:bg-surface-2';
+const iconBtn = 'h-11 w-11 shrink-0 inline-flex items-center justify-center rounded-full text-ink-3 hover:text-ink hover:bg-surface-2';
+const secondaryBtn =
+  'w-full inline-flex items-center justify-center gap-2 min-h-11 rounded-xl border border-line text-sm font-medium text-ink-2 hover:text-ink';
 
 export function RoutineRow({ routine }: { routine: Routine }) {
   const [open, setOpen] = useState(false);
@@ -132,7 +133,10 @@ export function RoutineRow({ routine }: { routine: Routine }) {
       <div className="flex-1 min-w-0">
         <p className="text-[15px] font-medium text-ink truncate">{routine.title}</p>
         <p className="text-sm text-ink-3">
-          {daysLabel(routine.days_of_week)} · {routine.start_time}–{routine.end_time}
+          {daysLabel(routine.days_of_week)} ·{' '}
+          <span className="whitespace-nowrap tabular-nums">
+            {routine.start_time}–{routine.end_time}
+          </span>
           {!routine.active && ' · En pausa'}
           {routine.valid_until && ` · hasta ${routine.valid_until.split('-').reverse().slice(0, 2).join('/')}`}
         </p>
@@ -142,27 +146,27 @@ export function RoutineRow({ routine }: { routine: Routine }) {
           <button type="button" onClick={() => setOpen(true)} className={iconBtn} aria-label={`Editar ${routine.title}`}>
             <Pencil size={16} />
           </button>
-          <form action={toggleRoutineActive}>
-            <input type="hidden" name="id" value={routine.id} />
-            <input type="hidden" name="active" value={String(routine.active)} />
-            <button type="submit" className={iconBtn} aria-label={routine.active ? `Pausar ${routine.title}` : `Reactivar ${routine.title}`}>
-              {routine.active ? <Pause size={16} /> : <Play size={16} />}
-            </button>
-          </form>
-          <ConfirmAction
-            action={deleteRoutine}
-            fields={{ id: routine.id }}
-            title={`¿Eliminar la rutina "${routine.title}"?`}
-            message="Desaparece de todas las semanas, también de las pasadas. Si solo quieres dejarla de lado, mejor pausarla."
-            confirmLabel="Eliminar"
-            triggerClassName={iconBtn}
-            triggerTitle="Eliminar"
-          >
-            <Trash2 size={16} />
-            <span className="sr-only">Eliminar {routine.title}</span>
-          </ConfirmAction>
           <Sheet open={open} onClose={close} title="Editar rutina">
             <RoutineForm routine={routine} onDone={close} />
+            <div className="mt-4 pt-4 border-t border-line grid grid-cols-2 gap-2">
+              <form action={toggleRoutineActive} onSubmit={() => setTimeout(close, 50)}>
+                <input type="hidden" name="id" value={routine.id} />
+                <input type="hidden" name="active" value={String(routine.active)} />
+                <button type="submit" className={secondaryBtn}>
+                  {routine.active ? <Pause size={15} /> : <Play size={15} />} {routine.active ? 'Pausar' : 'Reactivar'}
+                </button>
+              </form>
+              <ConfirmAction
+                action={deleteRoutine}
+                fields={{ id: routine.id }}
+                title={`¿Eliminar la rutina "${routine.title}"?`}
+                message="Desaparece de todas las semanas, también de las pasadas. Si solo quieres dejarla de lado, mejor pausarla."
+                confirmLabel="Eliminar"
+                triggerClassName={`${secondaryBtn} hover:text-danger hover:border-danger/30`}
+              >
+                <Trash2 size={15} /> Eliminar
+              </ConfirmAction>
+            </div>
           </Sheet>
         </>
       )}
