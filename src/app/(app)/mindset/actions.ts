@@ -16,10 +16,9 @@ import {
 } from '@/lib/action';
 import { revalidatePath } from 'next/cache';
 
+/** Los hábitos también aparecen en Hoy, Hábitos y la revisión semanal. */
 function revalidateAll() {
-  revalidatePath('/mindset');
-  revalidatePath('/mindset/habitos');
-  revalidatePath('/mindset/forja');
+  revalidatePath('/', 'layout');
 }
 
 const M369_TARGETS = { morning: 3, afternoon: 6, night: 9 } as const;

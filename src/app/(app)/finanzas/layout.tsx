@@ -1,7 +1,6 @@
 import React from 'react';
 import type { Metadata } from 'next';
 import { loadPlanPage } from '@/services/plan';
-import { QuickExpenseFab } from '@/components/finanzas/expense-sheet';
 import { RealtimeRefresh } from '@/components/finanzas/realtime-refresh';
 import { SubNav } from '@/components/ui/sub-nav';
 
@@ -30,14 +29,13 @@ const SECTIONS = [
 ];
 
 export default async function FinanzasLayout({ children }: { children: React.ReactNode }) {
-  // Registro rápido y tiempo real disponibles en todas las pantallas de Finanzas.
-  const { plan, quick, householdId } = await loadPlanPage();
+  // Tiempo real en todas las pantallas de Finanzas. El "+ Gasto" es el botón global.
+  const { householdId } = await loadPlanPage();
 
   return (
     <div className="space-y-5">
       <SubNav items={SECTIONS} />
       {children}
-      {plan.seeded && <QuickExpenseFab data={quick} />}
       <RealtimeRefresh householdId={householdId} />
     </div>
   );

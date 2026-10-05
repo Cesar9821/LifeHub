@@ -119,3 +119,29 @@ export function greetingFor(time: string): string {
 export function isDateStr(v: unknown): v is string {
   return typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
 }
+
+/** Desfase (minutos) de Chile respecto de UTC en un instante dado. */
+function chileOffsetMin(utcMs: number): number {
+  const p = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Santiago',
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).formatToParts(new Date(utcMs));
+  const get = (t: string) => Number(p.find((x) => x.type === t)?.value);
+  const asUtc = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'));
+  return Math.round((asUtc - utcMs) / 60_000);
+}
+
+/** Fecha y hora de Chile ("2026-10-05", "09:30") → ISO en UTC (para timestamptz). */
+export function chileToUtcIso(date: string, time: string): string {
+  const [y, m, d] = date.split('-').map(Number);
+  const [h, min] = time.slice(0, 5).split(':').map(Number);
+  const naive = Date.UTC(y, m - 1, d, h, min);
+  let utc = naive - chileOffsetMin(naive) * 60_000;
+  utc = naive - chileOffsetMin(utc) * 60_000; // segunda pasada por si cruza el cambio de hora
+  return new Date(utc).toISOString();
+}

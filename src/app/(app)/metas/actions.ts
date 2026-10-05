@@ -16,8 +16,9 @@ import {
 import { revalidatePath } from 'next/cache';
 import { parseSubmitted } from '@/lib/number-input';
 
+/** Las metas también se ven como objetivos en Proyectos. */
 function revalidate() {
-  revalidatePath('/metas');
+  revalidatePath('/', 'layout');
 }
 
 /**

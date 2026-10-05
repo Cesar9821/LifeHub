@@ -54,3 +54,11 @@ describe('fechas de la planificación', () => {
     expect(greetingFor('02:00')).toBe('Buenas noches');
   });
 });
+
+describe('hora de Chile a UTC', () => {
+  it('horario de verano (UTC-3) e invierno (UTC-4)', async () => {
+    const { chileToUtcIso } = await import('./dates');
+    expect(chileToUtcIso('2026-10-05', '09:30')).toBe('2026-10-05T12:30:00.000Z');
+    expect(chileToUtcIso('2026-07-01', '09:30')).toBe('2026-07-01T13:30:00.000Z');
+  });
+});

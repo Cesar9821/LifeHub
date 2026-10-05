@@ -16,8 +16,9 @@ import {
 } from '@/lib/action';
 import { revalidatePath } from 'next/cache';
 
+/** Hogar también aparece en Hoy y Semana. */
 function revalidate() {
-  revalidatePath('/familia');
+  revalidatePath('/', 'layout');
 }
 
 const taskSchema = z.object({
