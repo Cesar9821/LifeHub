@@ -46,6 +46,10 @@ interface Prefs {
   digest_time: string;
   low_balance_enabled: boolean;
   low_balance_threshold: number;
+  /** Columnas nuevas (20261005_lifehub_planning.sql): pueden no existir aún. */
+  reminders?: boolean;
+  review_enabled?: boolean;
+  review_time?: string;
 }
 
 interface M369Row {
@@ -152,9 +156,9 @@ async function monthAvailable(db: Db, hids: string[], period: string): Promise<n
 
 export async function GET(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
+  // Solo por header: un secreto en la URL queda en los logs.
   const auth = request.headers.get('authorization');
-  const qsSecret = request.nextUrl.searchParams.get('secret');
-  if (!secret || (auth !== `Bearer ${secret}` && qsSecret !== secret)) {
+  if (!secret || auth !== `Bearer ${secret}`) {
     return NextResponse.json({ error: 'no autorizado' }, { status: 401 });
   }
 
@@ -222,6 +226,41 @@ export async function GET(request: NextRequest) {
     expiredAll.push(...expiredEndpoints);
   }
 
+  // RECORDATORIOS — tareas con hora de aviso cumplida (se marcan una sola vez).
+  try {
+    const { data: due, error } = await db
+      .from('tasks')
+      .select('id, user_id, title')
+      .lte('remind_at', new Date().toISOString())
+      .is('reminded_at', null)
+      .neq('status', 'completado')
+      .limit(200);
+    if (!error && due && due.length > 0) {
+      for (const r of due as { id: string; user_id: string; title: string }[]) {
+        const prefs = prefsByUser.get(r.user_id);
+        const subs = subsByUser.get(r.user_id);
+        if (!prefs?.enabled || prefs.reminders === false || !subs?.length) continue;
+        const { sent, expiredEndpoints } = await sendToSubscriptions(subs, {
+          title: '🔔 Recordatorio',
+          body: r.title,
+          url: '/hoy',
+          tag: `rem-${r.id}`,
+        });
+        pushesSent += sent;
+        expiredAll.push(...expiredEndpoints);
+      }
+      await db
+        .from('tasks')
+        .update({ reminded_at: new Date().toISOString() })
+        .in('id', (due as { id: string }[]).map((r) => r.id));
+    }
+  } catch (e) {
+    console.error('Cron recordatorios:', e);
+  }
+
+  const isSunday = new Date(`${today}T12:00:00Z`).getUTCDay() === 0;
+  const weekStart = addDays(today, -6); // el lunes de esta semana (hoy es domingo)
+
   for (const [userId, subs] of subsByUser) {
     const prefs = prefsByUser.get(userId);
     if (!prefs || !prefs.enabled) continue;
@@ -258,6 +297,35 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // REVISIÓN SEMANAL — domingo, si aún no se hizo.
+    if (isSunday && prefs.review_enabled !== false && due('review', prefs.review_time ?? '19:00', sent)) {
+      let reviewed = false;
+      try {
+        const { data } = await db
+          .from('weekly_plans')
+          .select('reviewed_at')
+          .eq('user_id', userId)
+          .eq('week_start', weekStart)
+          .maybeSingle();
+        reviewed = Boolean(data?.reviewed_at);
+      } catch {
+        reviewed = false;
+      }
+      await deliver(
+        userId,
+        subs,
+        'review',
+        reviewed
+          ? null
+          : {
+              title: '🔄 Revisión semanal',
+              body: 'Dos minutos: cómo estuvo tu semana y cuál será tu prioridad.',
+              url: `/semana/revision?semana=${weekStart}`,
+              tag: 'review',
+            }
+      );
+    }
+
     // RESUMEN — pendientes + saldo bajo, a la hora del digest.
     if (due('digest', prefs.digest_time, sent)) {
       const pending: { text: string; url: string }[] = [];
@@ -268,6 +336,20 @@ export async function GET(request: NextRequest) {
         else if (due.length > 1) pending.push({ text: `💰 ${due.length} cuentas por pagar`, url: '/finanzas' });
       }
 
+      // Trabajo — lo que toca hoy (tareas de LifeHub 2.0; 0 si la tabla no existe).
+      {
+        const n = await countFor(db, () =>
+          db
+            .from('tasks')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', userId)
+            .eq('area', 'trabajo')
+            .not('status', 'in', '(completado,inbox,esperando)')
+            .or(`status.in.(hoy,en_curso),due_date.lte.${today}`)
+        );
+        if (n > 0) pending.push({ text: `💼 ${n} de trabajo hoy`, url: '/trabajo' });
+      }
+
       if (prefs.mentalidad) {
         const total = await countFor(db, () =>
           db.from('habits').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('is_active', true)
@@ -276,7 +358,7 @@ export async function GET(request: NextRequest) {
           db.from('habit_logs').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('log_date', today).eq('done', true)
         );
         const p = Math.max(0, total - done);
-        if (p > 0) pending.push({ text: `🧠 ${p} hábito${p > 1 ? 's' : ''} por cumplir`, url: '/mindset' });
+        if (p > 0) pending.push({ text: `🧠 ${p} hábito${p > 1 ? 's' : ''} por cumplir`, url: '/habitos' });
       }
 
       if (prefs.familia) {
@@ -290,7 +372,7 @@ export async function GET(request: NextRequest) {
         const n = await countFor(db, () =>
           db.from('goals').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'active').gte('target_date', today).lte('target_date', soon)
         );
-        if (n > 0) pending.push({ text: `🎯 ${n} meta${n > 1 ? 's' : ''} por vencer`, url: '/metas' });
+        if (n > 0) pending.push({ text: `🎯 ${n} objetivo${n > 1 ? 's' : ''} por vencer`, url: '/metas' });
       }
 
       // Familia — evento de hoy/mañana

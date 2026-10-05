@@ -79,25 +79,34 @@ export async function updateNotificationPrefs(formData: FormData) {
     return isNaN(n) ? 0 : Math.max(0, n);
   };
 
-  const { error } = await supabase.from('notification_prefs').upsert(
-    {
-      user_id: user.id,
-      enabled: bool('enabled'),
-      finanzas: bool('finanzas'),
-      mentalidad: bool('mentalidad'),
-      familia: bool('familia'),
-      metas: bool('metas'),
-      forja_time: time('forja_time', '06:00'),
-      m369_morning_time: time('m369_morning_time', '09:00'),
-      m369_afternoon_time: time('m369_afternoon_time', '14:00'),
-      m369_night_time: time('m369_night_time', '21:00'),
-      digest_time: time('digest_time', '09:00'),
-      low_balance_enabled: bool('low_balance_enabled'),
-      low_balance_threshold: num('low_balance_threshold'),
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'user_id' }
-  );
+  const base = {
+    user_id: user.id,
+    enabled: bool('enabled'),
+    finanzas: bool('finanzas'),
+    mentalidad: bool('mentalidad'),
+    familia: bool('familia'),
+    metas: bool('metas'),
+    forja_time: time('forja_time', '06:00'),
+    m369_morning_time: time('m369_morning_time', '09:00'),
+    m369_afternoon_time: time('m369_afternoon_time', '14:00'),
+    m369_night_time: time('m369_night_time', '21:00'),
+    digest_time: time('digest_time', '09:00'),
+    low_balance_enabled: bool('low_balance_enabled'),
+    low_balance_threshold: num('low_balance_threshold'),
+    updated_at: new Date().toISOString(),
+  };
+  // Avisos de LifeHub 2.0 (columnas nuevas del SQL de planificación).
+  const extra = {
+    reminders: bool('reminders'),
+    review_enabled: bool('review_enabled'),
+    review_time: time('review_time', '19:00'),
+  };
+
+  let { error } = await supabase.from('notification_prefs').upsert({ ...base, ...extra }, { onConflict: 'user_id' });
+  if (error && /reminders|review_/.test(error.message)) {
+    // Aún no se ejecuta el SQL nuevo: guarda lo de siempre.
+    ({ error } = await supabase.from('notification_prefs').upsert(base, { onConflict: 'user_id' }));
+  }
 
   failIf(error, 'No se pudieron guardar las preferencias');
   revalidatePath('/notificaciones');

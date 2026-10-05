@@ -1,5 +1,5 @@
 import { PageHeader } from '@/components/ui/card';
-import { Wallet, Brain, Users, Target, Clock, Flame } from 'lucide-react';
+import { Wallet, Brain, Users, Target, Clock, Flame, Bell, CalendarCheck } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth';
 import NotificationsManager from './notifications-manager';
@@ -21,6 +21,9 @@ interface Prefs {
   digest_time: string;
   low_balance_enabled: boolean;
   low_balance_threshold: number;
+  reminders?: boolean;
+  review_enabled?: boolean;
+  review_time?: string;
 }
 
 const DEFAULT_PREFS: Prefs = {
@@ -39,10 +42,10 @@ const DEFAULT_PREFS: Prefs = {
 };
 
 const MODULES = [
-  { key: 'finanzas', label: 'Finanzas', desc: 'Pagos por confirmar + saldo bajo', icon: Wallet, color: 'text-emerald-400' },
-  { key: 'mentalidad', label: 'Mentalidad', desc: 'La Forja, tu 369 y hábitos', icon: Brain, color: 'text-indigo-400' },
-  { key: 'familia', label: 'Familia', desc: 'Tareas asignadas (aviso al instante)', icon: Users, color: 'text-orange-400' },
-  { key: 'metas', label: 'Metas', desc: 'Objetivos que vencen pronto', icon: Target, color: 'text-amber-400' },
+  { key: 'finanzas', label: 'Finanzas', desc: 'Cuentas por pagar + saldo bajo', icon: Wallet, color: 'text-ink-2' },
+  { key: 'mentalidad', label: 'Hábitos', desc: 'La Forja, tu 369 y hábitos del día', icon: Brain, color: 'text-ink-2' },
+  { key: 'familia', label: 'Hogar', desc: 'Tareas asignadas y eventos de hoy/mañana', icon: Users, color: 'text-ink-2' },
+  { key: 'metas', label: 'Objetivos', desc: 'Objetivos que vencen pronto', icon: Target, color: 'text-ink-2' },
 ] as const;
 
 const hhmm = (v: string | undefined, def: string) => (v ? v.slice(0, 5) : def);
@@ -56,9 +59,7 @@ export default async function NotificacionesPage() {
 
   const { data } = await supabase
     .from('notification_prefs')
-    .select(
-      'enabled, finanzas, mentalidad, familia, metas, forja_time, m369_morning_time, m369_afternoon_time, m369_night_time, digest_time, low_balance_enabled, low_balance_threshold'
-    )
+    .select('*')
     .eq('user_id', user.id)
     .maybeSingle();
 
@@ -70,6 +71,7 @@ export default async function NotificacionesPage() {
     { name: 'm369_afternoon_time', label: '369 · tarde (6×)', value: hhmm(prefs.m369_afternoon_time, '14:00'), icon: Clock },
     { name: 'm369_night_time', label: '369 · noche (9×)', value: hhmm(prefs.m369_night_time, '21:00'), icon: Clock },
     { name: 'digest_time', label: 'Resumen de pendientes', value: hhmm(prefs.digest_time, '09:00'), icon: Clock },
+    { name: 'review_time', label: 'Revisión semanal (domingo)', value: hhmm(prefs.review_time, '19:00'), icon: Clock },
   ];
 
   return (
@@ -89,6 +91,27 @@ export default async function NotificacionesPage() {
                 <p className="text-xs text-ink-3">Interruptor general de todas las notificaciones</p>
               </div>
               <input type="checkbox" name="enabled" defaultChecked={prefs.enabled} className="w-5 h-5 accent-indigo-500 shrink-0" />
+            </label>
+
+            <label className="flex items-center justify-between gap-4 py-1.5">
+              <div className="flex items-center gap-3">
+                <Bell size={18} className="text-ink-2" />
+                <div>
+                  <p className="text-sm font-bold text-ink">Recordatorios</p>
+                  <p className="text-xs text-ink-3">Los que creas con + → Recordatorio</p>
+                </div>
+              </div>
+              <input type="checkbox" name="reminders" defaultChecked={prefs.reminders !== false} className="w-5 h-5 accent-indigo-500 shrink-0" />
+            </label>
+            <label className="flex items-center justify-between gap-4 py-1.5">
+              <div className="flex items-center gap-3">
+                <CalendarCheck size={18} className="text-ink-2" />
+                <div>
+                  <p className="text-sm font-bold text-ink">Revisión semanal</p>
+                  <p className="text-xs text-ink-3">El domingo, si aún no la haces</p>
+                </div>
+              </div>
+              <input type="checkbox" name="review_enabled" defaultChecked={prefs.review_enabled !== false} className="w-5 h-5 accent-indigo-500 shrink-0" />
             </label>
 
             {MODULES.map((m) => {
