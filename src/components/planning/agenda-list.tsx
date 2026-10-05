@@ -29,6 +29,33 @@ export function AgendaList({ items, now, compact = false }: { items: AgendaItem[
   const timed = items.filter((i) => i.start);
   const nowMin = now ? timeToMin(now) : null;
 
+  if (compact) {
+    // Grilla semanal de escritorio: hora arriba, título abajo (columnas angostas).
+    return (
+      <ol className="space-y-1">
+        {[...allDay, ...timed].map((i) => (
+          <li key={i.key}>
+            <AgendaItemButton item={i}>
+              <div
+                className={cn(
+                  'rounded-xl bg-surface-2 border-l-[3px] px-2 py-1.5 hover:bg-surface-3',
+                  i.area ? AREA_BORDER[i.area] : 'border-l-line-strong'
+                )}
+              >
+                <span className="block text-xs text-ink-3 tabular-nums">
+                  {i.start ? `${i.start}${i.end ? `–${i.end}` : ''}` : 'Todo el día'}
+                </span>
+                <span className={cn('block text-sm font-medium leading-snug line-clamp-2', i.done ? 'text-ink-3 line-through' : 'text-ink')}>
+                  {i.title}
+                </span>
+              </div>
+            </AgendaItemButton>
+          </li>
+        ))}
+      </ol>
+    );
+  }
+
   return (
     <ol className={cn('space-y-1.5', compact && 'space-y-1')}>
       {allDay.map((i) => (
