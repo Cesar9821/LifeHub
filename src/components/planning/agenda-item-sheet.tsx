@@ -93,14 +93,14 @@ function FamilyEventForm({ item, onDone }: { item: AgendaItem; onDone: () => voi
       <Field label="Nombre" htmlFor="fe-title" error={err.title}>
         <Input id="fe-title" name="title" required defaultValue={item.title} />
       </Field>
-      <div className="grid grid-cols-3 gap-3">
-        <Field label="Día" htmlFor="fe-date" className="col-span-3 sm:col-span-1">
-          <Input id="fe-date" type="date" name="date" required defaultValue={item.date} />
-        </Field>
-        <Field label="Desde" htmlFor="fe-start">
+      <Field label="Día" htmlFor="fe-date">
+        <Input id="fe-date" type="date" name="date" required defaultValue={item.date} />
+      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Desde (opcional)" htmlFor="fe-start">
           <Input id="fe-start" type="time" name="start" defaultValue={item.start ?? ''} />
         </Field>
-        <Field label="Hasta" htmlFor="fe-end" error={err.end}>
+        <Field label="Hasta (opcional)" htmlFor="fe-end" error={err.end}>
           <Input id="fe-end" type="time" name="end" defaultValue={item.end ?? ''} />
         </Field>
       </div>

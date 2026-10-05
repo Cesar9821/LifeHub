@@ -133,6 +133,27 @@ select optgroup {
   color: var(--color-ink);
 }
 
+/* Fecha y hora: en Safari (iPhone) traen un ancho mínimo propio y se salen
+   de las grillas de los formularios. Se igualan a cualquier otro campo. */
+input[type='date'],
+input[type='time'],
+input[type='datetime-local'] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
+input::-webkit-date-and-time-value {
+  text-align: left;
+  min-height: 1.5em;
+}
+
+/* Los ítems de grilla y flex pueden encogerse (evita desbordes con textos largos). */
+.grid > * {
+  min-width: 0;
+}
+
 /* Inputs de fecha/hora legibles en oscuro */
 input[type='date']::-webkit-calendar-picker-indicator,
 input[type='time']::-webkit-calendar-picker-indicator {

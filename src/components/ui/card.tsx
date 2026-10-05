@@ -58,8 +58,8 @@ export function PageHeader({
   children?: React.ReactNode;
 }) {
   return (
-    <header className="flex items-start justify-between gap-4 pt-2">
-      <div className="min-w-0 space-y-1">
+    <header className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3 pt-2">
+      <div className="min-w-0 flex-1 basis-44 space-y-1">
         {eyebrow && <p className="text-sm font-medium text-ink-3">{eyebrow}</p>}
         <h1 className="text-[28px] leading-tight font-semibold tracking-tight text-ink">{title}</h1>
         {subtitle && <p className="text-[15px] text-ink-2">{subtitle}</p>}

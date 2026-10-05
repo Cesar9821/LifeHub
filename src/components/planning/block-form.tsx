@@ -7,7 +7,7 @@ import { Field } from '@/components/ui/field';
 import { Input, Textarea } from '@/components/ui/input';
 import { InlineMessage } from '@/components/ui/inline-message';
 import { SubmitButton } from '@/components/ui/submit-button';
-import { toast } from '@/components/ui/toast';
+import { withSuccessToast } from '@/components/ui/toast';
 import { ChoiceChips } from './chips';
 
 export const AREA_CHOICES = [
@@ -38,14 +38,13 @@ export interface BlockInitial {
  * día, horario y área.
  */
 export function BlockForm({ initial, onDone }: { initial: BlockInitial; onDone?: () => void }) {
-  const [state, formAction] = useActionState(saveBlock, IDLE_STATE);
+  const [state, formAction] = useActionState(withSuccessToast(saveBlock), IDLE_STATE);
   const [area, setArea] = useState(initial.area ?? '');
   const err = state.fieldErrors ?? {};
   const kind = initial.kind ?? 'block';
 
   useEffect(() => {
     if (state.ok) {
-      toast(state.message ?? 'Guardado.');
       onDone?.();
     }
   }, [state, onDone]);
@@ -69,14 +68,14 @@ export function BlockForm({ initial, onDone }: { initial: BlockInitial; onDone?:
           invalid={!!err.title}
         />
       </Field>
-      <div className="grid grid-cols-3 gap-3">
-        <Field label="Día" htmlFor="block-date" error={err.date} className="col-span-3 sm:col-span-1">
-          <Input id="block-date" type="date" name="date" required defaultValue={initial.date} />
-        </Field>
-        <Field label="Desde" htmlFor="block-start" error={err.start} >
+      <Field label="Día" htmlFor="block-date" error={err.date}>
+        <Input id="block-date" type="date" name="date" required defaultValue={initial.date} />
+      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label={kind === 'event' ? 'Desde (opcional)' : 'Desde'} htmlFor="block-start" error={err.start}>
           <Input id="block-start" type="time" name="start" required={kind === 'block'} defaultValue={initial.start ?? ''} />
         </Field>
-        <Field label="Hasta" htmlFor="block-end" error={err.end}>
+        <Field label={kind === 'event' ? 'Hasta (opcional)' : 'Hasta'} htmlFor="block-end" error={err.end}>
           <Input id="block-end" type="time" name="end" required={kind === 'block'} defaultValue={initial.end ?? ''} />
         </Field>
       </div>

@@ -65,7 +65,7 @@ export function HoyView({ today, now, name, ready, tasks, priorities, frog, agen
       <header className="flex items-start justify-between gap-4 pt-2">
         <div className="min-w-0">
           <p className="text-sm font-medium text-ink-3">{longDateLabel(today)}</p>
-          <h1 className="mt-0.5 text-[28px] leading-tight font-semibold tracking-tight text-ink">
+          <h1 className="mt-0.5 text-[26px] sm:text-[28px] leading-tight font-semibold tracking-tight text-ink">
             {greetingFor(now)}
             {name ? `, ${name}` : ''} 👋
           </h1>
