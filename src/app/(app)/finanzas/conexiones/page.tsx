@@ -1,7 +1,7 @@
 import { RefreshCw, Unlink, CheckCircle2, AlertTriangle, Link2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth';
-import { mpAuthorizeUrl, mpConfigured } from '@/lib/mercadopago';
+import { mpConfigured } from '@/lib/mercadopago';
 import { syncMercadoPago, disconnectMercadoPago } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -22,7 +22,8 @@ export default async function ConexionesPage({
     .maybeSingle();
 
   const configured = mpConfigured();
-  const authorizeUrl = mpAuthorizeUrl();
+  // Pasa por /api/mp/connect, que agrega el `state` anti-CSRF.
+  const authorizeUrl = '/api/mp/connect';
 
   return (
     <div className="max-w-2xl mx-auto space-y-8 pb-20">

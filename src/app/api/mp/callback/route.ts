@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { mpExchangeCode } from '@/lib/mercadopago';
+import { MP_STATE_COOKIE, mpExchangeCode } from '@/lib/mercadopago';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -9,11 +9,19 @@ export async function GET(request: NextRequest) {
   const redirect = (status: string) => {
     const url = new URL('/finanzas/conexiones', request.url);
     url.searchParams.set('mp', status);
-    return NextResponse.redirect(url);
+    const res = NextResponse.redirect(url);
+    res.cookies.set(MP_STATE_COOKIE, '', { path: '/api/mp', maxAge: 0 });
+    return res;
   };
 
   const code = request.nextUrl.searchParams.get('code');
   if (!code) return redirect('error');
+
+  // El `state` debe coincidir con el que guardamos al iniciar la conexión:
+  // así nadie puede vincular SU cuenta de Mercado Pago a la tuya con un enlace.
+  const state = request.nextUrl.searchParams.get('state');
+  const expected = request.cookies.get(MP_STATE_COOKIE)?.value;
+  if (!state || !expected || state !== expected) return redirect('error');
 
   const supabase = await createClient();
   const {

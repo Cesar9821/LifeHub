@@ -9,8 +9,11 @@ export function mpConfigured(): boolean {
   return Boolean(process.env.MP_CLIENT_ID && process.env.MP_CLIENT_SECRET && process.env.MP_REDIRECT_URI);
 }
 
+/** Cookie con el `state` del OAuth (protege el callback contra CSRF). */
+export const MP_STATE_COOKIE = 'mp_oauth_state';
+
 /** URL a la que se envía al usuario para que autorice la conexión. */
-export function mpAuthorizeUrl(): string {
+export function mpAuthorizeUrl(state?: string): string {
   const clientId = process.env.MP_CLIENT_ID || '';
   const redirect = process.env.MP_REDIRECT_URI || '';
   const params = new URLSearchParams({
@@ -19,6 +22,7 @@ export function mpAuthorizeUrl(): string {
     platform_id: 'mp',
     redirect_uri: redirect,
   });
+  if (state) params.set('state', state);
   return `https://auth.mercadopago.cl/authorization?${params.toString()}`;
 }
 
