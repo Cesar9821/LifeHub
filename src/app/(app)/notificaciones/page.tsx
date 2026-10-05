@@ -1,5 +1,5 @@
 import { PageHeader } from '@/components/ui/card';
-import { Wallet, Brain, Users, Target, Clock, Flame, Bell, CalendarCheck } from 'lucide-react';
+import { Wallet, Brain, Users, Target, Clock, Flame, Bell, CalendarCheck, Moon, Cake } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth';
 import NotificationsManager from './notifications-manager';
@@ -24,6 +24,9 @@ interface Prefs {
   reminders?: boolean;
   review_enabled?: boolean;
   review_time?: string;
+  closing_enabled?: boolean;
+  closing_time?: string;
+  dates_enabled?: boolean;
 }
 
 const DEFAULT_PREFS: Prefs = {
@@ -43,7 +46,7 @@ const DEFAULT_PREFS: Prefs = {
 
 const MODULES = [
   { key: 'finanzas', label: 'Finanzas', desc: 'Cuentas por pagar + saldo bajo', icon: Wallet, color: 'text-ink-2' },
-  { key: 'mentalidad', label: 'Hábitos', desc: 'La Forja, tu 369 y hábitos del día', icon: Brain, color: 'text-ink-2' },
+  { key: 'mentalidad', label: 'Hábitos y consejos', desc: 'Consejo del día, tu 369 y hábitos del día', icon: Brain, color: 'text-ink-2' },
   { key: 'familia', label: 'Hogar', desc: 'Tareas asignadas y eventos de hoy/mañana', icon: Users, color: 'text-ink-2' },
   { key: 'metas', label: 'Objetivos', desc: 'Objetivos que vencen pronto', icon: Target, color: 'text-ink-2' },
 ] as const;
@@ -66,12 +69,13 @@ export default async function NotificacionesPage() {
   const prefs: Prefs = (data as Prefs) || DEFAULT_PREFS;
 
   const times = [
-    { name: 'forja_time', label: 'La Forja — frase del día', value: hhmm(prefs.forja_time, '06:00'), icon: Flame },
+    { name: 'forja_time', label: 'Consejo del día', value: hhmm(prefs.forja_time, '06:00'), icon: Flame },
     { name: 'm369_morning_time', label: '369 · mañana (3×)', value: hhmm(prefs.m369_morning_time, '09:00'), icon: Clock },
     { name: 'm369_afternoon_time', label: '369 · tarde (6×)', value: hhmm(prefs.m369_afternoon_time, '14:00'), icon: Clock },
     { name: 'm369_night_time', label: '369 · noche (9×)', value: hhmm(prefs.m369_night_time, '21:00'), icon: Clock },
     { name: 'digest_time', label: 'Resumen de pendientes', value: hhmm(prefs.digest_time, '09:00'), icon: Clock },
     { name: 'review_time', label: 'Revisión semanal (domingo)', value: hhmm(prefs.review_time, '19:00'), icon: Clock },
+    { name: 'closing_time', label: 'Cierre del día', value: hhmm(prefs.closing_time, '21:30'), icon: Moon },
   ];
 
   return (
@@ -112,6 +116,26 @@ export default async function NotificacionesPage() {
                 </div>
               </div>
               <input type="checkbox" name="review_enabled" defaultChecked={prefs.review_enabled !== false} className="w-5 h-5 accent-indigo-500 shrink-0" />
+            </label>
+            <label className="flex items-center justify-between gap-4 py-1.5">
+              <div className="flex items-center gap-3">
+                <Moon size={18} className="text-ink-2" />
+                <div>
+                  <p className="text-sm font-bold text-ink">Cierre del día</p>
+                  <p className="text-xs text-ink-3">En la noche, si aún no cierras el día</p>
+                </div>
+              </div>
+              <input type="checkbox" name="closing_enabled" defaultChecked={prefs.closing_enabled !== false} className="w-5 h-5 accent-indigo-500 shrink-0" />
+            </label>
+            <label className="flex items-center justify-between gap-4 py-1.5">
+              <div className="flex items-center gap-3">
+                <Cake size={18} className="text-ink-2" />
+                <div>
+                  <p className="text-sm font-bold text-ink">Cumpleaños y fechas</p>
+                  <p className="text-xs text-ink-3">El día antes y el mismo día</p>
+                </div>
+              </div>
+              <input type="checkbox" name="dates_enabled" defaultChecked={prefs.dates_enabled !== false} className="w-5 h-5 accent-indigo-500 shrink-0" />
             </label>
 
             {MODULES.map((m) => {
