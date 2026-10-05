@@ -1,4 +1,5 @@
-import { CalendarCheck, CreditCard, Zap } from 'lucide-react';
+import { CalendarCheck, Zap } from 'lucide-react';
+import { PageHeader } from '@/components/ui/card';
 import { formatCLP } from '@/lib/format';
 import { monthShort } from '@/lib/plan/months';
 import { debtItemsView, defaultMonth, loadPlanPage } from '@/services/plan';
@@ -13,13 +14,7 @@ export default async function DeudaCmrPage() {
 
   const header = (
     <div className="space-y-3">
-      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-line-strong bg-surface w-fit">
-        <CreditCard size={14} className="text-rose-400" />
-        <span className="text-xs font-bold text-ink-2 tracking-wide">Plan casa</span>
-      </div>
-      <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold text-ink tracking-tight leading-none">
-        Deuda CMR<span className="text-rose-500">.</span>
-      </h1>
+      <PageHeader title="Deuda CMR" subtitle="Plan para pagar la tarjeta" />
     </div>
   );
 
@@ -105,8 +100,27 @@ export default async function DeudaCmrPage() {
         <section className="bg-surface border border-line rounded-3xl p-5 space-y-5">
           <h2 className="text-sm font-semibold text-ink tracking-wide">Plan mes a mes</h2>
           <DebtChart rows={chartRows} items={activeItems.map((d) => ({ id: d.id, name: d.name }))} />
-          <div className="overflow-x-auto -mx-5 px-5">
-            <table className="w-full text-xs min-w-[520px]">
+          {/* Celular: una fila por mes, sin scroll horizontal */}
+          <ul className="sm:hidden divide-y divide-line tabular-nums">
+            {planMonths.map((m) => (
+              <li key={m.month} className={`py-2.5 ${m.month === month ? 'text-ink' : 'text-ink-2'}`}>
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-[15px] font-semibold">
+                    {monthShort(m.month)}
+                    {m.source === 'real' && <span className="ml-1.5 text-xs text-emerald-400">real</span>}
+                  </span>
+                  <span className="text-[15px] font-semibold">{formatCLP(m.total)}</span>
+                </div>
+                <p className="mt-0.5 text-xs text-ink-3">
+                  Cuotas {formatCLP(m.total - m.advance)}
+                  {m.advance > 0.5 && <span className="text-amber-300"> · adelanto {formatCLP(m.advance)}</span>}
+                  {' · '}queda {formatCLP(m.remainingAfter)}
+                </p>
+              </li>
+            ))}
+          </ul>
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full text-xs ">
               <thead>
                 <tr className="text-ink-3 text-xs tracking-wide">
                   <th className="text-left font-semibold py-2 pr-3">Mes</th>
