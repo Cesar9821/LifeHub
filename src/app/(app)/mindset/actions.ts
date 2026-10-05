@@ -358,3 +358,61 @@ export async function toggleTopTask(formData: FormData) {
   failIf(error, 'No se pudo actualizar la rana');
   revalidateAll();
 }
+
+/* ------------------------------------------------------------------ */
+/*  Hábitos simples (pantalla Hábitos): diarios, días fijos o N/semana  */
+/* ------------------------------------------------------------------ */
+
+const simpleHabitSchema = z.object({
+  id: z.string().optional(),
+  name: zRequiredText('El hábito'),
+  mode: z.enum(['daily', 'days', 'weekly']).default('daily'),
+  target_per_week: z.coerce.number().int().min(1).max(7).optional(),
+});
+
+/** Crea o edita un hábito. "Días específicos" se guarda en days_of_week. */
+export async function saveSimpleHabit(_prev: FormState, formData: FormData): Promise<FormState> {
+  const parsed = parseForm(simpleHabitSchema, formData);
+  if (!parsed.success) return parsed.state;
+  const { id, name, mode, target_per_week } = parsed.data;
+  const days = [...new Set(formData.getAll('days').map(Number).filter((n) => n >= 1 && n <= 7))].sort();
+  if (mode === 'days' && days.length === 0) {
+    return errorState('Revisa los datos ingresados.', { days: 'Elige al menos un día.' });
+  }
+
+  const supabase = await createClient();
+  const user = await requireUser();
+  const fields: Record<string, unknown> = {
+    name,
+    frequency: mode === 'weekly' ? 'weekly' : 'daily',
+    target_per_week: mode === 'weekly' ? target_per_week ?? 3 : mode === 'days' ? days.length : 7,
+    days_of_week: mode === 'days' ? days : null,
+  };
+
+  const write = async (f: Record<string, unknown>) => {
+    if (id) return supabase.from('habits').update(f).eq('id', id).eq('user_id', user.id);
+    let householdId: string | null = null;
+    try {
+      householdId = await getActiveHouseholdId();
+    } catch {
+      householdId = null;
+    }
+    return supabase.from('habits').insert([{ ...f, user_id: user.id, household_id: householdId, kind: 'build', is_active: true }]);
+  };
+
+  let { error } = await write(fields);
+  if (error && /days_of_week/.test(error.message)) {
+    // El SQL nuevo aún no se ejecuta: guarda sin días fijos.
+    if (mode === 'days') {
+      return errorState('Para elegir días específicos, ejecuta supabase/20261005_lifehub_planning.sql en Supabase.');
+    }
+    delete fields.days_of_week;
+    ({ error } = await write(fields));
+  }
+  if (error) {
+    console.error('Error guardando hábito:', error.message);
+    return errorState('No pudimos guardar el hábito. Inténtalo nuevamente.');
+  }
+  revalidateAll();
+  return successState(id ? 'Hábito actualizado.' : 'Hábito creado.');
+}
