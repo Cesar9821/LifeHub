@@ -77,6 +77,17 @@ export function longDateLabel(date: string): string {
   return `${DAY_NAMES[isoDow(date) - 1]} ${d} de ${MONTHS[m - 1]}`;
 }
 
+/** "5 de octubre" */
+export function dayMonthLabel(date: string): string {
+  const [, m, d] = parts(date);
+  return `${d} de ${MONTHS[m - 1]}`;
+}
+
+/** Día abreviado: "mié" */
+export function dayShort(date: string): string {
+  return DAY_SHORT[isoDow(date) - 1];
+}
+
 /** "lun 5" */
 export function shortDayLabel(date: string): string {
   return `${DAY_SHORT[isoDow(date) - 1]} ${parts(date)[2]}`;
