@@ -10,16 +10,14 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-bg flex items-center justify-center p-6 relative overflow-hidden">
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-900/20 rounded-full blur-[120px]" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-900/10 rounded-full blur-[120px]" />
 
       <div className="relative z-10 w-full max-w-md">
         <div className="flex flex-col items-center mb-10">
-          <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 p-4 rounded-3xl mb-6 shadow-[0_0_50px_-12px_rgba(79,70,229,0.5)]">
+          <div className="bg-surface-3 border border-line-strong p-4 rounded-3xl mb-6">
             <LayoutGrid className="h-9 w-9 text-ink" />
           </div>
           <h1 className="text-5xl font-semibold text-ink tracking-tight">
-            Life<span className="text-indigo-500">Hub</span>
+            LifeHub
           </h1>
           <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full border border-line-strong bg-surface">
             <Activity size={12} className="text-emerald-400" />
@@ -27,7 +25,7 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <form action={formAction} className="bg-surface border border-line rounded-[2.5rem] p-8 md:p-10 space-y-5">
+        <form action={formAction} className="bg-surface border border-line rounded-3xl p-8 md:p-10 space-y-5">
           {state?.error && (
             <div className="flex items-center gap-2 bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-bold px-4 py-3 rounded-2xl">
               <AlertCircle size={16} className="shrink-0" />
@@ -36,39 +34,42 @@ export default function RegisterPage() {
           )}
 
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-ink-3 tracking-wide pl-2">Nombre</label>
+            <label htmlFor="auth-full_name" className="text-sm font-medium text-ink-2 pl-2">Nombre</label>
             <input
+              id="auth-full_name"
               name="full_name"
               type="text"
               autoComplete="name"
               required
               placeholder="Cómo te llamas"
-              className="w-full bg-black/30 border border-line-strong rounded-2xl px-5 py-4 text-ink font-medium placeholder:text-ink-3 focus:outline-none focus:border-indigo-500/50 transition-colors"
+              className="w-full bg-surface-2 border border-line-strong rounded-2xl px-5 py-4 text-ink font-medium placeholder:text-ink-3 focus:outline-none focus:border-indigo-500/50 transition-colors"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-ink-3 tracking-wide pl-2">Correo</label>
+            <label htmlFor="auth-email" className="text-sm font-medium text-ink-2 pl-2">Correo</label>
             <input
+              id="auth-email"
               name="email"
               type="email"
               autoComplete="email"
               required
               placeholder="tu@correo.com"
-              className="w-full bg-black/30 border border-line-strong rounded-2xl px-5 py-4 text-ink font-medium placeholder:text-ink-3 focus:outline-none focus:border-indigo-500/50 transition-colors"
+              className="w-full bg-surface-2 border border-line-strong rounded-2xl px-5 py-4 text-ink font-medium placeholder:text-ink-3 focus:outline-none focus:border-indigo-500/50 transition-colors"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-ink-3 tracking-wide pl-2">Contraseña</label>
+            <label htmlFor="auth-password" className="text-sm font-medium text-ink-2 pl-2">Contraseña</label>
             <input
+              id="auth-password"
               name="password"
               type="password"
               autoComplete="new-password"
               required
               minLength={6}
               placeholder="Mínimo 6 caracteres"
-              className="w-full bg-black/30 border border-line-strong rounded-2xl px-5 py-4 text-ink font-medium placeholder:text-ink-3 focus:outline-none focus:border-indigo-500/50 transition-colors"
+              className="w-full bg-surface-2 border border-line-strong rounded-2xl px-5 py-4 text-ink font-medium placeholder:text-ink-3 focus:outline-none focus:border-indigo-500/50 transition-colors"
             />
           </div>
 
