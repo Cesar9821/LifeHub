@@ -23,6 +23,21 @@ function revalidateAll() {
 
 const M369_TARGETS = { morning: 3, afternoon: 6, night: 9 } as const;
 
+/**
+ * Escribe con la fecha de Chile. Si la base aún tiene el trigger antiguo
+ * (compara con la fecha UTC; se corrige con 20261005_habitos_hora_chile.sql),
+ * reintenta con la fecha UTC para que marcar en la noche nunca falle.
+ */
+async function withLogDate<T extends { error: { message: string } | null }>(run: (date: string) => PromiseLike<T>): Promise<T> {
+  const chile = todayStr();
+  const first = await run(chile);
+  const utc = new Date().toISOString().slice(0, 10);
+  if (first.error && /Solo puedes registrar el día de hoy/.test(first.error.message) && utc !== chile) {
+    return run(utc);
+  }
+  return first;
+}
+
 /** Marca o desmarca un hábito para HOY (el pasado no se toca). */
 export async function toggleHabit(formData: FormData) {
   const supabase = await createClient();
@@ -45,9 +60,9 @@ export async function toggleHabit(formData: FormData) {
     failIf(error, 'No se pudo desmarcar el hábito');
   } else {
     // Marcar: inserta el registro de hoy
-    const { error } = await supabase.from('habit_logs').insert([
-      { habit_id: habitId, user_id: user.id, log_date: today, done: true },
-    ]);
+    const { error } = await withLogDate((date) =>
+      supabase.from('habit_logs').insert([{ habit_id: habitId, user_id: user.id, log_date: date, done: true }])
+    );
     // El registro único por día evita duplicados; ignoramos ese error.
     if (!error?.message?.includes('duplicate')) {
       failIf(error, 'No se pudo marcar el hábito');
@@ -194,7 +209,6 @@ export async function saveDailyLog(_prev: FormState, formData: FormData): Promis
 
   const payload = {
     user_id: user.id,
-    log_date: todayStr(),
     sleep_hours: num('sleep_hours'),
     mood: num('mood'),
     energy: num('energy'),
@@ -205,9 +219,9 @@ export async function saveDailyLog(_prev: FormState, formData: FormData): Promis
     updated_at: new Date().toISOString(),
   };
 
-  const { error } = await supabase
-    .from('daily_logs')
-    .upsert(payload, { onConflict: 'user_id,log_date' });
+  const { error } = await withLogDate((date) =>
+    supabase.from('daily_logs').upsert({ ...payload, log_date: date }, { onConflict: 'user_id,log_date' })
+  );
 
   if (error) {
     console.error('Error guardando registro diario:', error.message);
@@ -234,14 +248,11 @@ export async function addWater(formData: FormData) {
 
   const newTotal = Math.max(0, Number(existing?.water_ml || 0) + ml);
 
-  const { error } = await supabase.from('daily_logs').upsert(
-    {
-      user_id: user.id,
-      log_date: today,
-      water_ml: newTotal,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'user_id,log_date' }
+  const { error } = await withLogDate((date) =>
+    supabase.from('daily_logs').upsert(
+      { user_id: user.id, log_date: date, water_ml: newTotal, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id,log_date' }
+    )
   );
 
   failIf(error, 'No se pudo registrar el agua');
