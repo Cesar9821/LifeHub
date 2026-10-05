@@ -1,3 +1,4 @@
+import { todayStr } from '@/lib/format';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser, getActiveHouseholdId } from '@/lib/auth';
 
@@ -60,9 +61,9 @@ function daysBetween(a: string, b: string): number {
 }
 
 /** Fecha de hoy YYYY-MM-DD (local). */
+/** Hoy en horario de Chile (el servidor corre en UTC). */
 function todayLocal(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return todayStr();
 }
 
 function computeProgress(g: Goal, doneMilestones: number, totalMilestones: number): number {

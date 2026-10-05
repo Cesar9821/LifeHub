@@ -1,14 +1,15 @@
 'use client';
 
 import { useActionState, useEffect, useMemo, useState } from 'react';
-import { Plus, X } from 'lucide-react';
-import { saveExpense } from '@/app/finanzas/plan/actions';
+import { Plus } from 'lucide-react';
+import { saveExpense } from '@/app/(app)/finanzas/plan/actions';
 import { IDLE_STATE } from '@/lib/action';
 import { CLPInput } from '@/components/ui/clp-input';
 import { InlineMessage } from '@/components/ui/inline-message';
 import { SubmitButton } from '@/components/ui/submit-button';
 import { fieldBase } from '@/components/ui/styles';
 import { toast } from '@/components/ui/toast';
+import { Sheet } from '@/components/ui/sheet';
 import type { ExpenseInitial, ExpensePreset, QuickData } from './types';
 
 const METHODS = [
@@ -35,10 +36,10 @@ function Chips({
           key={o.value}
           type="button"
           onClick={() => onChange(o.value)}
-          className={`min-h-11 px-4 rounded-xl text-xs font-black transition-all active:scale-95 border ${
+          className={`min-h-11 px-4 rounded-xl text-xs font-semibold transition-all active:scale-95 border ${
             value === o.value
               ? 'bg-white text-black border-white'
-              : 'bg-black/30 text-slate-400 border-white/10 hover:text-white'
+              : 'bg-black/30 text-ink-2 border-line-strong hover:text-ink'
           }`}
         >
           {o.label}
@@ -49,7 +50,7 @@ function Chips({
 }
 
 function Label({ children }: { children: React.ReactNode }) {
-  return <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">{children}</p>;
+  return <p className="text-xs font-semibold text-ink-3 tracking-wide px-1">{children}</p>;
 }
 
 /** Formulario de registro/edición de un gasto o ingreso (monto, concepto, quién, medio, fecha). */
@@ -106,7 +107,7 @@ export function ExpenseForm({
       {isExpense && <input type="hidden" name="payment_method" value={method} />}
 
       {!initial && !locked && (
-        <div className="grid grid-cols-2 gap-2 p-1 bg-black/30 rounded-2xl border border-white/5">
+        <div className="grid grid-cols-2 gap-2 p-1 bg-black/30 rounded-2xl border border-line">
           {(['expense', 'income'] as const).map((k) => (
             <button
               key={k}
@@ -115,12 +116,12 @@ export function ExpenseForm({
                 setKind(k);
                 setConceptId('');
               }}
-              className={`min-h-11 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+              className={`min-h-11 rounded-xl text-xs font-semibold tracking-wide transition-all ${
                 kind === k
                   ? k === 'expense'
                     ? 'bg-rose-500/20 text-rose-300'
                     : 'bg-emerald-500/20 text-emerald-300'
-                  : 'text-slate-500'
+                  : 'text-ink-3'
               }`}
             >
               {k === 'expense' ? 'Gasto' : 'Ingreso'}
@@ -138,15 +139,15 @@ export function ExpenseForm({
           defaultValue={initial?.amount ?? preset?.amount ?? state.values?.amount ?? ''}
           placeholder="0"
           accent={isExpense ? 'indigo' : 'emerald'}
-          className="w-full bg-black/30 border border-white/10 rounded-xl px-3 py-4 text-3xl font-black text-white placeholder:text-slate-700 outline-none focus:ring-2 focus:ring-white/15"
+          className="w-full bg-black/30 border border-line-strong rounded-xl px-3 py-4 text-3xl font-semibold text-ink placeholder:text-ink-3 outline-none focus:ring-2 focus:ring-white/15"
         />
-        {err.amount && <p className="text-[11px] font-bold text-rose-400 px-1">{err.amount}</p>}
+        {err.amount && <p className="text-xs font-bold text-rose-400 px-1">{err.amount}</p>}
       </div>
 
       {locked ? (
-        <div className="flex items-center justify-between gap-3 bg-black/30 border border-white/10 rounded-xl px-3 min-h-11">
-          <span className="text-sm font-black text-white">{preset?.label ?? selected?.name}</span>
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">{selected?.group_name}</span>
+        <div className="flex items-center justify-between gap-3 bg-black/30 border border-line-strong rounded-xl px-3 min-h-11">
+          <span className="text-sm font-semibold text-ink">{preset?.label ?? selected?.name}</span>
+          <span className="text-xs font-semibold text-ink-3 tracking-wide">{selected?.group_name}</span>
         </div>
       ) : (
       <div className="space-y-1.5">
@@ -156,18 +157,18 @@ export function ExpenseForm({
           onChange={(e) => pickConcept(e.target.value)}
           className={`${fieldBase} min-h-11 appearance-none ${err.concept_id ? 'border-rose-500/50' : ''}`}
         >
-          <option value="" className="bg-[#0A0C10]">Elige un concepto…</option>
+          <option value="" className="bg-surface">Elige un concepto…</option>
           {groups.map(([group, items]) => (
-            <optgroup key={group} label={group} className="bg-[#0A0C10]">
+            <optgroup key={group} label={group} className="bg-surface">
               {items.map((c) => (
-                <option key={c.id} value={c.id} className="bg-[#0A0C10]">
+                <option key={c.id} value={c.id} className="bg-surface">
                   {c.name}
                 </option>
               ))}
             </optgroup>
           ))}
         </select>
-        {err.concept_id && <p className="text-[11px] font-bold text-rose-400 px-1">{err.concept_id}</p>}
+        {err.concept_id && <p className="text-xs font-bold text-rose-400 px-1">{err.concept_id}</p>}
       </div>
       )}
 
@@ -181,14 +182,14 @@ export function ExpenseForm({
             defaultValue={initial?.debt_item_id ?? ''}
             className={`${fieldBase} min-h-11 appearance-none ${err.debt_item_id ? 'border-rose-500/50' : ''}`}
           >
-            <option value="" className="bg-[#0A0C10]">¿Qué cuota pagaste?</option>
+            <option value="" className="bg-surface">¿Qué cuota pagaste?</option>
             {data.debtItems.map((d) => (
-              <option key={d.id} value={d.id} className="bg-[#0A0C10]">
+              <option key={d.id} value={d.id} className="bg-surface">
                 {d.name}
               </option>
             ))}
           </select>
-          {err.debt_item_id && <p className="text-[11px] font-bold text-rose-400 px-1">{err.debt_item_id}</p>}
+          {err.debt_item_id && <p className="text-xs font-bold text-rose-400 px-1">{err.debt_item_id}</p>}
         </div>
       )}
 
@@ -235,7 +236,7 @@ export function ExpenseForm({
 
       <SubmitButton
         pendingText="Guardando…"
-        className={`w-full min-h-12 text-sm text-white ${
+        className={`w-full min-h-12 text-sm text-ink ${
           isExpense ? 'bg-rose-600 hover:bg-rose-500' : 'bg-emerald-600 hover:bg-emerald-500'
         }`}
       >
@@ -269,26 +270,10 @@ export function ExpenseSheet({
   preset?: ExpensePreset;
   title?: string;
 }) {
-  if (!open) return null;
   return (
-    <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm" onClick={onClose}>
-      <div
-        role="dialog"
-        aria-modal="true"
-        className="w-full sm:max-w-md max-h-[92vh] overflow-y-auto bg-[#0F1117] border border-white/10 rounded-t-[2rem] sm:rounded-[2rem] p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-black text-white uppercase tracking-wider">
-            {title ?? (initial ? 'Editar movimiento' : 'Registro rápido')}
-          </h2>
-          <button type="button" onClick={onClose} className="p-2.5 text-slate-500 hover:text-white" aria-label="Cerrar">
-            <X size={20} />
-          </button>
-        </div>
-        <ExpenseForm data={data} initial={initial} preset={preset} onDone={onClose} />
-      </div>
-    </div>
+    <Sheet open={open} onClose={onClose} title={title ?? (initial ? 'Editar movimiento' : 'Registrar gasto')}>
+      <ExpenseForm data={data} initial={initial} preset={preset} onDone={onClose} />
+    </Sheet>
   );
 }
 
@@ -301,7 +286,7 @@ export function QuickExpenseFab({ data }: { data: QuickData }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed z-[55] right-4 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] md:bottom-8 md:right-8 flex items-center gap-2 min-h-14 pl-5 pr-6 rounded-full bg-rose-600 text-white font-black text-sm uppercase tracking-wider shadow-[0_12px_30px_-8px_rgba(225,29,72,0.7)] hover:bg-rose-500 active:scale-95 transition-all"
+        className="fixed z-[55] right-4 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] md:bottom-8 md:right-8 flex items-center gap-2 min-h-14 pl-5 pr-6 rounded-full bg-rose-600 text-ink font-semibold text-sm tracking-wide shadow-[0_12px_30px_-8px_rgba(225,29,72,0.7)] hover:bg-rose-500 active:scale-95 transition-all"
       >
         <Plus size={20} strokeWidth={3} /> Gasto
       </button>

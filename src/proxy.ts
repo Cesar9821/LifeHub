@@ -13,6 +13,6 @@ export const config = {
      * - _next/static, _next/image (assets)
      * - favicon y archivos estáticos comunes
      */
-    '/((?!_next/static|_next/image|favicon.ico|manifest.json|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
   ],
 };

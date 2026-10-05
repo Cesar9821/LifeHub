@@ -20,12 +20,16 @@ export interface NumberInputProps {
   className?: string;
   accent?: 'indigo' | 'emerald' | 'amber';
   invalid?: boolean;
+  /** Avisa el valor limpio al escribir (para cálculos en vivo). */
+  onValueChange?: (value: string) => void;
+  /** Id del input visible (para asociar un <label>). */
+  id?: string;
 }
 
 const RING = {
-  indigo: 'focus:ring-indigo-500/50 focus:border-indigo-500',
-  emerald: 'focus:ring-emerald-500/50 focus:border-emerald-500',
-  amber: 'focus:ring-amber-500/50 focus:border-amber-500',
+  indigo: 'focus:ring-accent/25 focus:border-accent',
+  emerald: 'focus:ring-success/25 focus:border-success',
+  amber: 'focus:ring-warning/25 focus:border-warning',
 };
 
 /**
@@ -45,32 +49,39 @@ export function NumberInput({
   className,
   accent = 'indigo',
   invalid = false,
+  onValueChange,
+  id,
 }: NumberInputProps) {
   const [state, setState] = useState(() => formatStored(defaultValue, decimals));
 
   const base =
     className ||
-    `bg-slate-900/50 border ${invalid ? 'border-rose-500/60' : 'border-slate-800'} rounded-xl p-3 text-sm text-white placeholder:text-slate-600 outline-none focus:ring-2 ${RING[accent]} transition-all backdrop-blur-md w-full`;
+    `bg-surface-2 border ${invalid ? 'border-danger/60' : 'border-line-strong'} min-h-11 rounded-xl px-3 py-2.5 text-[15px] tabular-nums text-ink placeholder:text-ink-3 outline-none focus:ring-2 ${RING[accent]} transition-colors w-full`;
 
   return (
     <div className="relative">
       {prefix && (
-        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-bold pointer-events-none">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-3 text-sm font-bold pointer-events-none">
           {prefix}
         </span>
       )}
       <input
+        id={id}
         type="text"
         inputMode={decimals > 0 ? 'decimal' : 'numeric'}
         autoComplete="off"
         value={state.display}
         autoFocus={autoFocus}
         placeholder={placeholder}
-        onChange={(e) => setState(formatTyped(e.target.value, decimals, allowNegative))}
+        onChange={(e) => {
+          const next = formatTyped(e.target.value, decimals, allowNegative);
+          setState(next);
+          onValueChange?.(next.value);
+        }}
         className={`${base} ${prefix ? 'pl-7' : ''} ${suffix ? 'pr-12' : ''}`}
       />
       {suffix && (
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs font-bold pointer-events-none">
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-3 text-xs font-bold pointer-events-none">
           {suffix}
         </span>
       )}

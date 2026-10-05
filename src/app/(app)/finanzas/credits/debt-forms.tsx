@@ -1,0 +1,239 @@
+'use client';
+
+import { useActionState, useEffect, useState } from 'react';
+import { Archive, Pencil, Plus } from 'lucide-react';
+import { archiveDebtItem, saveCmrSettings, saveDebtItem } from '@/app/(app)/finanzas/plan/actions';
+import { IDLE_STATE } from '@/lib/action';
+import { formatCLP } from '@/lib/format';
+import { CLPInput } from '@/components/ui/clp-input';
+import { NumberInput } from '@/components/ui/number-input';
+import { InlineMessage } from '@/components/ui/inline-message';
+import { SubmitButton } from '@/components/ui/submit-button';
+import { fieldBase } from '@/components/ui/styles';
+import { ConfirmAction } from '@/components/finanzas/confirm-action';
+
+function Label({ children }: { children: React.ReactNode }) {
+  return <span className="text-xs font-semibold text-ink-3 tracking-wide px-1">{children}</span>;
+}
+
+/** Pago fijo mensual y mes de inicio del plan. */
+export function CmrSettingsForm({
+  fixedPayment,
+  startMonth,
+  months,
+}: {
+  fixedPayment: number;
+  startMonth: string;
+  months: { value: string; label: string }[];
+}) {
+  const [state, action] = useActionState(saveCmrSettings, IDLE_STATE);
+  return (
+    <form action={action} className="bg-surface border border-line rounded-3xl p-5 space-y-4">
+      <h2 className="text-sm font-semibold text-ink tracking-wide">Parámetros del plan</h2>
+      <InlineMessage state={state} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <label className="space-y-1.5">
+          <Label>Pago fijo mensual</Label>
+          <CLPInput name="cmr_fixed_payment" defaultValue={fixedPayment} required />
+        </label>
+        <label className="space-y-1.5 flex flex-col">
+          <Label>Mes de inicio</Label>
+          <select name="cmr_start_month" defaultValue={startMonth} className={`${fieldBase} min-h-11 appearance-none`}>
+            {months.map((m) => (
+              <option key={m.value} value={m.value} className="bg-surface">
+                {m.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <p className="text-xs text-ink-3">
+        Paga siempre el total facturado de la CMR, nunca el mínimo. Lo que sobra después de las cuotas adelanta ítems por prioridad.
+      </p>
+      <SubmitButton pendingText="Recalculando…" className="w-full min-h-11">
+        Recalcular plan
+      </SubmitButton>
+    </form>
+  );
+}
+
+export interface DebtItemFields {
+  id?: string;
+  name: string;
+  price: number;
+  installment: number;
+  total_installments: number;
+  remaining_installments: number;
+  priority: number;
+}
+
+function DebtItemForm({ initial, onDone }: { initial?: DebtItemFields; onDone: () => void }) {
+  const [state, action] = useActionState(saveDebtItem, IDLE_STATE);
+  useEffect(() => {
+    if (state.ok) onDone();
+  }, [state, onDone]);
+  const err = state.fieldErrors ?? {};
+  const num = (name: keyof DebtItemFields, label: string, value?: number, placeholder = '0', required = true) => (
+    <label className="space-y-1.5 flex flex-col">
+      <Label>{label}</Label>
+      <NumberInput name={name} required={required} defaultValue={value || ''} placeholder={placeholder} invalid={!!err[name]} />
+      {err[name] && <span className="text-xs font-bold text-rose-400 px-1">{err[name]}</span>}
+    </label>
+  );
+
+  return (
+    <form action={action} className="space-y-3 pt-3">
+      {initial?.id && <input type="hidden" name="id" value={initial.id} />}
+      <InlineMessage state={state} />
+      <label className="space-y-1.5 flex flex-col">
+        <Label>Ítem</Label>
+        <input name="name" required defaultValue={initial?.name ?? ''} placeholder="Ej: Refrigerador" className={`${fieldBase} min-h-11`} />
+      </label>
+      <div className="grid grid-cols-2 gap-3">
+        <label className="space-y-1.5 flex flex-col">
+          <Label>Precio</Label>
+          <CLPInput name="price" defaultValue={initial?.price || ''} />
+        </label>
+        {num('total_installments', 'En cuántas cuotas', initial?.total_installments, 'Ej: 3')}
+        <label className="space-y-1.5 flex flex-col">
+          <Label>Valor cuota</Label>
+          <CLPInput name="installment" decimals={2} defaultValue={initial?.installment || ''} placeholder="Se calcula" />
+          {err.installment && <span className="text-xs font-bold text-rose-400 px-1">{err.installment}</span>}
+        </label>
+        {num('remaining_installments', 'Cuotas que quedan', initial?.remaining_installments, 'Todas', false)}
+        {num('priority', 'Prioridad (1 = primero)', initial?.priority)}
+      </div>
+      <div className="flex gap-2">
+        <SubmitButton pendingText="Guardando…" className="flex-1 min-h-11">
+          Guardar
+        </SubmitButton>
+        <button type="button" onClick={onDone} className="min-h-11 px-4 text-xs font-bold text-ink-3 hover:text-ink">
+          Cancelar
+        </button>
+      </div>
+    </form>
+  );
+}
+
+export function AddDebtItem({ nextPriority }: { nextPriority: number }) {
+  const [open, setOpen] = useState(false);
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="w-full min-h-12 inline-flex items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 text-xs font-semibold text-ink-2 tracking-wide hover:text-ink hover:border-white/30"
+      >
+        <Plus size={16} /> Agregar compra en cuotas
+      </button>
+    );
+  }
+  return (
+    <div className="bg-surface border border-line rounded-3xl p-5">
+      <h3 className="text-sm font-semibold text-ink tracking-wide">Nueva compra en cuotas</h3>
+      <p className="mt-1 text-xs text-ink-3">
+        Pon qué compraste, el precio y en cuántas cuotas: el valor de la cuota se calcula solo. Sus cuotas se pagan
+        dentro del pago fijo mensual; si no alcanzan, el pago del mes sube a la suma de las cuotas.
+      </p>
+      <DebtItemForm
+        initial={{ name: '', price: 0, installment: 0, total_installments: 0, remaining_installments: 0, priority: nextPriority }}
+        onDone={() => setOpen(false)}
+      />
+    </div>
+  );
+}
+
+export function DebtItemCard({
+  item,
+  color,
+  balance,
+  paid,
+  remainingInstallments,
+  interest,
+  status,
+  thisMonth,
+}: {
+  item: DebtItemFields & { id: string };
+  color: string;
+  balance: number;
+  paid: number;
+  remainingInstallments: number;
+  interest: number;
+  status: 'Pagado' | 'Pendiente' | 'Completar';
+  thisMonth: { installment: number; advance: number; total: number };
+}) {
+  const [editing, setEditing] = useState(false);
+  const statusCls =
+    status === 'Pagado'
+      ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25'
+      : status === 'Completar'
+      ? 'bg-violet-500/10 text-violet-300 border-violet-500/25'
+      : 'bg-amber-500/10 text-amber-300 border-amber-500/25';
+
+  return (
+    <div className="bg-black/20 border border-line rounded-2xl p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="h-3 w-3 rounded-full shrink-0" style={{ background: color }} />
+          <p className="text-sm font-bold text-ink truncate">{item.name}</p>
+        </div>
+        <span className={`px-2.5 py-1 rounded-full border text-xs font-semibold tracking-wide ${statusCls}`}>{status}</span>
+      </div>
+
+      <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+        <div>
+          <dt className="text-ink-3 font-bold">Saldo</dt>
+          <dd className="text-ink font-semibold tabular-nums text-sm">{formatCLP(balance)}</dd>
+        </div>
+        <div>
+          <dt className="text-ink-3 font-bold">Cuotas que quedan</dt>
+          <dd className="text-ink font-semibold text-sm">
+            {remainingInstallments} <span className="text-ink-3 font-bold">de {formatCLP(item.installment)}</span>
+          </dd>
+        </div>
+        <div>
+          <dt className="text-ink-3 font-bold">Prioridad</dt>
+          <dd className="text-ink font-semibold text-sm">{item.priority}</dd>
+        </div>
+        <div>
+          <dt className="text-ink-3 font-bold">Interés</dt>
+          <dd className={`font-semibold text-sm ${interest > 0 ? 'text-rose-300' : 'text-emerald-300'}`}>
+            {interest > 0 ? `Sí · ${formatCLP(interest)}` : 'No'}
+          </dd>
+        </div>
+      </dl>
+
+      {(thisMonth.total > 0 || paid > 0) && (
+        <p className="mt-3 text-xs font-bold text-ink-2">
+          Este mes: {formatCLP(thisMonth.installment)} cuota
+          {thisMonth.advance > 0 && <span className="text-amber-300"> + {formatCLP(thisMonth.advance)} adelanto</span>}
+          {paid > 0 && <span className="text-ink-3"> · pagado en total {formatCLP(paid)}</span>}
+        </p>
+      )}
+
+      {!editing ? (
+        <div className="mt-2 flex items-center gap-1 -mb-2 -ml-2">
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="min-h-11 inline-flex items-center gap-1.5 px-2 text-xs font-semibold text-ink-2 hover:text-ink tracking-wide"
+          >
+            <Pencil size={13} /> Editar
+          </button>
+          <ConfirmAction
+            action={archiveDebtItem}
+            fields={{ id: item.id }}
+            title={`¿Archivar "${item.name}"?`}
+            message="Sale del plan CMR. Los pagos registrados se conservan."
+            confirmLabel="Archivar"
+            triggerClassName="min-h-11 inline-flex items-center gap-1.5 px-2 text-xs font-semibold text-ink-3 hover:text-rose-400 tracking-wide"
+          >
+            <Archive size={13} /> Archivar
+          </ConfirmAction>
+        </div>
+      ) : (
+        <DebtItemForm initial={item} onDone={() => setEditing(false)} />
+      )}
+    </div>
+  );
+}

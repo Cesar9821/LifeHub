@@ -1,0 +1,188 @@
+import { PageHeader } from '@/components/ui/card';
+import { Wallet, Brain, Users, Target, Clock, Flame, Bell, CalendarCheck } from 'lucide-react';
+import { createClient } from '@/lib/supabase/server';
+import { requireUser } from '@/lib/auth';
+import NotificationsManager from './notifications-manager';
+import { CLPInput } from '@/components/ui/clp-input';
+import { updateNotificationPrefs } from './actions';
+
+export const dynamic = 'force-dynamic';
+
+interface Prefs {
+  enabled: boolean;
+  finanzas: boolean;
+  mentalidad: boolean;
+  familia: boolean;
+  metas: boolean;
+  forja_time: string;
+  m369_morning_time: string;
+  m369_afternoon_time: string;
+  m369_night_time: string;
+  digest_time: string;
+  low_balance_enabled: boolean;
+  low_balance_threshold: number;
+  reminders?: boolean;
+  review_enabled?: boolean;
+  review_time?: string;
+}
+
+const DEFAULT_PREFS: Prefs = {
+  enabled: true,
+  finanzas: true,
+  mentalidad: true,
+  familia: true,
+  metas: true,
+  forja_time: '06:00',
+  m369_morning_time: '09:00',
+  m369_afternoon_time: '14:00',
+  m369_night_time: '21:00',
+  digest_time: '09:00',
+  low_balance_enabled: false,
+  low_balance_threshold: 0,
+};
+
+const MODULES = [
+  { key: 'finanzas', label: 'Finanzas', desc: 'Cuentas por pagar + saldo bajo', icon: Wallet, color: 'text-ink-2' },
+  { key: 'mentalidad', label: 'Hábitos', desc: 'La Forja, tu 369 y hábitos del día', icon: Brain, color: 'text-ink-2' },
+  { key: 'familia', label: 'Hogar', desc: 'Tareas asignadas y eventos de hoy/mañana', icon: Users, color: 'text-ink-2' },
+  { key: 'metas', label: 'Objetivos', desc: 'Objetivos que vencen pronto', icon: Target, color: 'text-ink-2' },
+] as const;
+
+const hhmm = (v: string | undefined, def: string) => (v ? v.slice(0, 5) : def);
+
+const inputCls =
+  'bg-black/30 border border-line-strong rounded-lg px-2.5 py-1.5 text-sm text-ink outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500/50';
+
+export default async function NotificacionesPage() {
+  const user = await requireUser();
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from('notification_prefs')
+    .select('*')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  const prefs: Prefs = (data as Prefs) || DEFAULT_PREFS;
+
+  const times = [
+    { name: 'forja_time', label: 'La Forja — frase del día', value: hhmm(prefs.forja_time, '06:00'), icon: Flame },
+    { name: 'm369_morning_time', label: '369 · mañana (3×)', value: hhmm(prefs.m369_morning_time, '09:00'), icon: Clock },
+    { name: 'm369_afternoon_time', label: '369 · tarde (6×)', value: hhmm(prefs.m369_afternoon_time, '14:00'), icon: Clock },
+    { name: 'm369_night_time', label: '369 · noche (9×)', value: hhmm(prefs.m369_night_time, '21:00'), icon: Clock },
+    { name: 'digest_time', label: 'Resumen de pendientes', value: hhmm(prefs.digest_time, '09:00'), icon: Clock },
+    { name: 'review_time', label: 'Revisión semanal (domingo)', value: hhmm(prefs.review_time, '19:00'), icon: Clock },
+  ];
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <PageHeader title="Notificaciones" subtitle="Activa los avisos, elige qué recibir y a qué hora." />
+
+        <NotificationsManager />
+
+        <form action={updateNotificationPrefs} className="bg-surface border border-line rounded-3xl p-6 md:p-8 space-y-6">
+          {/* Módulos */}
+          <div className="space-y-4">
+            <h2 className="text-sm font-semibold text-ink tracking-wide">¿Qué quieres recibir?</h2>
+
+            <label className="flex items-center justify-between gap-4 py-2 border-b border-line">
+              <div>
+                <p className="text-sm font-semibold text-ink">Activar avisos</p>
+                <p className="text-xs text-ink-3">Interruptor general de todas las notificaciones</p>
+              </div>
+              <input type="checkbox" name="enabled" defaultChecked={prefs.enabled} className="w-5 h-5 accent-indigo-500 shrink-0" />
+            </label>
+
+            <label className="flex items-center justify-between gap-4 py-1.5">
+              <div className="flex items-center gap-3">
+                <Bell size={18} className="text-ink-2" />
+                <div>
+                  <p className="text-sm font-bold text-ink">Recordatorios</p>
+                  <p className="text-xs text-ink-3">Los que creas con + → Recordatorio</p>
+                </div>
+              </div>
+              <input type="checkbox" name="reminders" defaultChecked={prefs.reminders !== false} className="w-5 h-5 accent-indigo-500 shrink-0" />
+            </label>
+            <label className="flex items-center justify-between gap-4 py-1.5">
+              <div className="flex items-center gap-3">
+                <CalendarCheck size={18} className="text-ink-2" />
+                <div>
+                  <p className="text-sm font-bold text-ink">Revisión semanal</p>
+                  <p className="text-xs text-ink-3">El domingo, si aún no la haces</p>
+                </div>
+              </div>
+              <input type="checkbox" name="review_enabled" defaultChecked={prefs.review_enabled !== false} className="w-5 h-5 accent-indigo-500 shrink-0" />
+            </label>
+
+            {MODULES.map((m) => {
+              const Icon = m.icon;
+              return (
+                <label key={m.key} className="flex items-center justify-between gap-4 py-1.5">
+                  <div className="flex items-center gap-3">
+                    <Icon size={18} className={m.color} />
+                    <div>
+                      <p className="text-sm font-bold text-ink">{m.label}</p>
+                      <p className="text-xs text-ink-3">{m.desc}</p>
+                    </div>
+                  </div>
+                  <input type="checkbox" name={m.key} defaultChecked={prefs[m.key]} className="w-5 h-5 accent-indigo-500 shrink-0" />
+                </label>
+              );
+            })}
+          </div>
+
+          {/* Horarios */}
+          <div className="space-y-3 pt-5 border-t border-line">
+            <h2 className="text-sm font-semibold text-ink tracking-wide">Horarios</h2>
+            <p className="text-xs text-ink-3">Aproximados (±30 min). Cada aviso llega una vez al día.</p>
+            {times.map((t) => {
+              const Icon = t.icon;
+              return (
+                <label key={t.name} className="flex items-center justify-between gap-4">
+                  <span className="flex items-center gap-2 text-sm text-ink-2">
+                    <Icon size={14} className="text-indigo-400" /> {t.label}
+                  </span>
+                  <input type="time" name={t.name} defaultValue={t.value} className={inputCls} />
+                </label>
+              );
+            })}
+          </div>
+
+          {/* Saldo bajo */}
+          <div className="space-y-3 pt-5 border-t border-line">
+            <h2 className="text-sm font-semibold text-ink tracking-wide">Alerta de saldo bajo</h2>
+            <label className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-bold text-ink">Avísame si me queda poco</p>
+                <p className="text-xs text-ink-3">Cuando el saldo del mes baje del umbral</p>
+              </div>
+              <input type="checkbox" name="low_balance_enabled" defaultChecked={prefs.low_balance_enabled} className="w-5 h-5 accent-indigo-500 shrink-0" />
+            </label>
+            <label className="flex items-center justify-between gap-4">
+              <span className="text-sm text-ink-2">Umbral (CLP)</span>
+              <div className="w-36">
+                <CLPInput
+                  name="low_balance_threshold"
+                  defaultValue={prefs.low_balance_threshold || ''}
+                  placeholder="50.000"
+                  className={`${inputCls} w-full`}
+                />
+              </div>
+            </label>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-white text-black py-3 rounded-xl font-semibold text-xs tracking-wide hover:bg-slate-200 transition-all active:scale-95"
+          >
+            Guardar preferencias
+          </button>
+        </form>
+
+        <p className="text-xs text-ink-3 text-center leading-relaxed">
+          La asignación de tareas llega al instante. El resto se envía a la hora que elijas.
+          En iPhone requiere tener LifeHub instalado en la pantalla de inicio.
+        </p>
+    </div>
+  );
+}

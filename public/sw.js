@@ -1,5 +1,4 @@
 /* LifeHub service worker — instalabilidad PWA + Web Push */
-const VERSION = 'lifehub-v1';
 
 self.addEventListener('install', () => {
   self.skipWaiting();
@@ -18,7 +17,7 @@ self.addEventListener('push', (event) => {
   let payload = {};
   try {
     payload = event.data ? event.data.json() : {};
-  } catch (_e) {
+  } catch {
     payload = { title: 'LifeHub', body: event.data ? event.data.text() : '' };
   }
 
@@ -29,7 +28,7 @@ self.addEventListener('push', (event) => {
     badge: '/icon-192.png',
     tag: payload.tag || undefined,
     renotify: Boolean(payload.tag),
-    data: { url: payload.url || '/hub' },
+    data: { url: payload.url || '/hoy' },
   };
 
   event.waitUntil(self.registration.showNotification(title, options));
@@ -38,7 +37,7 @@ self.addEventListener('push', (event) => {
 // Clic en la notificación → enfoca una pestaña abierta o abre la app.
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const targetUrl = (event.notification.data && event.notification.data.url) || '/hub';
+  const targetUrl = (event.notification.data && event.notification.data.url) || '/hoy';
 
   event.waitUntil(
     self.clients

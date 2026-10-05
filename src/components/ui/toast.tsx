@@ -32,9 +32,9 @@ export function Toaster() {
   return (
     <div
       role="status"
-      className="fixed z-[95] left-1/2 -translate-x-1/2 top-[calc(1rem+env(safe-area-inset-top))] flex items-center gap-2 max-w-[90vw] px-4 py-3 rounded-2xl bg-emerald-500 text-black text-sm font-black shadow-[0_12px_30px_-8px_rgba(16,185,129,0.6)] animate-in fade-in slide-in-from-top-2"
+      className="fixed z-[95] left-1/2 -translate-x-1/2 top-[calc(1rem+env(safe-area-inset-top))] flex items-center gap-2 max-w-[90vw] px-4 py-3 rounded-2xl bg-surface-3 border border-line-strong text-ink text-sm font-medium shadow-lg shadow-black/40 animate-fade-in"
     >
-      <CheckCircle2 size={18} className="shrink-0" />
+      <CheckCircle2 size={18} className="shrink-0 text-success" />
       {message}
     </div>
   );

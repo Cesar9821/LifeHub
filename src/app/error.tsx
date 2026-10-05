@@ -20,22 +20,22 @@ export default function Error({
 
   return (
     <div className="min-h-[60vh] flex items-center justify-center p-6">
-      <div className="max-w-md w-full bg-slate-900/40 border border-white/5 rounded-[2rem] p-8 backdrop-blur-xl text-center space-y-5">
+      <div className="max-w-md w-full bg-surface border border-line rounded-3xl p-8 text-center space-y-5">
         <div className="mx-auto h-14 w-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center">
           <AlertTriangle size={26} className="text-rose-400" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-xl font-black text-white uppercase tracking-tight">
+          <h2 className="text-xl font-semibold text-ink tracking-tight">
             Algo salió mal
           </h2>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-ink-2">
             No se pudo completar la operación. Tus datos no se modificaron.
             Puedes reintentar.
           </p>
         </div>
         <button
           onClick={reset}
-          className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 rounded-xl font-black text-sm hover:bg-slate-200 transition-all active:scale-95"
+          className="inline-flex items-center gap-2 bg-white text-black px-6 py-3 rounded-xl font-semibold text-sm hover:bg-slate-200 transition-all active:scale-95"
         >
           <RotateCw size={16} /> Reintentar
         </button>

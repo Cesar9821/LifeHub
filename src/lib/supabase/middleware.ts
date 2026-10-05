@@ -54,10 +54,11 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Con sesión y visitando login/register -> a la pantalla de inicio rápido
-  if (user && (pathname.startsWith('/login') || pathname.startsWith('/register'))) {
+  // Con sesión y visitando la portada, login o register -> a Hoy
+  if (user && (pathname === '/' || pathname.startsWith('/login') || pathname.startsWith('/register'))) {
     const url = request.nextUrl.clone();
-    url.pathname = '/finanzas';
+    url.pathname = '/hoy';
+    url.search = '';
     return NextResponse.redirect(url);
   }
 

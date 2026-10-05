@@ -1,0 +1,31 @@
+name: LifeHub · CI
+
+# Revisa cada push y pull request: lint, tests y build de producción.
+# No usa secretos: el build corre con valores de Supabase de ejemplo.
+
+on:
+  push:
+    branches: [main, 'claude/**']
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx eslint src
+      - run: npm test
+      - run: npx next build

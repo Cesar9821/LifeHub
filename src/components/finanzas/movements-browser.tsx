@@ -19,8 +19,8 @@ export function MovementsBrowser({ items, data }: { items: ExpenseListItem[]; da
   const income = filtered.filter((i) => i.initial.kind === 'income').reduce((a, i) => a + i.initial.amount, 0);
 
   const chip = (active: boolean) =>
-    `min-h-11 px-4 rounded-xl text-xs font-black border whitespace-nowrap transition-all ${
-      active ? 'bg-white text-black border-white' : 'bg-black/30 text-slate-400 border-white/10 hover:text-white'
+    `min-h-11 px-4 rounded-xl text-xs font-semibold border whitespace-nowrap transition-all ${
+      active ? 'bg-white text-black border-white' : 'bg-black/30 text-ink-2 border-line-strong hover:text-ink'
     }`;
 
   return (
@@ -46,7 +46,7 @@ export function MovementsBrowser({ items, data }: { items: ExpenseListItem[]; da
       </div>
 
       <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs font-bold px-1">
-        <span className="text-slate-400">{filtered.length} movimientos</span>
+        <span className="text-ink-2">{filtered.length} movimientos</span>
         {spent > 0 && <span className="text-rose-300">Gastos {formatCLP(spent)}</span>}
         {income > 0 && <span className="text-emerald-300">Ingresos {formatCLP(income)}</span>}
       </div>

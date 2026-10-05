@@ -57,13 +57,19 @@ de saldo bajo. Todos los avisos son **accionables** (abren la pantalla correcta)
 **Por horario** (una vez al día, ±30 min):
 - 🔥 **La Forja** — frase del día motivadora (por defecto 06:00).
 - 🔥 **369** — recordatorio de escribir tu 369 de mañana / tarde / noche, a las horas que definas.
-- 📋 **Resumen** — pagos por confirmar, hábitos, tareas y metas por vencer.
-- 💸 **Saldo bajo** — si el saldo del mes baja del umbral que fijaste.
+- 📋 **Resumen** — cuentas por pagar, trabajo de hoy, hábitos, tareas del hogar y objetivos por vencer.
+- 💸 **Saldo bajo** — si el disponible del mes baja del umbral que fijaste.
+- 🔄 **Revisión semanal** — el domingo (por defecto 19:00), solo si aún no la haces.
+- 🔔 **Recordatorios** — los que creas con **+ → Recordatorio**, a la hora elegida (±30 min).
+
+Los recordatorios y la revisión semanal requieren `supabase/20261005_lifehub_planning.sql`.
 
 **Al instante** (no espera horario):
 - 🏠 **Tarea asignada** — cuando alguien del hogar te asigna una tarea, te llega al toque.
 
 ### Probar el motor a mano
+
+El endpoint solo acepta el secreto en el header `Authorization` (nunca en la URL).
 ```bash
 curl -H "Authorization: Bearer TU_CRON_SECRET" "https://life-hub-puce.vercel.app/api/cron/notify"
 ```

@@ -1,44 +1,157 @@
 @import "tailwindcss";
 
-:root {
-  --background: #050608;
-  --foreground: #ffffff;
+/* ==========================================================================
+   LifeHub — tokens de diseño
+   Premium · Clean minimal · Dark. Un solo acento, estados por color.
+   Usar SIEMPRE estos tokens (bg-surface, text-ink-2, border-line,
+   text-success…) en vez de colores sueltos por componente.
+   ========================================================================== */
+
+@theme {
+  /* Superficies (de atrás hacia adelante) */
+  --color-bg: #0b0d12;
+  --color-surface: #12151c;
+  --color-surface-2: #181c25;
+  --color-surface-3: #212633;
+
+  /* Bordes */
+  --color-line: rgb(255 255 255 / 0.07);
+  --color-line-strong: rgb(255 255 255 / 0.13);
+
+  /* Texto: principal, secundario, tenue (todos ≥ 4.5:1 sobre surface) */
+  --color-ink: #f2f4f8;
+  --color-ink-2: #b4bbc8;
+  --color-ink-3: #8790a2;
+
+  /* Acento único (enlaces, activo, foco) */
+  --color-accent: #8b9cff;
+  --color-accent-strong: #6e7ff3;
+
+  /* Estados */
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-danger: #f87171;
+  --color-info: #60a5fa;
+  --color-neutral: #8790a2;
+
+  /* Áreas de vida (solo para puntos y bordes de bloques, nunca fondos grandes) */
+  --color-area-trabajo: #60a5fa;
+  --color-area-familia: #fb923c;
+  --color-area-salud: #34d399;
+  --color-area-habitos: #2dd4bf;
+  --color-area-finanzas: #a3e635;
+  --color-area-proyectos: #c084fc;
+  --color-area-personal: #8b9cff;
+
+  /* Paleta heredada: violeta se unifica con el acento y los grises tenues
+     suben de contraste (las pantallas antiguas los usan para texto). */
+  --color-violet-300: #c7d0ff;
+  --color-violet-400: #8b9cff;
+  --color-violet-500: #7385f7;
+  --color-violet-600: #6e7ff3;
+  --color-slate-500: #8790a2;
+  --color-slate-600: #747d90;
+
+  /* Movimiento sutil */
+  --animate-sheet-up: sheet-up 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-fade-in: fade-in 160ms ease-out;
+
+  @keyframes sheet-up {
+    from {
+      transform: translateY(24px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  /* Compatibilidad con clases antiguas */
+  --color-background: var(--color-bg);
+  --color-foreground: var(--color-ink);
+}
+
+:root {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Scrollbar personalizado */
+/* Foco visible y consistente para teclado */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
+/* En el celular los campos van a 16px: iOS no hace zoom al enfocarlos */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em) !important;
+  }
+}
+
+/* Scrollbar discreto */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgb(255 255 255 / 0.08);
   border-radius: 10px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.12);
 }
 
 /* Selects con estilos consistentes en todos los navegadores */
-select option {
-  background-color: #0A0C10;
-  color: white;
+select option,
+select optgroup {
+  background-color: var(--color-surface);
+  color: var(--color-ink);
 }
 
-/* Animaciones suaves globales */
-* {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* Inputs de fecha/hora legibles en oscuro */
+input[type='date']::-webkit-calendar-picker-indicator,
+input[type='time']::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
+}
+
+/* Ocultar barras de desplazamiento horizontales en carruseles de chips */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

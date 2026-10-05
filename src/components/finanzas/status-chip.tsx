@@ -5,7 +5,7 @@ const CHIP: Record<BudgetStatus, string> = {
   cerca: 'bg-amber-500/10 text-amber-300 border-amber-500/30',
   pasado: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
   sin_presupuesto: 'bg-violet-500/10 text-violet-300 border-violet-500/25',
-  sin_movimiento: 'bg-white/5 text-slate-500 border-white/10',
+  sin_movimiento: 'bg-white/5 text-ink-3 border-line-strong',
 };
 
 const BAR: Record<BudgetStatus, string> = {
@@ -18,7 +18,7 @@ const BAR: Record<BudgetStatus, string> = {
 
 export function StatusChip({ status }: { status: BudgetStatus }) {
   return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-full border text-[10px] font-black uppercase tracking-wider whitespace-nowrap ${CHIP[status]}`}>
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full border text-xs font-semibold tracking-wide whitespace-nowrap ${CHIP[status]}`}>
       {STATUS_LABEL[status]}
     </span>
   );
