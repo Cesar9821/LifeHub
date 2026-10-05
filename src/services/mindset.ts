@@ -1,3 +1,4 @@
+import { todayStr } from '@/lib/format';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth';
 
@@ -28,13 +29,8 @@ export interface HabitWithStatus extends Habit {
   weekCount: number;
 }
 
-/** Fecha local en formato YYYY-MM-DD */
-export function todayStr(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
-    d.getDate()
-  ).padStart(2, '0')}`;
-}
+/** Hoy (YYYY-MM-DD) en horario de Chile. El servidor corre en UTC. */
+export { todayStr } from '@/lib/format';
 
 /** Resta N días a una fecha YYYY-MM-DD */
 function minusDays(dateStr: string, days: number): string {
