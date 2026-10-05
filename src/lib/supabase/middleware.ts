@@ -40,8 +40,11 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Rutas públicas (no requieren sesión)
+  // /api/cron/* se autentica con su propio secreto (Authorization: Bearer).
+  // Sin esto el proxy redirigía el cron al login y no salía ninguna notificación.
   const isPublic =
     pathname === '/' ||
+    pathname.startsWith('/api/cron/') ||
     pathname.startsWith('/login') ||
     pathname.startsWith('/register') ||
     pathname.startsWith('/auth');
